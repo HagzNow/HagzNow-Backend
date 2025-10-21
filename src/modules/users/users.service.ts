@@ -1,9 +1,9 @@
-import { Body, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
-import { Repository } from 'typeorm';
 
 @Injectable()
 export class UsersService {
@@ -20,6 +20,8 @@ export class UsersService {
   }
 
   async findOneById(id: number) {
+    // In case id is undefined or null without this it will return first value
+    if (!id) return null;
     return await this.userRepository.findOneBy({ id });
   }
   async findOne(email: string) {
