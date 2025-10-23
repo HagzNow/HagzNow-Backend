@@ -38,10 +38,10 @@ export class CreateArenaDto {
     example: 2,
     minimum: 1,
   })
-  @IsNumber()
-  @Min(1)
-  minPeriod: number;
 
+  // @IsNumber()
+  // @Min(1)
+  // minPeriod: number;
   @ApiProperty({
     description: 'Opening hour (0–23)',
     example: 8,
