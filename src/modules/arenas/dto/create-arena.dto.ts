@@ -127,6 +127,10 @@ export class CreateArenaDto {
   @Type(() => CreateArenaImageDto)
   images?: CreateArenaImageDto[];
 
+  @ApiPropertyOptional({
+    type: [CreateArenaExtraDto],
+    description: 'List of arena extras',
+  })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })

@@ -1,12 +1,13 @@
 import { OmitType, PartialType } from '@nestjs/swagger';
-import { CreateArenaDto } from './create-arena.dto';
 import { Type } from 'class-transformer';
-import { IsOptional, ValidateNested, IsArray } from 'class-validator';
+import { IsArray, IsOptional, ValidateNested } from 'class-validator';
+import { CreateArenaDto } from './create-arena.dto';
+import { UpdateArenaExtraDto } from './update-arena-extra.dto';
 import { UpdateArenaImageDto } from './update-arena-image.dto';
 import { UpdateArenaLocationDto } from './update-arena-location.dto';
 
 export class UpdateArenaDto extends PartialType(
-  OmitType(CreateArenaDto, ['location', 'images'] as const),
+  OmitType(CreateArenaDto, ['location', 'images', 'extras'] as const),
 ) {
   @IsOptional()
   @ValidateNested()
@@ -18,4 +19,10 @@ export class UpdateArenaDto extends PartialType(
   @ValidateNested({ each: true })
   @Type(() => UpdateArenaImageDto)
   images?: UpdateArenaImageDto[];
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => UpdateArenaExtraDto)
+  extras?: UpdateArenaExtraDto[];
 }
