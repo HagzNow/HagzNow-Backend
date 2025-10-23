@@ -8,6 +8,10 @@ import { UsersModule } from './modules/users/users.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 // import { databaseProviders } from './database/database.providers';
 import { User } from './modules/users/entities/user.entity';
+import { ArenasModule } from './modules/arenas/arenas.module';
+import { CategoriesModule } from './modules/categories/categories.module';
+import { Category } from './modules/categories/entities/category.entity';
+import { Arena } from './modules/arenas/entities/arena.entity';
 
 @Module({
   imports: [
@@ -26,11 +30,13 @@ import { User } from './modules/users/entities/user.entity';
         // Setting synchronize: true shouldn't be used in production - otherwise you can lose production data.
 
         synchronize: process.env.DB_SYNC === 'true',
-        entities: [User],
+        entities: [User, Category, Arena],
       }),
     }),
     AuthModule,
     UsersModule,
+    ArenasModule,
+    CategoriesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
