@@ -6,12 +6,17 @@ import { AppModule } from './app.module';
 // import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 // import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import morgan from 'morgan';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.use(
     morgan(':method :url :status :res[content-length] - :response-time ms'),
   );
+  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
+    prefix: '/uploads/',
+  });
   const config = new DocumentBuilder()
     .setTitle('HagzNow API')
     .setDescription('API for reserving sports arenas')
@@ -30,6 +35,9 @@ async function bootstrap() {
     new ValidationPipe({
       whitelist: true,
       transform: true,
+      transformOptions: {
+        enableImplicitConversion: true, // 👈 important
+      },
     }),
   );
   await app.listen(process.env.PORT ?? 3000);

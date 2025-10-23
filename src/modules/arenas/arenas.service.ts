@@ -15,11 +15,19 @@ export class ArenasService {
     private readonly categoriesService: CategoriesService,
   ) {}
 
-  async create(createArenaDto: CreateArenaDto) {
+  async create(createArenaDto: CreateArenaDto, files?: Express.Multer.File[]) {
     const { categoryId, ...arenaData } = createArenaDto;
+    console.log('sssss');
+
+    const images =
+      files?.map((file) => ({
+        path: `/uploads/arenas/${file.filename}`,
+      })) ?? [];
+    console.log(images);
 
     const arena = this.arenaRepository.create({
       ...arenaData,
+      images,
     });
 
     if (categoryId) {
