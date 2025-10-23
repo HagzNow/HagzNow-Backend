@@ -1,4 +1,5 @@
-import { IsEmail, IsString, Length, Matches } from 'class-validator';
+import { IsEmail, IsIn, IsString, Length, Matches } from 'class-validator';
+import { UserRole } from '../interfaces/userRole.interface';
 
 export class CreateUserDto {
   @IsString()
@@ -23,4 +24,9 @@ export class CreateUserDto {
       'Password must contain at least one uppercase letter, one lowercase letter, and one number',
   })
   password: string;
+
+  @IsIn([UserRole.USER, UserRole.OWNER], {
+    message: 'Role must be user or owner',
+  })
+  role: UserRole;
 }
