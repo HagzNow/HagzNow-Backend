@@ -11,6 +11,7 @@ import { ArenasModule } from './modules/arenas/arenas.module';
 import { ArenaExtra } from './modules/arenas/entities/arena-extra.entity';
 import { ArenaImage } from './modules/arenas/entities/arena-image.entity';
 import { ArenaLocation } from './modules/arenas/entities/arena-location.entity';
+import { ArenaSlot } from './modules/arenas/entities/arena-slot.entity';
 import { Arena } from './modules/arenas/entities/arena.entity';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { Category } from './modules/categories/entities/category.entity';
@@ -40,6 +41,7 @@ import { User } from './modules/users/entities/user.entity';
           ArenaImage,
           ArenaLocation,
           ArenaExtra,
+          ArenaSlot,
         ],
       }),
     }),

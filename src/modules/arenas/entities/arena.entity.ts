@@ -14,6 +14,7 @@ import { ArenaStatus } from '../interfaces/arena-status.interface';
 import { ArenaExtra } from './arena-extra.entity';
 import { ArenaImage } from './arena-image.entity';
 import { ArenaLocation } from './arena-location.entity';
+import { ArenaSlot } from './arena-slot.entity';
 
 @Entity('arenas')
 export class Arena {
@@ -83,6 +84,9 @@ export class Arena {
     eager: true,
   })
   extras: ArenaExtra[];
+
+  @OneToMany(() => ArenaSlot, (slot) => slot.arena)
+  slots: ArenaSlot[];
 
   getDepositAmount(totalPrice: number): number {
     return (totalPrice * this.depositPercent) / 100;
