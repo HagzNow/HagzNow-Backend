@@ -33,12 +33,11 @@ export class CreateArenaDto {
   @IsNotEmpty()
   thumbnail: string;
 
-  @ApiProperty({
-    description: 'Minimum booking period (in hours)',
-    example: 2,
-    minimum: 1,
-  })
-
+  // @ApiProperty({
+  //   description: 'Minimum booking period (in hours)',
+  //   example: 2,
+  //   minimum: 1,
+  // })
   // @IsNumber()
   // @Min(1)
   // minPeriod: number;
