@@ -8,8 +8,8 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { Serialize } from '../common/interceptors/serialize.interceptor';
-import { ApiResponseUtil } from '../common/utils/api-response.util';
+import { Serialize } from '../../common/interceptors/serialize.interceptor';
+import { ApiResponseUtil } from '../../common/utils/api-response.util';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserDto } from './dto/user.dto';
