@@ -3,17 +3,18 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 // import { DatabaseModule } from './database/database.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
-import { TypeOrmModule } from '@nestjs/typeorm';
 // import { databaseProviders } from './database/database.providers';
-import { User } from './modules/users/entities/user.entity';
 import { ArenasModule } from './modules/arenas/arenas.module';
+import { ArenaExtra } from './modules/arenas/entities/arena-extra.entity';
+import { ArenaImage } from './modules/arenas/entities/arena-image.entity';
+import { ArenaLocation } from './modules/arenas/entities/arena-location.entity';
+import { Arena } from './modules/arenas/entities/arena.entity';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { Category } from './modules/categories/entities/category.entity';
-import { Arena } from './modules/arenas/entities/arena.entity';
-import { ArenaImages } from './modules/arenas/entities/arena-image.entity';
-import { ArenaLocation } from './modules/arenas/entities/arena-location.entity';
+import { User } from './modules/users/entities/user.entity';
 
 @Module({
   imports: [
@@ -32,7 +33,14 @@ import { ArenaLocation } from './modules/arenas/entities/arena-location.entity';
         // Setting synchronize: true shouldn't be used in production - otherwise you can lose production data.
 
         synchronize: process.env.DB_SYNC === 'true',
-        entities: [User, Category, Arena, ArenaImages, ArenaLocation],
+        entities: [
+          User,
+          Category,
+          Arena,
+          ArenaImage,
+          ArenaLocation,
+          ArenaExtra,
+        ],
       }),
     }),
     AuthModule,

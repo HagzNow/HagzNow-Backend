@@ -1,19 +1,20 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
-  IsString,
+  IsArray,
+  IsEnum,
   IsNotEmpty,
   IsNumber,
-  Min,
-  Max,
   IsOptional,
-  IsEnum,
+  IsString,
+  Max,
+  Min,
   ValidateNested,
-  IsArray,
 } from 'class-validator';
 import { ArenaStatus } from '../interfaces/arena-status.interface';
+import { CreateArenaExtraDto } from './create-arena-extra.dto';
 import { CreateArenaImageDto } from './create-arena-image.dto';
 import { CreateArenaLocationDto } from './create-arena-location.dto';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateArenaDto {
   @ApiProperty({
@@ -66,7 +67,7 @@ export class CreateArenaDto {
   @ApiProperty({ description: 'Price per hour', example: 150, minimum: 0 })
   @IsNumber()
   @Min(0)
-  pricePerHoue: number;
+  pricePerHour: number;
 
   @ApiProperty({
     description: 'Deposit amount as a percentage of total price',
@@ -126,4 +127,10 @@ export class CreateArenaDto {
   @ValidateNested({ each: true })
   @Type(() => CreateArenaImageDto)
   images?: CreateArenaImageDto[];
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateArenaExtraDto)
+  extras?: CreateArenaExtraDto[];
 }

@@ -1,15 +1,16 @@
 import { Module } from '@nestjs/common';
-import { ArenasService } from './arenas.service';
-import { ArenasController } from './arenas.controller';
-import { Arena } from './entities/arena.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ArenaLocation } from './entities/arena-location.entity';
-import { ArenaImages } from './entities/arena-image.entity';
 import { CategoriesModule } from '../categories/categories.module';
+import { ArenasController } from './arenas.controller';
+import { ArenasService } from './arenas.service';
+import { ArenaExtra } from './entities/arena-extra.entity';
+import { ArenaImage } from './entities/arena-image.entity';
+import { ArenaLocation } from './entities/arena-location.entity';
+import { Arena } from './entities/arena.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Arena, ArenaLocation, ArenaImages]),
+    TypeOrmModule.forFeature([Arena, ArenaLocation, ArenaImage, ArenaExtra]),
     CategoriesModule,
   ],
   controllers: [ArenasController],
