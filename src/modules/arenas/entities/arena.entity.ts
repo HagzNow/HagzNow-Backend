@@ -2,12 +2,17 @@ import {
   BeforeInsert,
   Column,
   Entity,
+  JoinColumn,
   ManyToOne,
+  OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { ArenaStatus } from '../interfaces/arena-status.interface';
 import { Category } from 'src/modules/categories/entities/category.entity';
+import { ArenaLocation } from './arena-location.entity';
+import { ArenaImages } from './arena-image.entity';
 
 @Entity('arenas')
 export class Arena {
@@ -20,7 +25,7 @@ export class Arena {
   @Column({ type: 'varchar', length: 244 })
   name: string;
 
-  @Column({ type: 'varchar', nullable: true })
+  @Column({ type: 'varchar', nullable: false })
   thumbnail: string;
 
   @Column({ type: 'int', default: 60 })
@@ -48,6 +53,22 @@ export class Arena {
     onDelete: 'SET NULL', // if category deleted, arena stays but category becomes null
   })
   category: Category;
+
+  @OneToMany(() => ArenaImages, (image) => image.arena, {
+    cascade: true,
+    onDelete: 'CASCADE', // if category deleted, arena stays but category becomes null
+    eager: true,
+  })
+  images: ArenaImages[];
+
+  @OneToOne(() => ArenaLocation, (location) => location.arena, {
+    cascade: true,
+    onDelete: 'CASCADE',
+    eager: true,
+  })
+  @JoinColumn() // 👈 Add this decorator
+  location: ArenaLocation;
+
   @Column({ type: 'enum', enum: ArenaStatus, default: ArenaStatus.PENDING })
   status: ArenaStatus;
 

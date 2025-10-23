@@ -1,26 +1,62 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateArenaDto } from './dto/create-arena.dto';
 import { UpdateArenaDto } from './dto/update-arena.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Arena } from './entities/arena.entity';
+import { Repository } from 'typeorm';
+import { CategoriesService } from '../categories/categories.service';
 
 @Injectable()
 export class ArenasService {
-  create(createArenaDto: CreateArenaDto) {
-    return 'This action adds a new arena';
+  constructor(
+    @InjectRepository(Arena)
+    private readonly arenaRepository: Repository<Arena>,
+
+    private readonly categoriesService: CategoriesService,
+  ) {}
+
+  async create(createArenaDto: CreateArenaDto) {
+    const { categoryId, ...arenaData } = createArenaDto;
+
+    const arena = this.arenaRepository.create({
+      ...arenaData,
+    });
+
+    if (categoryId) {
+      const category = await this.categoriesService.findOne(categoryId);
+      if (!category)
+        throw new NotFoundException(`Category ${categoryId} not found`);
+      arena.category = category;
+    }
+    return await this.arenaRepository.save(arena);
   }
 
-  findAll() {
-    return `This action returns all arenas`;
+  async findAll() {
+    return await this.arenaRepository.find();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} arena`;
+  async findOne(id: number) {
+    if (!id) return null;
+    return await this.arenaRepository.findOneBy({ id });
   }
 
-  update(id: number, updateArenaDto: UpdateArenaDto) {
-    return `This action updates a #${id} arena`;
+  async update(id: number, updateArenaDto: UpdateArenaDto) {
+    const arena = await this.arenaRepository.findOne({
+      where: { id },
+      relations: ['images', 'location'], // Load relations if needed
+    });
+
+    if (!arena) {
+      throw new NotFoundException('Arena not found');
+    }
+
+    // TODO fix update image
+    this.arenaRepository.merge(arena, updateArenaDto);
+
+    return await this.arenaRepository.save(arena);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} arena`;
+  async remove(id: number) {
+    return await this.arenaRepository.delete(id);
   }
 }

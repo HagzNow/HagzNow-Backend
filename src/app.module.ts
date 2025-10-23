@@ -12,6 +12,8 @@ import { ArenasModule } from './modules/arenas/arenas.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { Category } from './modules/categories/entities/category.entity';
 import { Arena } from './modules/arenas/entities/arena.entity';
+import { ArenaImages } from './modules/arenas/entities/arena-image.entity';
+import { ArenaLocation } from './modules/arenas/entities/arena-location.entity';
 
 @Module({
   imports: [
@@ -30,7 +32,7 @@ import { Arena } from './modules/arenas/entities/arena.entity';
         // Setting synchronize: true shouldn't be used in production - otherwise you can lose production data.
 
         synchronize: process.env.DB_SYNC === 'true',
-        entities: [User, Category, Arena],
+        entities: [User, Category, Arena, ArenaImages, ArenaLocation],
       }),
     }),
     AuthModule,

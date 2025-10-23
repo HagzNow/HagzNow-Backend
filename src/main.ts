@@ -3,11 +3,15 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
-import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
-import { ResponseInterceptor } from './common/interceptors/response.interceptor';
+// import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+// import { ResponseInterceptor } from './common/interceptors/response.interceptor';
+import morgan from 'morgan';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.use(
+    morgan(':method :url :status :res[content-length] - :response-time ms'),
+  );
   const config = new DocumentBuilder()
     .setTitle('HagzNow API')
     .setDescription('API for reserving sports arenas')
