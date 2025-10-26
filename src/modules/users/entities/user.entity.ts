@@ -1,15 +1,18 @@
+import * as bcrypt from 'bcrypt';
+import { Wallet } from 'src/modules/wallets/entities/wallet.entity';
 import {
   BeforeInsert,
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { UserRole } from '../interfaces/userRole.interface';
 import { UserStatus } from '../interfaces/userStatus.interface';
-import * as bcrypt from 'bcrypt';
 
 @Entity('users')
 export class User {
@@ -45,6 +48,10 @@ export class User {
 
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
+
+  @OneToOne(() => Wallet, (wallet) => wallet.user)
+  @JoinColumn()
+  wallet: Wallet;
 
   @UpdateDateColumn({
     type: 'timestamp',

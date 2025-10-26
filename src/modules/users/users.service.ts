@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -8,11 +9,14 @@ import { User } from './entities/user.entity';
 @Injectable()
 export class UsersService {
   constructor(
+    private readonly eventEmitter: EventEmitter2,
     @InjectRepository(User) private userRepository: Repository<User>,
   ) {}
   async create(createUserDto: CreateUserDto) {
     const newUser = this.userRepository.create(createUserDto);
-    return await this.userRepository.save(newUser);
+    await this.userRepository.save(newUser);
+    this.eventEmitter.emit('user.created', newUser);
+    return newUser;
   }
 
   async findAll() {

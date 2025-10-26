@@ -7,6 +7,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 // import { databaseProviders } from './database/database.providers';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ArenasModule } from './modules/arenas/arenas.module';
 import { ArenaExtra } from './modules/arenas/entities/arena-extra.entity';
 import { ArenaImage } from './modules/arenas/entities/arena-image.entity';
@@ -16,9 +17,13 @@ import { Arena } from './modules/arenas/entities/arena.entity';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { Category } from './modules/categories/entities/category.entity';
 import { User } from './modules/users/entities/user.entity';
+import { WalletTransaction } from './modules/wallets/entities/wallet-transaction.entity';
+import { Wallet } from './modules/wallets/entities/wallet.entity';
+import { WalletModule } from './modules/wallets/wallets.module';
 
 @Module({
   imports: [
+    EventEmitterModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
@@ -42,6 +47,8 @@ import { User } from './modules/users/entities/user.entity';
           ArenaLocation,
           ArenaExtra,
           ArenaSlot,
+          Wallet,
+          WalletTransaction,
         ],
       }),
     }),
@@ -49,6 +56,7 @@ import { User } from './modules/users/entities/user.entity';
     UsersModule,
     ArenasModule,
     CategoriesModule,
+    WalletModule,
   ],
   controllers: [AppController],
   providers: [AppService],
