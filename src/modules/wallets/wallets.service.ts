@@ -1,0 +1,24 @@
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { User } from '../users/entities/user.entity';
+import { Wallet } from './entities/wallet.entity';
+
+@Injectable()
+export class WalletsService {
+  constructor(
+    @InjectRepository(Wallet) private walletRepository: Repository<Wallet>,
+  ) {}
+  async create(user: User) {
+    const newWallet = this.walletRepository.create({ user, balance: 0 });
+    return await this.walletRepository.save(newWallet);
+  }
+
+  findOne(id: number) {
+    return `This action returns a #${id} wallet`;
+  }
+
+  update(userId: number, balance: number) {
+    return `This action updates a #${userId} wallet`;
+  }
+}
