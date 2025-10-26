@@ -10,6 +10,7 @@ import { CategoriesService } from '../categories/categories.service';
 import { ArenaFilterDto } from './dto/arena-filter.dto';
 import { CreateArenaDto } from './dto/create-arena.dto';
 import { UpdateArenaDto } from './dto/update-arena.dto';
+import { ArenaExtra } from './entities/arena-extra.entity';
 import { Arena } from './entities/arena.entity';
 
 @Injectable()
@@ -17,6 +18,8 @@ export class ArenasService {
   constructor(
     @InjectRepository(Arena)
     private readonly arenaRepository: Repository<Arena>,
+    @InjectRepository(ArenaExtra)
+    private readonly extraRepository: Repository<ArenaExtra>,
 
     private readonly categoriesService: CategoriesService,
   ) {}
@@ -69,6 +72,12 @@ export class ArenasService {
   async findOne(id: number) {
     if (!id) return null;
     return await this.arenaRepository.findOneBy({ id });
+  }
+
+  async getActiveExtras(arenaId: number) {
+    return this.extraRepository.find({
+      where: { arena: { id: arenaId }, isActive: true },
+    });
   }
 
   async update(id: number, updateArenaDto: UpdateArenaDto) {

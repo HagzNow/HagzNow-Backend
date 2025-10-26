@@ -76,6 +76,11 @@ export class ArenasController {
     return this.arenasService.findOne(+id);
   }
 
+  @Get(':id/extras')
+  getActiveExtras(@Param('id') id: number) {
+    return this.arenasService.getActiveExtras(id);
+  }
+
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateArenaDto: UpdateArenaDto) {
     return this.arenasService.update(+id, updateArenaDto);

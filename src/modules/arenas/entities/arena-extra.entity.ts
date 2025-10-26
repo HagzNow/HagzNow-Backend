@@ -12,6 +12,9 @@ export class ArenaExtra {
   @Column({ type: 'decimal' })
   price: number;
 
+  @Column({ type: 'boolean', default: true })
+  isActive: boolean;
+
   @ManyToOne(() => Arena, (arena) => arena.extras, {
     onDelete: 'CASCADE',
   })
