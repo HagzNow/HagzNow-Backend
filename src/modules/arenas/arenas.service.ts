@@ -1,10 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { CreateArenaDto } from './dto/create-arena.dto';
-import { UpdateArenaDto } from './dto/update-arena.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Arena } from './entities/arena.entity';
+import { PaginationDto } from 'src/common/dtos/pagination.dto';
+import { SortDto } from 'src/common/dtos/sort.dto';
+import { applyFilters } from 'src/common/utils/filter.utils';
+import { paginate } from 'src/common/utils/paginate';
+import { applySorting } from 'src/common/utils/sort.util';
 import { Repository } from 'typeorm';
 import { CategoriesService } from '../categories/categories.service';
+import { ArenaFilterDto } from './dto/arena-filter.dto';
+import { CreateArenaDto } from './dto/create-arena.dto';
+import { UpdateArenaDto } from './dto/update-arena.dto';
+import { Arena } from './entities/arena.entity';
 
 @Injectable()
 export class ArenasService {
@@ -39,8 +45,25 @@ export class ArenasService {
     return await this.arenaRepository.save(arena);
   }
 
-  async findAll() {
-    return await this.arenaRepository.find();
+  async findAll(
+    paginationDto: PaginationDto,
+    filters: ArenaFilterDto,
+    sort: SortDto,
+  ) {
+    const { orderBy, direction } = sort;
+    // Start a query builder
+    const query = this.arenaRepository.createQueryBuilder('arenas');
+
+    // Apply filters dynamically
+    applyFilters(query, filters, 'arenas');
+
+    // Apply sorting dynamically
+    if (orderBy) {
+      applySorting(query, { [orderBy]: direction }, 'arenas');
+    }
+
+    // Paginate (using your existing paginate util)
+    return paginate(query, paginationDto);
   }
 
   async findOne(id: number) {

@@ -1,21 +1,25 @@
 import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  UseInterceptors,
   BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
   UploadedFiles,
+  UseInterceptors,
 } from '@nestjs/common';
+import { AnyFilesInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
+import { PaginationDto } from 'src/common/dtos/pagination.dto';
+import { SortDto } from 'src/common/dtos/sort.dto';
 import { ArenasService } from './arenas.service';
+import { ArenaFilterDto } from './dto/arena-filter.dto';
 import { CreateArenaDto } from './dto/create-arena.dto';
 import { UpdateArenaDto } from './dto/update-arena.dto';
-import { AnyFilesInterceptor } from '@nestjs/platform-express';
-import { extname } from 'path';
-import { diskStorage } from 'multer';
 
 @Controller('arenas')
 export class ArenasController {
@@ -58,8 +62,13 @@ export class ArenasController {
   }
 
   @Get()
-  findAll() {
-    return this.arenasService.findAll();
+  findAll(
+    @Query() paginationDto: PaginationDto,
+    @Query() filters: ArenaFilterDto,
+    @Query() sort: SortDto,
+  ) {
+    console.log('here');
+    return this.arenasService.findAll(paginationDto, filters, sort);
   }
 
   @Get(':id')
