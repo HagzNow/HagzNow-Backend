@@ -16,6 +16,7 @@ import { ArenaSlot } from './modules/arenas/entities/arena-slot.entity';
 import { Arena } from './modules/arenas/entities/arena.entity';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { Category } from './modules/categories/entities/category.entity';
+import { Reservation } from './modules/reservations/entities/reservation.entity';
 import { ReservationsModule } from './modules/reservations/reservations.module';
 import { User } from './modules/users/entities/user.entity';
 import { WalletTransaction } from './modules/wallets/entities/wallet-transaction.entity';
@@ -50,6 +51,7 @@ import { WalletModule } from './modules/wallets/wallets.module';
           ArenaSlot,
           Wallet,
           WalletTransaction,
+          Reservation,
         ],
       }),
     }),
