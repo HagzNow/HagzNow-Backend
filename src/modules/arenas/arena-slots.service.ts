@@ -18,6 +18,14 @@ export class ArenaSlotsService {
   ) {}
 
   async getAvailableSlots(arenaId: string, date: string) {
+    // Step 0: validate date
+    if (Date.now() > new Date(date).getTime()) {
+      return ApiResponseUtil.throwError(
+        'You cannot check available slots for past dates',
+        'INVALID_DATE',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
     // Step 1: find arena
     const arena = await this.arenaRepo.findOne({ where: { id: arenaId } });
     //WORK
