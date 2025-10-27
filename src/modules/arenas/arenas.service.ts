@@ -55,7 +55,10 @@ export class ArenasService {
   ) {
     const { orderBy, direction } = sort;
     // Start a query builder
-    const query = this.arenaRepository.createQueryBuilder('arenas');
+    const query = this.arenaRepository
+      .createQueryBuilder('arenas')
+      .leftJoinAndSelect('arenas.location', 'location')
+      .leftJoinAndSelect('arenas.category', 'category');
 
     // Apply filters dynamically
     applyFilters(query, filters, 'arenas');
