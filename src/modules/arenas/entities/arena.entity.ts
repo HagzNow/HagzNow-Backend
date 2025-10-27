@@ -1,4 +1,5 @@
 import { Category } from 'src/modules/categories/entities/category.entity';
+import { Reservation } from 'src/modules/reservations/entities/reservation.entity';
 import {
   Column,
   Entity,
@@ -77,6 +78,9 @@ export class Arena {
 
   @OneToMany(() => ArenaSlot, (slot) => slot.arena)
   slots: ArenaSlot[];
+
+  @OneToMany(() => Reservation, (reservation) => reservation.arena)
+  reservations: Reservation[];
 
   getDepositAmount(totalPrice: number): number {
     return (totalPrice * this.depositPercent) / 100;

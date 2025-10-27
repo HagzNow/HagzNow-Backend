@@ -1,3 +1,4 @@
+import { Reservation } from 'src/modules/reservations/entities/reservation.entity';
 import {
   Column,
   Entity,
@@ -21,4 +22,9 @@ export class ArenaSlot {
 
   @ManyToOne(() => Arena, (arena) => arena.slots, { onDelete: 'CASCADE' })
   arena: Arena;
+
+  @ManyToOne(() => Reservation, (reservation) => reservation.slots, {
+    onDelete: 'CASCADE',
+  })
+  reservation: Reservation;
 }

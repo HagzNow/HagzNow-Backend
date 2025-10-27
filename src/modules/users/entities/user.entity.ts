@@ -1,4 +1,5 @@
 import * as bcrypt from 'bcrypt';
+import { Reservation } from 'src/modules/reservations/entities/reservation.entity';
 import { Wallet } from 'src/modules/wallets/entities/wallet.entity';
 import {
   BeforeInsert,
@@ -6,6 +7,7 @@ import {
   CreateDateColumn,
   Entity,
   JoinColumn,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -50,6 +52,9 @@ export class User {
   @OneToOne(() => Wallet, (wallet) => wallet.user)
   @JoinColumn()
   wallet: Wallet;
+
+  @OneToMany(() => Reservation, (reservation) => reservation.user)
+  reservations: Reservation[];
 
   @UpdateDateColumn({
     type: 'timestamp',

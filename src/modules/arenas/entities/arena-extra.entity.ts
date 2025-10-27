@@ -1,4 +1,11 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Reservation } from 'src/modules/reservations/entities/reservation.entity';
+import {
+  Column,
+  Entity,
+  ManyToMany,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Arena } from './arena.entity';
 
 @Entity('arenas_extras')
@@ -19,4 +26,9 @@ export class ArenaExtra {
     onDelete: 'CASCADE',
   })
   arena: Arena;
+
+  @ManyToMany(() => Reservation, (reservation) => reservation.extras, {
+    onDelete: 'SET NULL',
+  })
+  reservations: Reservation[];
 }
