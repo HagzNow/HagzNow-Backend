@@ -1,4 +1,4 @@
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class ArenaFilterDto {
   @IsOptional()
@@ -6,6 +6,6 @@ export class ArenaFilterDto {
   name?: string;
 
   @IsOptional()
-  @IsNumber()
-  categoryId?: number;
+  @IsUUID()
+  categoryId?: string;
 }
