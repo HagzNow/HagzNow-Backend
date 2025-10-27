@@ -24,5 +24,5 @@ export class CreateArenaSlotDto {
   })
   @IsNotEmpty()
   @IsInt()
-  arenaId: number;
+  arenaId: string;
 }

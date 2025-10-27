@@ -3,8 +3,8 @@ import { Arena } from './arena.entity';
 
 @Entity('arena_images')
 export class ArenaImage {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column({ type: 'varchar', nullable: false })
   path: string;

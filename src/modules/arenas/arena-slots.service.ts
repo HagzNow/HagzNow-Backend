@@ -17,7 +17,7 @@ export class ArenaSlotsService {
     private readonly arenaRepo: Repository<Arena>,
   ) {}
 
-  async getAvailableSlots(arenaId: number, date: string) {
+  async getAvailableSlots(arenaId: string, date: string) {
     // Step 1: find arena
     const arena = await this.arenaRepo.findOne({ where: { id: arenaId } });
     //WORK

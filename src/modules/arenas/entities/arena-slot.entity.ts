@@ -10,8 +10,8 @@ import { Arena } from './arena.entity';
 @Entity('arena_slots')
 @Index('unique_arena_date_hour', ['arena', 'date', 'hour'], { unique: true })
 export class ArenaSlot {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column({ type: 'date' })
   date: string;

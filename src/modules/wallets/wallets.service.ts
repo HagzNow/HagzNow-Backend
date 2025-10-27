@@ -14,11 +14,11 @@ export class WalletsService {
     return await this.walletRepository.save(newWallet);
   }
 
-  findOne(id: number) {
+  findOne(id: string) {
     return `This action returns a #${id} wallet`;
   }
 
-  update(userId: number, balance: number) {
+  update(userId: string, balance: number) {
     return `This action updates a #${userId} wallet`;
   }
 }

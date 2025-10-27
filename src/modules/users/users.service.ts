@@ -23,7 +23,7 @@ export class UsersService {
     return await this.userRepository.find();
   }
 
-  async findOneById(id: number) {
+  async findOneById(id: string) {
     // In case id is undefined or null without this it will return first value
     if (!id) return null;
     return await this.userRepository.findOneBy({ id });
@@ -32,11 +32,11 @@ export class UsersService {
     return await this.userRepository.findOneBy({ email });
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
+  update(id: string, updateUserDto: UpdateUserDto) {
     return `This action updates a #${id} user`;
   }
 
-  remove(id: number) {
+  remove(id: string) {
     return `This action removes a #${id} user`;
   }
 }

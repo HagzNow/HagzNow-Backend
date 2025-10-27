@@ -69,18 +69,18 @@ export class ArenasService {
     return paginate(query, paginationDto);
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     if (!id) return null;
     return await this.arenaRepository.findOneBy({ id });
   }
 
-  async getActiveExtras(arenaId: number) {
+  async getActiveExtras(arenaId: string) {
     return this.extraRepository.find({
       where: { arena: { id: arenaId }, isActive: true },
     });
   }
 
-  async update(id: number, updateArenaDto: UpdateArenaDto) {
+  async update(id: string, updateArenaDto: UpdateArenaDto) {
     const arena = await this.arenaRepository.findOne({
       where: { id },
       relations: ['images', 'location'], // Load relations if needed
@@ -96,7 +96,7 @@ export class ArenasService {
     return await this.arenaRepository.save(arena);
   }
 
-  async remove(id: number) {
+  async remove(id: string) {
     return await this.arenaRepository.delete(id);
   }
 }

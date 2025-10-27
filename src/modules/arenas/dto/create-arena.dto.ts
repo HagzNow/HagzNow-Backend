@@ -7,6 +7,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  IsUUID,
   Max,
   Min,
   ValidateNested,
@@ -105,8 +106,8 @@ export class CreateArenaDto {
 
   @ApiPropertyOptional({ description: 'Category ID', example: 3 })
   @IsOptional()
-  @IsNumber()
-  categoryId?: number;
+  @IsUUID()
+  categoryId?: string;
 
   @ApiPropertyOptional({
     type: () => CreateArenaLocationDto,

@@ -67,27 +67,26 @@ export class ArenasController {
     @Query() filters: ArenaFilterDto,
     @Query() sort: SortDto,
   ) {
-    console.log('here');
     return this.arenasService.findAll(paginationDto, filters, sort);
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.arenasService.findOne(+id);
+    return this.arenasService.findOne(id);
   }
 
   @Get(':id/extras')
-  getActiveExtras(@Param('id') id: number) {
+  getActiveExtras(@Param('id') id: string) {
     return this.arenasService.getActiveExtras(id);
   }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateArenaDto: UpdateArenaDto) {
-    return this.arenasService.update(+id, updateArenaDto);
+    return this.arenasService.update(id, updateArenaDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.arenasService.remove(+id);
+    return this.arenasService.remove(id);
   }
 }

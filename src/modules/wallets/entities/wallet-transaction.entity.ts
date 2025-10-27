@@ -11,8 +11,8 @@ import { Wallet } from './wallet.entity';
 
 @Entity('wallet_transactions')
 export class WalletTransaction {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column({ type: 'decimal' })
   amount: number;

@@ -34,7 +34,7 @@ export class UsersController {
   // TODO (check what to return based on the rule)
   @Get(':id')
   findOne(@Param('id') id: string) {
-    let user = this.usersService.findOneById(+id);
+    let user = this.usersService.findOneById(id);
     if (!user) {
       return ApiResponseUtil.throwError(
         'User not found',
@@ -48,7 +48,7 @@ export class UsersController {
   @Patch(':id')
   @Serialize(UserDto)
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    let user = this.usersService.findOneById(+id);
+    let user = this.usersService.findOneById(id);
     if (!user) {
       return ApiResponseUtil.throwError(
         'User not found',
@@ -56,11 +56,11 @@ export class UsersController {
         HttpStatus.NOT_FOUND,
       );
     }
-    return this.usersService.update(+id, updateUserDto);
+    return this.usersService.update(id, updateUserDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.usersService.remove(+id);
+    return this.usersService.remove(id);
   }
 }

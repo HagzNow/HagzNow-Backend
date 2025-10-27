@@ -8,7 +8,7 @@ export class ArenaSlotsController {
 
   @Get('available')
   async getAvailableSlots(
-    @Param('arenaId') arenaId: number,
+    @Param('arenaId') arenaId: string,
     @Query('date') date: string,
   ) {
     console.log(

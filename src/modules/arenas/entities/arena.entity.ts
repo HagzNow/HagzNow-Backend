@@ -1,6 +1,5 @@
 import { Category } from 'src/modules/categories/entities/category.entity';
 import {
-  BeforeInsert,
   Column,
   Entity,
   JoinColumn,
@@ -9,7 +8,6 @@ import {
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { v4 as uuidv4 } from 'uuid';
 import { ArenaStatus } from '../interfaces/arena-status.interface';
 import { ArenaExtra } from './arena-extra.entity';
 import { ArenaImage } from './arena-image.entity';
@@ -18,11 +16,8 @@ import { ArenaSlot } from './arena-slot.entity';
 
 @Entity('arenas')
 export class Arena {
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  @Column({ type: 'uuid', unique: true })
-  uuid: string;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column({ type: 'varchar', length: 244 })
   name: string;
@@ -73,11 +68,6 @@ export class Arena {
 
   @Column({ type: 'enum', enum: ArenaStatus, default: ArenaStatus.PENDING })
   status: ArenaStatus;
-
-  @BeforeInsert()
-  generateUUID() {
-    this.uuid = uuidv4();
-  }
 
   @OneToMany(() => ArenaExtra, (extra) => extra.arena, {
     cascade: true,

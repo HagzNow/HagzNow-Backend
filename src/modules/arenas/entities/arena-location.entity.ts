@@ -3,8 +3,8 @@ import { Arena } from './arena.entity';
 
 @Entity('arena_locations')
 export class ArenaLocation {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 6, nullable: false })
   lat: number;

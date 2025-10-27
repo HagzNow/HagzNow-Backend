@@ -3,8 +3,8 @@ import { Arena } from './arena.entity';
 
 @Entity('arenas_extras')
 export class ArenaExtra {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column({ type: 'varchar', nullable: false })
   name: string;

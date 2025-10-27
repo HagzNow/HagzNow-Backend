@@ -10,22 +10,20 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { v4 as uuidv4 } from 'uuid';
 import { UserRole } from '../interfaces/userRole.interface';
 import { UserStatus } from '../interfaces/userStatus.interface';
 
 @Entity('users')
 export class User {
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  @Column({ type: 'uuid', unique: true })
-  uuid: string;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column()
   fName: string;
+
   @Column()
   lName: string;
+
   @Column({ unique: true })
   email: string;
   @Column()
@@ -59,11 +57,6 @@ export class User {
     onUpdate: 'CURRENT_TIMESTAMP',
   })
   updatedAt: Date;
-
-  @BeforeInsert()
-  generateUUID() {
-    this.uuid = uuidv4();
-  }
 
   @BeforeInsert()
   async hashingPassword() {
