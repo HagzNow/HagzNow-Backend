@@ -109,6 +109,7 @@ export class ReservationsService {
         totalAmount: totalAmount,
         playTotalAmount: playAmount,
         extrasTotalAmount: extrasAmount,
+        arena: arena,
       });
       await queryRunner.manager.save(reservation);
 
