@@ -20,12 +20,9 @@ export class ArenaSlotsService {
   async getAvailableSlots(arenaId: string, date: string) {
     // Step 0: validate date
     const today = new Date();
-    const formattedDate = today.toISOString().split('T')[0];
-    console.log(formattedDate); // e.g. "2025-10-28"
+    const formattedDate = today.toISOString().split('T')[0]; // 'YYYY-MM-DD'
 
     if (formattedDate > date) {
-      console.log(Date.now());
-      console.log(new Date(date).getTime());
       return ApiResponseUtil.throwError(
         'You cannot check available slots for past dates',
         'INVALID_DATE',

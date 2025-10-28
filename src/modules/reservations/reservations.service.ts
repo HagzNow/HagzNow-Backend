@@ -67,11 +67,6 @@ export class ReservationsService {
         0,
       );
       const totalAmount = playAmount + extrasAmount;
-      console.log('--------------------------------------------------/n', {
-        playAmount,
-        extrasAmount,
-        totalAmount,
-      });
 
       // 1️⃣ Check user balance
       if (!user.wallet || user.wallet.balance < totalAmount) {
