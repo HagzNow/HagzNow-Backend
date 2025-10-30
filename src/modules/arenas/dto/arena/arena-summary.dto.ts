@@ -8,6 +8,9 @@ export class ArenaSummaryDto {
   name: string;
 
   @Expose()
+  pricePerHour: number;
+
+  @Expose()
   @Transform(({ obj }) => obj.category.name)
   categoryName: string;
 

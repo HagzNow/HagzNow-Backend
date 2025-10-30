@@ -58,7 +58,8 @@ export class ArenasService {
     const query = this.arenaRepository
       .createQueryBuilder('arenas')
       .leftJoinAndSelect('arenas.location', 'location')
-      .leftJoinAndSelect('arenas.category', 'category');
+      .leftJoinAndSelect('arenas.category', 'category')
+      .where('arenas.status = :status', { status: 'active' });
 
     // Apply filters dynamically
     applyFilters(query, filters, 'arenas');
