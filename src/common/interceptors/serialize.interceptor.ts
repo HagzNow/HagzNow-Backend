@@ -7,23 +7,34 @@ import {
 import { plainToInstance } from 'class-transformer';
 import { map, Observable } from 'rxjs';
 
-// Decorator
 export function Serialize(dto: any) {
   return UseInterceptors(new SerializeInterceptor(dto));
 }
 
 export class SerializeInterceptor implements NestInterceptor {
   constructor(private dto: any) {}
+
   intercept(
     context: ExecutionContext,
     next: CallHandler<any>,
-  ): Observable<any> | Promise<Observable<any>> {
+  ): Observable<any> {
     return next.handle().pipe(
-      map((data) =>
-        plainToInstance(this.dto, data, {
+      map((data) => {
+        // If it's a paginated result { data, total, ... }
+        if (data && Array.isArray(data.data)) {
+          return {
+            ...data,
+            data: plainToInstance(this.dto, data.data, {
+              excludeExtraneousValues: true,
+            }),
+          };
+        }
+
+        // Otherwise transform normally
+        return plainToInstance(this.dto, data, {
           excludeExtraneousValues: true,
-        }),
-      ),
+        });
+      }),
     );
   }
 }
