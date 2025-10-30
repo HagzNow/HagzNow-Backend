@@ -7,7 +7,9 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
+import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { CategoriesService } from './categories.service';
+import { CategoryDto } from './dto/category.dto';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 
@@ -20,11 +22,13 @@ export class CategoriesController {
     return this.categoriesService.create(createCategoryDto);
   }
 
+  @Serialize(CategoryDto)
   @Get()
   findAll() {
     return this.categoriesService.findAll();
   }
 
+  @Serialize(CategoryDto)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.categoriesService.findOne(id);

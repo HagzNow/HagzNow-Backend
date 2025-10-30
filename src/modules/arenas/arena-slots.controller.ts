@@ -1,8 +1,8 @@
 // arena-slots.controller.ts
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ArenaSlotsService } from './arena-slots.service';
-import { ArenaParamsDto } from './dto/arena-params.dto';
 import { ArenaSlotQueryDto } from './dto/arena-slot/arena-slot-query.dto';
+import { ArenaParamsDto } from './dto/arena/arena-params.dto';
 
 @Controller('arenas/:arenaId/slots')
 export class ArenaSlotsController {

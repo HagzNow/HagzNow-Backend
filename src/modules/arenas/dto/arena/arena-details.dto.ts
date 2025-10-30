@@ -1,0 +1,53 @@
+import { Expose, Type } from 'class-transformer';
+import { CategoryDto } from 'src/modules/categories/dto/category.dto';
+import { ArenaExtraDto } from '../arena-extra/arena-extra.dto';
+import { ArenaImageDto } from '../arena-image/arena-image.dto';
+import { ArenaLocationDto } from '../arena-location/arena-location.dto';
+
+export class ArenaDetailsDto {
+  @Expose()
+  id: string;
+
+  @Expose()
+  name: string;
+
+  @Expose()
+  thumbnail: string;
+
+  @Expose()
+  minPeriod: number;
+
+  @Expose()
+  openingHour: number;
+
+  @Expose()
+  closingHour: number;
+
+  @Expose()
+  pricePerHour: number;
+
+  @Expose()
+  depositPercent: number;
+
+  @Expose()
+  description: string;
+
+  @Expose()
+  policy: string;
+
+  @Expose()
+  @Type(() => CategoryDto)
+  category: CategoryDto;
+
+  @Expose()
+  @Type(() => ArenaLocationDto)
+  location?: ArenaLocationDto;
+
+  @Type(() => ArenaImageDto)
+  @Expose()
+  images?: ArenaImageDto[];
+
+  @Type(() => ArenaExtraDto)
+  @Expose()
+  extras?: ArenaExtraDto[];
+}

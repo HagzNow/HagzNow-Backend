@@ -49,6 +49,7 @@ export class Arena {
 
   @ManyToOne(() => Category, (category) => category.arenas, {
     onDelete: 'SET NULL', // if category deleted, arena stays but category becomes null
+    eager: true,
   })
   category: Category;
 

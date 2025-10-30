@@ -18,12 +18,16 @@ import { Roles } from 'src/common/decorators/roles.decorator';
 import { IdParamDto } from 'src/common/dtos/id-param.dto';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { SortDto } from 'src/common/dtos/sort.dto';
+import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { UserRole } from '../users/interfaces/userRole.interface';
 import { ArenasService } from './arenas.service';
-import { ArenaFilterDto } from './dto/arena-filter.dto';
-import { CreateArenaDto } from './dto/create-arena.dto';
-import { UpdateArenaStatusDto } from './dto/update-arena-status.dto';
-import { UpdateArenaDto } from './dto/update-arena.dto';
+import { ArenaExtraDto } from './dto/arena-extra/arena-extra.dto';
+import { ArenaDetailsDto } from './dto/arena/arena-details.dto';
+import { ArenaFilterDto } from './dto/arena/arena-filter.dto';
+import { ArenaSummaryDto } from './dto/arena/arena-summary.dto';
+import { CreateArenaDto } from './dto/arena/create-arena.dto';
+import { UpdateArenaStatusDto } from './dto/arena/update-arena-status.dto';
+import { UpdateArenaDto } from './dto/arena/update-arena.dto';
 
 @Controller('arenas')
 export class ArenasController {
@@ -65,6 +69,7 @@ export class ArenasController {
     return this.arenasService.create(createArenaDto, files);
   }
 
+  @Serialize(ArenaSummaryDto)
   @Get()
   findAll(
     @Query() paginationDto: PaginationDto,
@@ -74,11 +79,13 @@ export class ArenasController {
     return this.arenasService.findAll(paginationDto, filters, sort);
   }
 
+  @Serialize(ArenaDetailsDto)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.arenasService.findOne(id);
   }
 
+  @Serialize(ArenaExtraDto)
   @Get(':id/extras')
   getActiveExtras(@Param('id') id: string) {
     return this.arenasService.getActiveExtras(id);
