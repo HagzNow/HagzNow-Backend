@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { SortDto } from 'src/common/dtos/sort.dto';
+import { ApiResponseUtil } from 'src/common/utils/api-response.util';
 import { applyFilters } from 'src/common/utils/filter.utils';
 import { paginate } from 'src/common/utils/paginate';
 import { applySorting } from 'src/common/utils/sort.util';
@@ -12,6 +13,7 @@ import { CreateArenaDto } from './dto/create-arena.dto';
 import { UpdateArenaDto } from './dto/update-arena.dto';
 import { ArenaExtra } from './entities/arena-extra.entity';
 import { Arena } from './entities/arena.entity';
+import { ArenaStatus } from './interfaces/arena-status.interface';
 
 @Injectable()
 export class ArenasService {
@@ -94,6 +96,28 @@ export class ArenasService {
     // TODO fix update image
     this.arenaRepository.merge(arena, updateArenaDto);
 
+    return await this.arenaRepository.save(arena);
+  }
+
+  async approve(id: string, status: ArenaStatus) {
+    const arena = await this.arenaRepository.findOneBy({ id });
+    if (!arena) {
+      return ApiResponseUtil.throwError(
+        'ARENA_NOT_FOUND',
+        'Arena not found',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    if (arena.status !== ArenaStatus.PENDING) {
+      return ApiResponseUtil.throwError(
+        'INVALID_ARENA_STATUS',
+        'Only pending arenas can be approved',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    arena.status = status;
     return await this.arenaRepository.save(arena);
   }
 
