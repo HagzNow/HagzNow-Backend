@@ -78,6 +78,12 @@ export class ArenasController {
   ) {
     return this.arenasService.findAll(paginationDto, filters, sort);
   }
+  @Serialize(ArenaSummaryDto)
+  @Roles(UserRole.ADMIN)
+  @Get('requests')
+  findRequests(@Query() paginationDto: PaginationDto) {
+    return this.arenasService.findRequests(paginationDto);
+  }
 
   @Serialize(ArenaDetailsDto)
   @Get(':id')

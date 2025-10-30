@@ -72,6 +72,17 @@ export class ArenasService {
     return paginate(query, paginationDto);
   }
 
+  async findRequests(paginationDto: PaginationDto) {
+    // Start a query builder
+    const query = this.arenaRepository
+      .createQueryBuilder('arenas')
+      .leftJoinAndSelect('arenas.location', 'location')
+      .leftJoinAndSelect('arenas.category', 'category');
+
+    // Paginate (using your existing paginate util)
+    return paginate(query, paginationDto);
+  }
+
   async findOne(id: string) {
     if (!id) return null;
     return await this.arenaRepository.findOneBy({ id });
