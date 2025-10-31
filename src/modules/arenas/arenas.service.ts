@@ -14,6 +14,9 @@ import { UpdateArenaDto } from './dto/arena/update-arena.dto';
 import { ArenaExtra } from './entities/arena-extra.entity';
 import { Arena } from './entities/arena.entity';
 import { ArenaStatus } from './interfaces/arena-status.interface';
+import axios from 'axios';
+import { Readable } from 'stream';
+import FormData from 'form-data';
 
 @Injectable()
 export class ArenasService {
@@ -26,17 +29,77 @@ export class ArenasService {
     private readonly categoriesService: CategoriesService,
   ) {}
 
-  async create(createArenaDto: CreateArenaDto, files?: Express.Multer.File[]) {
+  async create(
+    createArenaDto: CreateArenaDto,
+    files?: {
+      thumbnail?: Express.Multer.File[];
+      images?: Express.Multer.File[];
+    },
+  ) {
     const { categoryId, ...arenaData } = createArenaDto;
 
-    const images =
-      files?.map((file) => ({
-        path: `/uploads/arenas/${file.filename}`,
-      })) ?? [];
+    let thumbnail = '';
+    let uploadedImages = [];
 
+    // Helper function to upload to sersawy.com
+    const uploadToSersawy = async (files: Express.Multer.File[]) => {
+      const formData = new FormData();
+
+      for (const file of files) {
+        const stream = Readable.from(file.buffer);
+        formData.append('images[]', stream, {
+          filename: file.originalname,
+          contentType: file.mimetype,
+        });
+      }
+
+      const response = await axios.post(
+        'https://api.sersawy.com/images/',
+        formData,
+        {
+          headers: formData.getHeaders(),
+        },
+      );
+
+      if (response.data?.success) {
+        return response.data.files.map((f) => ({
+          path: f.url,
+          filename: f.filename,
+          size: f.size,
+          width: f.dimensions?.width,
+          height: f.dimensions?.height,
+        }));
+      }
+
+      throw new Error('Upload failed: ' + JSON.stringify(response.data));
+    };
+
+    try {
+      // Upload thumbnail if provided
+      if (files?.thumbnail?.length) {
+        const uploaded = await uploadToSersawy(files.thumbnail);
+        thumbnail = uploaded[0].path; // ✅ store only URL string
+      }
+
+      // Upload gallery images
+      if (files?.images?.length) {
+        uploadedImages = await uploadToSersawy(files.images);
+      }
+    } catch (err) {
+      console.error(
+        '❌ Error uploading to sersawy.com:',
+        err.response?.data || err.message,
+      );
+      throw err;
+    }
+    console.log(thumbnail);
+    console.log(thumbnail);
+
+    // Save Arena with remote URLs
     const arena = this.arenaRepository.create({
       ...arenaData,
-      images,
+      thumbnail,
+      images: uploadedImages,
     });
 
     if (categoryId) {
@@ -45,9 +108,9 @@ export class ArenasService {
         throw new NotFoundException(`Category ${categoryId} not found`);
       arena.category = category;
     }
+
     return await this.arenaRepository.save(arena);
   }
-
   async findAll(
     paginationDto: PaginationDto,
     filters: ArenaFilterDto,

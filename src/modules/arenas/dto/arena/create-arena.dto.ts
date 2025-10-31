@@ -30,8 +30,13 @@ export class CreateArenaDto {
     description: 'Thumbnail image URL',
     example: 'https://example.com/image.jpg',
   })
-  @IsString()
-  @IsNotEmpty()
+  // @IsString()
+  // @IsNotEmpty()
+  @ApiProperty({
+    description: 'Thumbnail image (file upload)',
+    type: 'string',
+    format: 'binary',
+  })
   thumbnail: string;
 
   // @ApiProperty({
@@ -118,9 +123,11 @@ export class CreateArenaDto {
   @Type(() => CreateArenaLocationDto)
   location?: CreateArenaLocationDto;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
+    description: 'Additional images for the arena (multiple file uploads)',
     type: [CreateArenaImageDto],
-    description: 'List of arena images',
+    items: { type: 'string', format: 'binary' },
+    required: false,
   })
   @IsOptional()
   @IsArray()

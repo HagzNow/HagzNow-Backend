@@ -12,7 +12,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
+import { diskStorage, memoryStorage } from 'multer';
 import { extname } from 'path';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { IdParamDto } from 'src/common/dtos/id-param.dto';
@@ -28,6 +28,7 @@ import { ArenaSummaryDto } from './dto/arena/arena-summary.dto';
 import { CreateArenaDto } from './dto/arena/create-arena.dto';
 import { UpdateArenaStatusDto } from './dto/arena/update-arena-status.dto';
 import { UpdateArenaDto } from './dto/arena/update-arena.dto';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 
 @Controller('arenas')
 export class ArenasController {
@@ -35,36 +36,35 @@ export class ArenasController {
 
   @Post()
   @UseInterceptors(
-    AnyFilesInterceptor({
-      storage: diskStorage({
-        destination: './uploads/arenas',
-        filename: (req, file, cb) => {
-          const uniqueSuffix =
-            Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(null, `${uniqueSuffix}${extname(file.originalname)}`);
+    FileFieldsInterceptor(
+      [
+        { name: 'thumbnail', maxCount: 1 },
+        { name: 'images', maxCount: 10 },
+      ],
+      {
+        storage: memoryStorage(),
+        fileFilter: (req, file, cb) => {
+          if (!file.mimetype.match(/^image\/(jpeg|png|jpg|gif|webp)$/)) {
+            return cb(
+              new BadRequestException(
+                `Unsupported file type ${file.originalname}. Only image files are allowed.`,
+              ),
+              false,
+            );
+          }
+          cb(null, true);
         },
-      }),
-
-      // 👇 Only allow image MIME types
-      fileFilter: (req, file, cb) => {
-        if (!file.mimetype.match(/^image\/(jpeg|png|jpg|gif|webp)$/)) {
-          return cb(
-            new BadRequestException(
-              `Unsupported file type ${extname(file.originalname)}. Only image files are allowed.`,
-            ),
-            false,
-          );
-        }
-        cb(null, true);
+        limits: { fileSize: 50 * 1024 * 1024 },
       },
-      limits: {
-        fileSize: 500 * 1024 * 1024,
-      },
-    }),
+    ),
   )
   create(
     @Body() createArenaDto: CreateArenaDto,
-    @UploadedFiles() files: Express.Multer.File[],
+    @UploadedFiles()
+    files: {
+      thumbnail?: Express.Multer.File[];
+      images?: Express.Multer.File[];
+    },
   ) {
     return this.arenasService.create(createArenaDto, files);
   }
