@@ -7,7 +7,9 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
+import { Roles } from 'src/common/decorators/roles.decorator';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
+import { UserRole } from '../users/interfaces/userRole.interface';
 import { CategoriesService } from './categories.service';
 import { CategoryDto } from './dto/category.dto';
 import { CreateCategoryDto } from './dto/create-category.dto';
@@ -17,6 +19,7 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
+  @Roles(UserRole.ADMIN)
   @Post()
   create(@Body() createCategoryDto: CreateCategoryDto) {
     return this.categoriesService.create(createCategoryDto);

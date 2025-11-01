@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { ApiResponseUtil } from 'src/common/utils/api-response.util';
 import { Repository } from 'typeorm';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
@@ -30,6 +31,26 @@ export class CategoriesService {
   }
 
   async remove(id: string) {
+    const category = await this.categoryRepository.findOne({
+      where: { id },
+      relations: ['arenas'],
+    });
+
+    if (!category) {
+      return ApiResponseUtil.throwError(
+        'Category not found',
+        'CATEGORY_NOT_FOUND',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    if (category.arenas.length) {
+      return ApiResponseUtil.throwError(
+        'Cannot delete category with associated arenas',
+        'CATEGORY_DELETE_CONFLICT',
+        HttpStatus.CONFLICT,
+      );
+    }
     return await this.categoryRepository.delete(id);
   }
 }
