@@ -30,11 +30,14 @@ export class WalletTransaction {
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
-  @Column({ type: 'uuid', nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   referenceId?: string;
 
   @ManyToOne(() => Wallet, (wallet) => wallet.transactions, {
     onDelete: 'RESTRICT',
   })
   wallet: Wallet;
+
+  // @Column({ unique: true, nullable: true })
+  // orderId: number;
 }

@@ -18,6 +18,10 @@ export class WalletsService {
     return `This action returns a #${id} wallet`;
   }
 
+  findOneByUserId(userId: string) {
+    return this.walletRepository.findOne({ where: { user: { id: userId } } });
+  }
+
   update(userId: string, balance: number) {
     return `This action updates a #${userId} wallet`;
   }

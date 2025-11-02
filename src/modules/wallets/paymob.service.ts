@@ -49,6 +49,7 @@ export class PaymobService {
     if (calculatedHmac !== hmac) {
       throw new BadRequestException('Invalid HMAC');
     }
+    console.log(obj);
 
     if (obj.success) {
       const amount = obj.amount_cents / 100;
@@ -78,6 +79,7 @@ export class PaymobService {
       currency: 'EGP',
       items: [],
     });
+    console.log('Order created:', response.data);
     return response.data.id;
   }
 
@@ -95,6 +97,7 @@ export class PaymobService {
         expiration: 3600,
         order_id: orderId,
         billing_data: {
+          userId: '5151541',
           apartment: 'NA',
           email,
           floor: 'NA',

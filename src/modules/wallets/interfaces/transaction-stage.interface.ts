@@ -3,4 +3,6 @@ export enum TransactionStage {
   HOLD = 'hold', // Held until user cannot cancel
   RELEASED = 'released', // Hold is cancelled (funds returned)
   SETTLED = 'settled', // Hold completed → sent to owner
+  PENDING = 'pending', // Awaiting external processing
+  FAILED = 'failed', // Transaction failed
 }
