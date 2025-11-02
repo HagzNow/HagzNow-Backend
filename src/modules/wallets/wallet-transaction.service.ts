@@ -45,12 +45,12 @@ export class WalletTransactionService {
   update(id: string) {
     return `This action updates a #${id} wallet`;
   }
-  // async updateByRefernceId(referenceId: string, stage: TransactionStage) {
-  //   return await this.walletTransactionRepository.update(
-  //     { referenceId },
-  //     { stage },
-  //   );
-  // }
+  async updateByRefernceId(referenceId: string, stage: TransactionStage) {
+    return await this.walletTransactionRepository.update(
+      { referenceId },
+      { stage },
+    );
+  }
 
   async processCompleteTransaction(amount: number, referenceId: string) {
     return await this.dataSource.transaction(async (manager) => {
@@ -89,5 +89,8 @@ export class WalletTransactionService {
       // ✅ Step 5: Optionally return updated wallet or transaction
       return { wallet, transaction };
     });
+  }
+  async prcessFailedTransaction(referenceId: string) {
+    return await this.updateByRefernceId(referenceId, TransactionStage.FAILED);
   }
 }

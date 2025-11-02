@@ -63,6 +63,9 @@ export class PaymobService {
         amount,
         referenceId,
       );
+    } else {
+      const referenceId = obj.order.id.toString();
+      this.walletTransactionService.prcessFailedTransaction(referenceId);
     }
 
     return { received: true };
