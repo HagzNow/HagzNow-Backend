@@ -35,6 +35,7 @@ export class WalletTransaction {
 
   @ManyToOne(() => Wallet, (wallet) => wallet.transactions, {
     onDelete: 'RESTRICT',
+    eager: true,
   })
   wallet: Wallet;
 

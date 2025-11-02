@@ -1,6 +1,10 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import axios from 'axios';
 import * as crypto from 'crypto';
+import { WalletTransactionService } from './wallet-transaction.service';
+import { TransactionStage } from './interfaces/transaction-stage.interface';
+import { TransactionType } from './interfaces/transaction-type.interface';
+import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class PaymobService {
@@ -9,6 +13,7 @@ export class PaymobService {
   private integrationId = process.env.PAYMOB_INTEGRATION_ID;
   private iframeId = process.env.PAYMOB_IFRAME_ID;
   private hmacSecret = process.env.PAYMOB_HMAC_SECRET;
+  constructor(private walletTransactionService: WalletTransactionService) {}
 
   // -----------------------------
   // 🧩 Webhook handler
@@ -53,9 +58,11 @@ export class PaymobService {
 
     if (obj.success) {
       const amount = obj.amount_cents / 100;
-      const email = obj.payment_key_claims.billing_data.email;
-      console.log('✅ Payment succeeded:', { amount, email });
-      // You can trigger post-payment logic here
+      const referenceId = obj.order.id.toString();
+      this.walletTransactionService.processCompleteTransaction(
+        amount,
+        referenceId,
+      );
     }
 
     return { received: true };
@@ -71,7 +78,7 @@ export class PaymobService {
     return response.data.token;
   }
 
-  async createOrder(token: string, amountCents: number) {
+  async createOrder(token: string, amountCents: number, user: User) {
     const response = await axios.post(`${this.baseUrl}/ecommerce/orders`, {
       auth_token: token,
       delivery_needed: false,
@@ -79,7 +86,16 @@ export class PaymobService {
       currency: 'EGP',
       items: [],
     });
-    console.log('Order created:', response.data);
+    const newWalletTransaction = await this.walletTransactionService.create(
+      {
+        amount: amountCents / 100,
+        stage: TransactionStage.PENDING,
+        type: TransactionType.DEPOSIT,
+        referenceId: response.data.id.toString(),
+      },
+      user,
+    );
+    console.log('Order created:', newWalletTransaction);
     return response.data.id;
   }
 
