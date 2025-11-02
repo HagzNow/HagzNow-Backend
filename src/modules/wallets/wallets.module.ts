@@ -7,9 +7,10 @@ import { PaymobService } from './paymob.service';
 import { WalletController } from './wallets.controller';
 import { WalletsListener } from './wallets.listener';
 import { WalletsService } from './wallets.service';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Wallet, WalletTransaction])],
+  imports: [TypeOrmModule.forFeature([Wallet, WalletTransaction]), AuthModule],
 
   controllers: [WalletController, PaymobWebhookController],
   providers: [WalletsService, WalletsListener, PaymobService],

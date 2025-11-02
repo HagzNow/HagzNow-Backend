@@ -1,6 +1,8 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { PaymobService } from './paymob.service';
 import { WalletsService } from './wallets.service';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { AuthGuard } from 'src/common/guards/auth.guard';
 
 @Controller('wallet')
 export class WalletController {
@@ -13,9 +15,9 @@ export class WalletController {
   findOne(@Param('id') id: string) {
     return this.walletsService.findOne(id);
   }
-
+  @UseGuards(AuthGuard)
   @Post('add-funds')
-  async addFunds(@Body('amount') amount: number, @Body('email') email: string) {
+  async addFunds(@Body('amount') amount: number, @CurrentUser() user: any) {
     const amountCents = amount * 100;
 
     const token = await this.paymobService.authenticate();
@@ -24,7 +26,7 @@ export class WalletController {
       token,
       orderId,
       amountCents,
-      email,
+      user.email,
     );
 
     const iframeUrl = this.paymobService.getIframeUrl(paymentToken);
