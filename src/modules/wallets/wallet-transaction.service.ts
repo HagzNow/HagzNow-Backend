@@ -7,6 +7,8 @@ import { WalletTransaction } from './entities/wallet-transaction.entity';
 import { CreateWalletTransactionDto } from './dto/create-wallet-transaction.dto';
 import { WalletsService } from './wallets.service';
 import { TransactionStage } from './interfaces/transaction-stage.interface';
+import { PaginationDto } from 'src/common/dtos/pagination.dto';
+import { paginate } from 'src/common/utils/paginate';
 
 @Injectable()
 export class WalletTransactionService {
@@ -30,6 +32,19 @@ export class WalletTransactionService {
       ...createwqalletTransactionDto,
     });
     return await this.walletTransactionRepository.save(newWalletTransaction);
+  }
+
+  async findAll(paginationDto: PaginationDto, user: User) {
+    const wallet = await this.walletService.findOneByUserId(user.id);
+    if (!wallet) {
+      throw new BadRequestException('Wallet not found for this user');
+    }
+    const query = this.walletTransactionRepository
+      .createQueryBuilder('transaction')
+      .where('transaction.walletId = :walletId', { walletId: wallet.id })
+      .orderBy('transaction.id', 'DESC');
+
+    return await paginate(query, paginationDto);
   }
 
   async findOne(id: string) {

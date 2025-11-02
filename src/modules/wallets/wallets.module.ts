@@ -9,11 +9,16 @@ import { WalletsListener } from './wallets.listener';
 import { WalletsService } from './wallets.service';
 import { AuthModule } from '../auth/auth.module';
 import { WalletTransactionService } from './wallet-transaction.service';
+import { WalletTransactionController } from './wallet-transaction.controller';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Wallet, WalletTransaction]), AuthModule],
 
-  controllers: [WalletController, PaymobWebhookController],
+  controllers: [
+    WalletController,
+    PaymobWebhookController,
+    WalletTransactionController,
+  ],
   providers: [
     WalletsService,
     WalletsListener,
