@@ -100,17 +100,19 @@ export class ReservationsService {
 
       // 3️⃣ Create reservation (HOLD)
       const reservation = queryRunner.manager.create(Reservation, {
-        user,
-        status: ReservationStatus.HOLD,
         dateOfReservation: dto.date,
-        totalAmount: totalAmount,
+        arena,
+        status: ReservationStatus.HOLD,
         playTotalAmount: playAmount,
         extrasTotalAmount: extrasAmount,
-        arena: arena,
+        totalAmount: totalAmount,
+        extras: dto.extras ? extras : [],
+        user,
       });
       await queryRunner.manager.save(reservation);
 
       // 4️⃣ Create arena slots linked to this reservation
+      const addedSlots: ArenaSlot[] = [];
       for (const hour of dto.slots) {
         const slot = queryRunner.manager.create(ArenaSlot, {
           arena,
@@ -119,6 +121,7 @@ export class ReservationsService {
           hour,
         });
         await queryRunner.manager.save(slot);
+        addedSlots.push(slot);
       }
 
       // 5️⃣ Create wallet HOLD transaction
@@ -151,7 +154,7 @@ export class ReservationsService {
       //     removeOnFail: true,
       //   },
       // );
-
+      reservation.slots = addedSlots;
       return reservation;
     } catch (err) {
       await queryRunner.rollbackTransaction();
