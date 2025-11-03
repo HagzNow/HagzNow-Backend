@@ -11,11 +11,13 @@ export class WalletController {
     private readonly walletsService: WalletsService,
     private paymobService: PaymobService,
   ) {}
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.walletsService.findOne(id);
+  @UseGuards(AuthGuard)
+  @Get('balance')
+  async getBalance(@CurrentUser() user: User) {
+    console.log('Getting balance for user:', user.id);
+    return this.walletsService.getBalanceByUserId(user.id);
   }
+
   @UseGuards(AuthGuard)
   @Post('add-funds')
   async addFunds(@Body('amount') amount: number, @CurrentUser() user: User) {
@@ -37,5 +39,10 @@ export class WalletController {
     const iframeUrl = this.paymobService.getIframeUrl(paymentToken);
 
     return { paymentUrl: iframeUrl };
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.walletsService.findOne(id);
   }
 }
