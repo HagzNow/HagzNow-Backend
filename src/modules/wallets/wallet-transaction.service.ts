@@ -1,22 +1,16 @@
-import {
-  Injectable,
-  Body,
-  BadRequestException,
-  HttpStatus,
-} from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { PaginationDto } from 'src/common/dtos/pagination.dto';
+import { ApiResponseUtil } from 'src/common/utils/api-response.util';
+import { paginate } from 'src/common/utils/paginate';
+import { applySorting } from 'src/common/utils/sort.util';
 import { DataSource, Repository } from 'typeorm';
 import { User } from '../users/entities/user.entity';
-import { Wallet } from './entities/wallet.entity';
-import { WalletTransaction } from './entities/wallet-transaction.entity';
 import { CreateWalletTransactionDto } from './dto/create-wallet-transaction.dto';
-import { WalletsService } from './wallets.service';
+import { WalletTransaction } from './entities/wallet-transaction.entity';
+import { Wallet } from './entities/wallet.entity';
 import { TransactionStage } from './interfaces/transaction-stage.interface';
-import { PaginationDto } from 'src/common/dtos/pagination.dto';
-import { paginate } from 'src/common/utils/paginate';
-import { SortDto } from 'src/common/dtos/sort.dto';
-import { applySorting } from 'src/common/utils/sort.util';
-import { ApiResponseUtil } from 'src/common/utils/api-response.util';
+import { WalletsService } from './wallets.service';
 
 @Injectable()
 export class WalletTransactionService {
@@ -57,8 +51,7 @@ export class WalletTransactionService {
     }
     const query = this.walletTransactionRepository
       .createQueryBuilder('transaction')
-      .where('transaction.walletId = :walletId', { walletId: wallet.id })
-      .orderBy('transaction.id', 'DESC');
+      .where('transaction.walletId = :walletId', { walletId: wallet.id });
 
     applySorting(query, { createdAt: 'DESC' }, 'transaction');
 
