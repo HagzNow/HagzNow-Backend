@@ -11,7 +11,7 @@ export class ArenaSummaryDto {
   pricePerHour: number;
 
   @Expose()
-  @Transform(({ obj }) => obj.category.name)
+  @Transform(({ obj }) => obj.category?.name ?? 'Uncategorized')
   categoryName: string;
 
   @Expose()

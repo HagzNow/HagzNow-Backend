@@ -2,7 +2,6 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsArray,
-  IsEnum,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -105,12 +104,7 @@ export class CreateArenaDto {
     enum: ArenaStatus,
     description: 'Current status of the arena',
   })
-  @IsOptional()
-  @IsEnum(ArenaStatus)
-  status?: ArenaStatus;
-
   @ApiPropertyOptional({ description: 'Category ID', example: 3 })
-  @IsOptional()
   @IsUUID()
   categoryId?: string;
 
@@ -118,10 +112,9 @@ export class CreateArenaDto {
     type: () => CreateArenaLocationDto,
     description: 'Arena location details',
   })
-  @IsOptional()
   @ValidateNested()
   @Type(() => CreateArenaLocationDto)
-  location?: CreateArenaLocationDto;
+  location: CreateArenaLocationDto;
 
   @ApiProperty({
     description: 'Additional images for the arena (multiple file uploads)',
@@ -129,11 +122,10 @@ export class CreateArenaDto {
     items: { type: 'string', format: 'binary' },
     required: false,
   })
-  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreateArenaImageDto)
-  images?: CreateArenaImageDto[];
+  images: CreateArenaImageDto[];
 
   @ApiPropertyOptional({
     type: [CreateArenaExtraDto],
