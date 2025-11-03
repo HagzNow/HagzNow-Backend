@@ -2,7 +2,9 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ApiResponseUtil } from 'src/common/utils/api-response.util';
+import { paginate } from 'src/common/utils/paginate';
 import { DataSource, In, Repository } from 'typeorm';
+import { PaginationDto } from '../../common/dtos/pagination.dto';
 import { ArenaExtra } from '../arenas/entities/arena-extra.entity';
 import { ArenaSlot } from '../arenas/entities/arena-slot.entity';
 import { Arena } from '../arenas/entities/arena.entity';
@@ -14,9 +16,6 @@ import { CreateReservationDto } from './dto/create-reservation.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
 import { Reservation } from './entities/reservation.entity';
 import { ReservationStatus } from './interfaces/reservation-status.interface';
-import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import { PaginationDto } from '../../common/dtos/pagination.dto';
-import { paginate } from 'src/common/utils/paginate';
 
 @Injectable()
 export class ReservationsService {
