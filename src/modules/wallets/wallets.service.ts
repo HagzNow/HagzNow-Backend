@@ -14,6 +14,16 @@ export class WalletsService {
     return await this.walletRepository.save(newWallet);
   }
 
+  async getBalanceByUserId(userId: string) {
+    const wallet = await this.walletRepository.findOne({
+      where: { user: { id: userId } },
+    });
+    if (!wallet) {
+      return 0;
+    }
+    return { avaibaleBalance: wallet.balance };
+  }
+
   findOne(id: string) {
     return `This action returns a #${id} wallet`;
   }
