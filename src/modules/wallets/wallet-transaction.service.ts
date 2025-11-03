@@ -9,6 +9,8 @@ import { WalletsService } from './wallets.service';
 import { TransactionStage } from './interfaces/transaction-stage.interface';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { paginate } from 'src/common/utils/paginate';
+import { SortDto } from 'src/common/dtos/sort.dto';
+import { applySorting } from 'src/common/utils/sort.util';
 
 @Injectable()
 export class WalletTransactionService {
@@ -43,6 +45,8 @@ export class WalletTransactionService {
       .createQueryBuilder('transaction')
       .where('transaction.walletId = :walletId', { walletId: wallet.id })
       .orderBy('transaction.id', 'DESC');
+
+    applySorting(query, { createdAt: 'DESC' }, 'transaction');
 
     return await paginate(query, paginationDto);
   }
