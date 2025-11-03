@@ -14,6 +14,9 @@ import { CreateReservationDto } from './dto/create-reservation.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
 import { Reservation } from './entities/reservation.entity';
 import { ReservationStatus } from './interfaces/reservation-status.interface';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { PaginationDto } from '../../common/dtos/pagination.dto';
+import { paginate } from 'src/common/utils/paginate';
 
 @Injectable()
 export class ReservationsService {
@@ -161,6 +164,40 @@ export class ReservationsService {
 
   async findAll() {
     return await this.reservationRepository.find();
+  }
+
+  // 🔒 Private reusable query builder
+  private async findReservationsByDateRelation(
+    user: User,
+    paginationDto: PaginationDto,
+    isPast: boolean,
+  ) {
+    const today = new Date();
+
+    const query = this.reservationRepository
+      .createQueryBuilder('reservation')
+      .leftJoinAndSelect('reservation.arena', 'arena')
+      .leftJoinAndSelect('reservation.slots', 'slots')
+      .where('reservation.userId = :userId', { userId: user.id })
+      .andWhere(
+        isPast
+          ? 'reservation.dateOfReservation < :today'
+          : 'reservation.dateOfReservation >= :today',
+        { today },
+      )
+      .orderBy('reservation.dateOfReservation', isPast ? 'DESC' : 'ASC');
+
+    return await paginate(query, paginationDto);
+  }
+
+  // 🌅 Upcoming reservations (today or future)
+  async findUpcomingReservations(paginationDto: PaginationDto, user: User) {
+    return this.findReservationsByDateRelation(user, paginationDto, false);
+  }
+
+  // 🌇 Past reservations (before today)
+  async findPastReservations(paginationDto: PaginationDto, user: User) {
+    return this.findReservationsByDateRelation(user, paginationDto, true);
   }
 
   findOne(id: string) {
