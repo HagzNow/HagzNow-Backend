@@ -1,4 +1,9 @@
-import { Injectable, Body, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Body,
+  BadRequestException,
+  HttpStatus,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { User } from '../users/entities/user.entity';
@@ -11,6 +16,7 @@ import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { paginate } from 'src/common/utils/paginate';
 import { SortDto } from 'src/common/dtos/sort.dto';
 import { applySorting } from 'src/common/utils/sort.util';
+import { ApiResponseUtil } from 'src/common/utils/api-response.util';
 
 @Injectable()
 export class WalletTransactionService {
@@ -26,7 +32,11 @@ export class WalletTransactionService {
   ) {
     const wallet = await this.walletService.findOneByUserId(user.id);
     if (!wallet) {
-      throw new BadRequestException('Wallet not found for this user');
+      return ApiResponseUtil.throwError(
+        'Wallet not found for this user',
+        'WALLET_NOT_FOUND',
+        400,
+      );
     }
 
     const newWalletTransaction = this.walletTransactionRepository.create({
@@ -39,7 +49,11 @@ export class WalletTransactionService {
   async findAll(paginationDto: PaginationDto, user: User) {
     const wallet = await this.walletService.findOneByUserId(user.id);
     if (!wallet) {
-      throw new BadRequestException('Wallet not found for this user');
+      return ApiResponseUtil.throwError(
+        'Wallet not found for this user',
+        'WALLET_NOT_FOUND',
+        400,
+      );
     }
     const query = this.walletTransactionRepository
       .createQueryBuilder('transaction')
@@ -79,12 +93,18 @@ export class WalletTransactionService {
         .findOne({ where: { referenceId } });
 
       if (!transaction) {
-        throw new BadRequestException('Transaction not found');
+        return ApiResponseUtil.throwError(
+          'Transaction not found',
+          'TRANSACTION_NOT_FOUND',
+          HttpStatus.NOT_FOUND,
+        );
       }
 
       if (transaction.stage !== TransactionStage.PENDING) {
-        throw new BadRequestException(
-          'Funds already added for this transaction',
+        return ApiResponseUtil.throwError(
+          'Transaction is not in PENDING stage',
+          'INVALID_TRANSACTION_STAGE',
+          HttpStatus.CONFLICT,
         );
       }
 
@@ -98,7 +118,11 @@ export class WalletTransactionService {
         .findOne({ where: { id: transaction.wallet.id } });
 
       if (!wallet) {
-        throw new BadRequestException('Wallet not found for this user');
+        return ApiResponseUtil.throwError(
+          'Wallet not found',
+          'WALLET_NOT_FOUND',
+          HttpStatus.NOT_FOUND,
+        );
       }
 
       // ✅ Step 4: Update wallet balance

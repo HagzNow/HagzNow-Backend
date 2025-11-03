@@ -5,6 +5,7 @@ import { WalletTransactionService } from './wallet-transaction.service';
 import { TransactionStage } from './interfaces/transaction-stage.interface';
 import { TransactionType } from './interfaces/transaction-type.interface';
 import { User } from '../users/entities/user.entity';
+import { ApiResponseUtil } from 'src/common/utils/api-response.util';
 
 @Injectable()
 export class PaymobService {
@@ -52,7 +53,11 @@ export class PaymobService {
       .digest('hex');
 
     if (calculatedHmac !== hmac) {
-      throw new BadRequestException('Invalid HMAC');
+      return ApiResponseUtil.throwError(
+        'Invalid HMAC signature',
+        'INVALID_HMAC',
+        400,
+      );
     }
     console.log(obj);
 
