@@ -83,7 +83,8 @@ export class Arena {
   @OneToMany(() => Reservation, (reservation) => reservation.arena)
   reservations: Reservation[];
 
-  getDepositAmount(totalPrice: number): number {
+  getDepositAmount(totalHours: number): number {
+    const totalPrice = this.pricePerHour * totalHours;
     return (totalPrice * this.depositPercent) / 100;
   }
 }
