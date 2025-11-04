@@ -122,7 +122,6 @@ export class CreateArenaDto {
     items: { type: 'string', format: 'binary' },
     required: false,
   })
-  @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreateArenaImageDto)
   images: CreateArenaImageDto[];
