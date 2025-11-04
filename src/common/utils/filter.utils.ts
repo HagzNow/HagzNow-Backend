@@ -1,3 +1,4 @@
+import { isEnum } from 'class-validator';
 import { ObjectLiteral, SelectQueryBuilder } from 'typeorm';
 
 /**
@@ -20,7 +21,7 @@ export function applyFilters<T extends ObjectLiteral>(
         value,
       );
 
-    if (typeof value === 'string' && !isUuid) {
+    if (typeof value === 'string' && !isUuid && !isEnum) {
       // for text-based search
       query.andWhere(`${column} ILIKE :${paramName}`, {
         [paramName]: `%${value}%`,
