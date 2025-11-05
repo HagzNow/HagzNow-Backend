@@ -23,4 +23,7 @@ export class UserDto {
 
   @Expose()
   status: UserStatus;
+
+  @Expose()
+  avatar?: string;
 }

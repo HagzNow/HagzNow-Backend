@@ -29,4 +29,6 @@ export class CreateUserDto {
     message: 'Role must be user or owner',
   })
   role: UserRole;
+
+  avatar?: string;
 }

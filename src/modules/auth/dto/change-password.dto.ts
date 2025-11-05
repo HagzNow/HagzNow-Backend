@@ -29,7 +29,7 @@ export class PasswordsNotSameConstraint
 /**
  * 🔐 Reset Password DTO
  */
-export class ResetPasswordDto {
+export class ChangePasswordDto {
   @ApiProperty({ description: 'The current password of the user' })
   @IsString()
   oldPassword: string;

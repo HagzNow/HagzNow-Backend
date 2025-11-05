@@ -13,7 +13,7 @@ import { LoginDto } from './dto/login.dto';
 import { AuthGuard } from 'src/common/guards/auth.guard';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { UserDto } from '../users/dto/user.dto';
-import { ResetPasswordDto } from './dto/reset-password.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { User } from '../users/entities/user.entity';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 
@@ -34,8 +34,8 @@ export class AuthController {
   @Serialize(UserDto)
   @UseGuards(AuthGuard)
   @Patch('change-password')
-  async resetPassword(
-    @Body() dto: ResetPasswordDto,
+  async changePassword(
+    @Body() dto: ChangePasswordDto,
     @CurrentUser() user: User,
   ) {
     return await this.authService.setNewPassword(

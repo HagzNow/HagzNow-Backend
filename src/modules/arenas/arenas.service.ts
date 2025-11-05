@@ -52,7 +52,7 @@ export class ArenasService {
 
     const arena = this.arenaRepository.create({
       ...arenaData,
-      thumbnail,
+      thumbnail: thumbnail[0],
       images,
     } as DeepPartial<Arena>);
 

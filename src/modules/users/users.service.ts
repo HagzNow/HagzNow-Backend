@@ -12,6 +12,7 @@ import { UserFilterDto } from './dto/user-filter.dto';
 import { User } from './entities/user.entity';
 import { UserRole } from './interfaces/userRole.interface';
 import { UserStatus } from './interfaces/userStatus.interface';
+import { handleImageUpload } from 'src/common/utils/handle-image-upload.util';
 
 @Injectable()
 export class UsersService {
@@ -64,7 +65,13 @@ export class UsersService {
     };
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto) {
+  async update(
+    id: string,
+    updateUserDto: UpdateUserDto,
+    files?: {
+      avatar?: Express.Multer.File[];
+    },
+  ) {
     const user = await this.userRepository.findOneBy({ id });
     if (!user) {
       return ApiResponseUtil.throwError(
@@ -73,6 +80,10 @@ export class UsersService {
         HttpStatus.NOT_FOUND,
       );
     }
+    const { avatar } = await handleImageUpload({
+      avatar: files?.avatar,
+    });
+    if (avatar && avatar.length > 0) updateUserDto.avatar = avatar[0];
     Object.assign(user, updateUserDto);
     return await this.userRepository.save(user);
   }

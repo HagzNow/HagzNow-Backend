@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFiles,
   UseGuards,
 } from '@nestjs/common';
 import { Roles } from 'src/common/decorators/roles.decorator';
@@ -21,6 +22,8 @@ import { UsersService } from './users.service';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { User } from './entities/user.entity';
 import { AuthGuard } from 'src/common/guards/auth.guard';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { UseImageUpload } from 'src/common/decorators/use-image-upload.decorator';
 
 @Controller('users')
 export class UsersController {
@@ -53,6 +56,21 @@ export class UsersController {
   @Get('profile')
   async getProfile(@CurrentUser() { id }: User) {
     return await this.usersService.findOneById(id);
+  }
+
+  @Serialize(UserDto)
+  @UseGuards(AuthGuard)
+  @Patch('profile')
+  @UseImageUpload([{ name: 'avatar', maxCount: 1 }])
+  async updateProfile(
+    @Body() userData: UpdateUserDto,
+    @UploadedFiles()
+    files: {
+      avatar?: Express.Multer.File[];
+    },
+    @CurrentUser() { id }: User,
+  ) {
+    return await this.usersService.update(id, userData, files);
   }
 
   // TODO (check what to return based on the rule)
