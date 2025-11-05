@@ -68,7 +68,7 @@ export class UsersService {
     return `This action updates a #${id} user`;
   }
 
-  async remove(id: string) {
+  async toggle(id: string) {
     const user = await this.userRepository.findOneBy({ id });
     if (!user) {
       return ApiResponseUtil.throwError(
@@ -77,7 +77,10 @@ export class UsersService {
         HttpStatus.NOT_FOUND,
       );
     }
-    user.status = UserStatus.DISABLED;
+    user.status =
+      user.status == UserStatus.DISABLED
+        ? UserStatus.ACTIVE
+        : UserStatus.DISABLED;
     return await this.userRepository.save(user);
   }
 }

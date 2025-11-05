@@ -4,6 +4,6 @@ import { IsUUID } from 'class-validator';
 
 export class IdParamDto {
   @ApiProperty({ description: 'The unique identifier (UUID)' })
-  @IsUUID('4', { message: 'Invalid ID format, must be a UUID v4' })
+  @IsUUID(undefined, { message: 'Invalid ID format, must be a valid UUID' })
   id: string;
 }

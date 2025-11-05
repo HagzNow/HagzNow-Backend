@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseUUIDPipe,
   Post,
   Query,
 } from '@nestjs/common';
@@ -45,7 +46,7 @@ export class UsersController {
 
   // TODO (check what to return based on the rule)
   @Get(':id')
-  async findOne(@Param('id') { id }: IdParamDto) {
+  async findOne(@Param('id', new ParseUUIDPipe()) id: string) {
     return await this.usersService.findOneById(id);
   }
 
@@ -65,7 +66,7 @@ export class UsersController {
 
   @Roles(UserRole.ADMIN)
   @Delete(':id')
-  remove(@Param('id') { id }: IdParamDto) {
-    return this.usersService.remove(id);
+  remove(@Param('id', new ParseUUIDPipe()) id: string) {
+    return this.usersService.toggle(id);
   }
 }
