@@ -18,7 +18,7 @@ import { handleImageUpload } from 'src/common/utils/handle-image-upload.util';
 export class UsersService {
   constructor(
     private readonly eventEmitter: EventEmitter2,
-    @InjectRepository(User) private userRepository: Repository<User>,
+    @InjectRepository(User) protected userRepository: Repository<User>,
   ) {}
   async create(createUserDto: CreateUserDto) {
     const newUser = this.userRepository.create(createUserDto);
@@ -47,24 +47,6 @@ export class UsersService {
     return await this.userRepository.findOneBy({ email });
   }
 
-  async getStats() {
-    const totalUsers = await this.userRepository.count();
-
-    const totalOwners = await this.userRepository.count({
-      where: { role: UserRole.OWNER },
-    });
-
-    const activeUsers = await this.userRepository.count({
-      where: { status: UserStatus.ACTIVE },
-    });
-
-    return {
-      totalUsers,
-      totalOwners,
-      activeUsers,
-    };
-  }
-
   async update(
     id: string,
     updateUserDto: UpdateUserDto,
@@ -85,22 +67,6 @@ export class UsersService {
     });
     if (avatar && avatar.length > 0) updateUserDto.avatar = avatar[0];
     Object.assign(user, updateUserDto);
-    return await this.userRepository.save(user);
-  }
-
-  async toggle(id: string) {
-    const user = await this.userRepository.findOneBy({ id });
-    if (!user) {
-      return ApiResponseUtil.throwError(
-        'User not found',
-        'USER_NOT_FOUND',
-        HttpStatus.NOT_FOUND,
-      );
-    }
-    user.status =
-      user.status == UserStatus.DISABLED
-        ? UserStatus.ACTIVE
-        : UserStatus.DISABLED;
     return await this.userRepository.save(user);
   }
 }

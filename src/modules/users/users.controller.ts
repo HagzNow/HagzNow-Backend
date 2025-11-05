@@ -29,28 +29,6 @@ import { UseImageUpload } from 'src/common/decorators/use-image-upload.decorator
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Roles(UserRole.ADMIN)
-  @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
-  }
-
-  @Serialize(UserDto)
-  @Roles(UserRole.ADMIN)
-  @Get()
-  findAll(
-    @Query() paginationDto: PaginationDto,
-    @Query() filters: UserFilterDto,
-  ) {
-    return this.usersService.findAll(paginationDto, filters);
-  }
-
-  @Roles(UserRole.ADMIN)
-  @Get('stats')
-  async getUserStats() {
-    return await this.usersService.getStats();
-  }
-
   @Serialize(UserDto)
   @UseGuards(AuthGuard)
   @Get('profile')
@@ -94,10 +72,4 @@ export class UsersController {
   //   }
   //   return this.usersService.update(id, updateUserDto);
   // }
-
-  @Roles(UserRole.ADMIN)
-  @Patch('/change-status/:id')
-  remove(@Param('id', new ParseUUIDPipe()) id: string) {
-    return this.usersService.toggle(id);
-  }
 }

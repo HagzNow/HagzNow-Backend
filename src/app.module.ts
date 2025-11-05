@@ -25,6 +25,8 @@ import { CurrentUserMiddleware } from './modules/users/middlewares/current-user.
 import { WalletTransaction } from './modules/wallets/entities/wallet-transaction.entity';
 import { Wallet } from './modules/wallets/entities/wallet.entity';
 import { WalletModule } from './modules/wallets/wallets.module';
+import { OwnersModule } from './modules/owners/owners.module';
+import { AdminModule } from './modules/admin/admin.module';
 
 @Module({
   imports: [
@@ -60,6 +62,8 @@ import { WalletModule } from './modules/wallets/wallets.module';
     }),
     AuthModule,
     UsersModule,
+    OwnersModule,
+    AdminModule,
     ArenasModule,
     CategoriesModule,
     WalletModule,
