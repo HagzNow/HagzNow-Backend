@@ -45,6 +45,8 @@ export class UsersController {
   }
 
   // TODO (check what to return based on the rule)
+  @Serialize(UserDto)
+  @Roles(UserRole.ADMIN)
   @Get(':id')
   async findOne(@Param('id', new ParseUUIDPipe()) id: string) {
     return await this.usersService.findOneById(id);
