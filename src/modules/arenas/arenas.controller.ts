@@ -5,6 +5,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -28,35 +29,17 @@ import { CreateArenaDto } from './dto/arena/create-arena.dto';
 import { UpdateArenaStatusDto } from './dto/arena/update-arena-status.dto';
 import { UpdateArenaDto } from './dto/arena/update-arena.dto';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import { UseImageUpload } from 'src/common/decorators/use-image-upload.decorator';
 
 @Controller('arenas')
 export class ArenasController {
   constructor(private readonly arenasService: ArenasService) {}
 
   @Post()
-  @UseInterceptors(
-    FileFieldsInterceptor(
-      [
-        { name: 'thumbnail', maxCount: 1 },
-        { name: 'images', maxCount: 10 },
-      ],
-      {
-        storage: memoryStorage(),
-        fileFilter: (req, file, cb) => {
-          if (!file.mimetype.match(/^image\/(jpeg|png|jpg|gif|webp)$/)) {
-            return cb(
-              new BadRequestException(
-                `Unsupported file type ${file.originalname}. Only image files are allowed.`,
-              ),
-              false,
-            );
-          }
-          cb(null, true);
-        },
-        limits: { fileSize: 50 * 1024 * 1024 },
-      },
-    ),
-  )
+  @UseImageUpload([
+    { name: 'thumbnail', maxCount: 1 },
+    { name: 'images', maxCount: 10 },
+  ])
   create(
     @Body() createArenaDto: CreateArenaDto,
     @UploadedFiles()

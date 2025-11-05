@@ -1,4 +1,9 @@
-import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { SortDto } from 'src/common/dtos/sort.dto';
@@ -6,7 +11,7 @@ import { ApiResponseUtil } from 'src/common/utils/api-response.util';
 import { applyFilters } from 'src/common/utils/filter.utils';
 import { paginate } from 'src/common/utils/paginate';
 import { applySorting } from 'src/common/utils/sort.util';
-import { Repository } from 'typeorm';
+import { DeepPartial, Repository } from 'typeorm';
 import { CategoriesService } from '../categories/categories.service';
 import { ArenaFilterDto } from './dto/arena/arena-filter.dto';
 import { CreateArenaDto } from './dto/arena/create-arena.dto';
@@ -17,6 +22,8 @@ import { ArenaStatus } from './interfaces/arena-status.interface';
 import axios from 'axios';
 import { Readable } from 'stream';
 import FormData from 'form-data';
+import { uploadToSersawy } from 'src/common/utils/upload-to-sersawy.util';
+import { handleImageUpload } from 'src/common/utils/handle-image-upload.util';
 
 @Injectable()
 export class ArenasService {
@@ -38,69 +45,16 @@ export class ArenasService {
   ) {
     const { categoryId, ...arenaData } = createArenaDto;
 
-    let thumbnail = '';
-    let uploadedImages = [];
+    const { thumbnail, images } = await handleImageUpload({
+      thumbnail: files?.thumbnail,
+      images: files?.images,
+    });
 
-    // Helper function to upload to sersawy.com
-    const uploadToSersawy = async (files: Express.Multer.File[]) => {
-      const formData = new FormData();
-
-      for (const file of files) {
-        const stream = Readable.from(file.buffer);
-        formData.append('images[]', stream, {
-          filename: file.originalname,
-          contentType: file.mimetype,
-        });
-      }
-
-      const response = await axios.post(
-        'https://api.sersawy.com/images/',
-        formData,
-        {
-          headers: formData.getHeaders(),
-        },
-      );
-
-      if (response.data?.success) {
-        return response.data.files.map((f) => ({
-          path: f.url,
-          filename: f.filename,
-          size: f.size,
-          width: f.dimensions?.width,
-          height: f.dimensions?.height,
-        }));
-      }
-
-      throw new Error('Upload failed: ' + JSON.stringify(response.data));
-    };
-
-    try {
-      // Upload thumbnail if provided
-      if (files?.thumbnail?.length) {
-        const uploaded = await uploadToSersawy(files.thumbnail);
-        thumbnail = uploaded[0].path; // ✅ store only URL string
-      }
-
-      // Upload gallery images
-      if (files?.images?.length) {
-        uploadedImages = await uploadToSersawy(files.images);
-      }
-    } catch (err) {
-      console.error(
-        '❌ Error uploading to sersawy.com:',
-        err.response?.data || err.message,
-      );
-      throw err;
-    }
-    console.log(thumbnail);
-    console.log(thumbnail);
-
-    // Save Arena with remote URLs
     const arena = this.arenaRepository.create({
       ...arenaData,
       thumbnail,
-      images: uploadedImages,
-    });
+      images,
+    } as DeepPartial<Arena>);
 
     if (categoryId) {
       const category = await this.categoriesService.findOne(categoryId);
