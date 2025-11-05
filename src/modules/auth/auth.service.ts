@@ -4,6 +4,7 @@ import * as bcrypt from 'bcrypt';
 import { ApiResponseUtil } from '../../common/utils/api-response.util';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { UsersService } from '../users/users.service';
+import { UserStatus } from '../users/interfaces/userStatus.interface';
 
 @Injectable()
 export class AuthService {
@@ -21,6 +22,12 @@ export class AuthService {
         'Email or password is incorrect',
         'INVALID_CREDENTIALS',
         HttpStatus.UNAUTHORIZED,
+      );
+    if (user.status !== UserStatus.ACTIVE)
+      ApiResponseUtil.throwError(
+        'User account is not active',
+        'INACTIVE_ACCOUNT',
+        HttpStatus.FORBIDDEN,
       );
     const { password, ...result } = user;
     return {
