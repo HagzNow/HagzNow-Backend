@@ -15,7 +15,6 @@ import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage, memoryStorage } from 'multer';
 import { extname } from 'path';
 import { Roles } from 'src/common/decorators/roles.decorator';
-import { IdParamDto } from 'src/common/dtos/id-param.dto';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { SortDto } from 'src/common/dtos/sort.dto';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
@@ -104,7 +103,10 @@ export class ArenasController {
 
   @Roles(UserRole.ADMIN)
   @Patch(':id/:status')
-  updateStatus(@Param() { id }: IdParamDto, @Body() dto: UpdateArenaStatusDto) {
+  updateStatus(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() dto: UpdateArenaStatusDto,
+  ) {
     return this.arenasService.approve(id, dto.status);
   }
 

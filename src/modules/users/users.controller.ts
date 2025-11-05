@@ -11,7 +11,6 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { Roles } from 'src/common/decorators/roles.decorator';
-import { IdParamDto } from 'src/common/dtos/id-param.dto';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { CreateUserDto } from './dto/create-user.dto';
