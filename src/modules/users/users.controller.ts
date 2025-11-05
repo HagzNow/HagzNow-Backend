@@ -5,8 +5,10 @@ import {
   Get,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { IdParamDto } from 'src/common/dtos/id-param.dto';
@@ -17,6 +19,9 @@ import { UserFilterDto } from './dto/user-filter.dto';
 import { UserDto } from './dto/user.dto';
 import { UserRole } from './interfaces/userRole.interface';
 import { UsersService } from './users.service';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { User } from './entities/user.entity';
+import { AuthGuard } from 'src/common/guards/auth.guard';
 
 @Controller('users')
 export class UsersController {
@@ -44,6 +49,13 @@ export class UsersController {
     return await this.usersService.getStats();
   }
 
+  @Serialize(UserDto)
+  @UseGuards(AuthGuard)
+  @Get('profile')
+  async getProfile(@CurrentUser() { id }: User) {
+    return await this.usersService.findOneById(id);
+  }
+
   // TODO (check what to return based on the rule)
   @Serialize(UserDto)
   @Roles(UserRole.ADMIN)
@@ -67,7 +79,7 @@ export class UsersController {
   // }
 
   @Roles(UserRole.ADMIN)
-  @Delete(':id')
+  @Patch('/change-status/:id')
   remove(@Param('id', new ParseUUIDPipe()) id: string) {
     return this.usersService.toggle(id);
   }
