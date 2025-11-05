@@ -64,8 +64,17 @@ export class UsersService {
     };
   }
 
-  update(id: string, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async update(id: string, updateUserDto: UpdateUserDto) {
+    const user = await this.userRepository.findOneBy({ id });
+    if (!user) {
+      return ApiResponseUtil.throwError(
+        'User not found',
+        'USER_NOT_FOUND',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    Object.assign(user, updateUserDto);
+    return await this.userRepository.save(user);
   }
 
   async toggle(id: string) {

@@ -1,7 +1,21 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
+import { AuthGuard } from 'src/common/guards/auth.guard';
+import { Serialize } from 'src/common/interceptors/serialize.interceptor';
+import { UserDto } from '../users/dto/user.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { User } from '../users/entities/user.entity';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -15,5 +29,19 @@ export class AuthController {
   @Post('register')
   signUp(@Body() signUpDto: CreateUserDto) {
     return this.authService.signUp(signUpDto);
+  }
+
+  // @Serialize(UserDto)
+  @UseGuards(AuthGuard)
+  @Patch('change-password')
+  async resetPassword(
+    @Body() dto: ResetPasswordDto,
+    @CurrentUser() user: User,
+  ) {
+    return await this.authService.setNewPassword(
+      user,
+      dto.oldPassword,
+      dto.newPassword,
+    );
   }
 }

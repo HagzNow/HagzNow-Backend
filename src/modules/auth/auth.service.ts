@@ -5,6 +5,7 @@ import { ApiResponseUtil } from '../../common/utils/api-response.util';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { UsersService } from '../users/users.service';
 import { UserStatus } from '../users/interfaces/userStatus.interface';
+import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -48,5 +49,36 @@ export class AuthService {
     return {
       token: await this.jwtService.signAsync(result),
     };
+  }
+
+  async setNewPassword(
+    currentUser: User,
+    oldPassword: string,
+    newPassword: string,
+  ) {
+    const user = await this.usersService.findOneById(currentUser.id);
+    if (!user)
+      ApiResponseUtil.throwError(
+        'User not found',
+        'USER_NOT_FOUND',
+        HttpStatus.NOT_FOUND,
+      );
+    if (user.status !== UserStatus.ACTIVE)
+      ApiResponseUtil.throwError(
+        'User account is not active',
+        'INACTIVE_ACCOUNT',
+        HttpStatus.FORBIDDEN,
+      );
+
+    let isMatch = false;
+    if (user) isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch)
+      ApiResponseUtil.throwError(
+        'Old password is incorrect',
+        'INVALID_OLD_PASSWORD',
+        HttpStatus.UNAUTHORIZED,
+      );
+
+    return await this.usersService.update(user.id, { password: newPassword });
   }
 }

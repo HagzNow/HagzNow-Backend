@@ -3,6 +3,7 @@ import { Reservation } from 'src/modules/reservations/entities/reservation.entit
 import { Wallet } from 'src/modules/wallets/entities/wallet.entity';
 import {
   BeforeInsert,
+  BeforeUpdate,
   Column,
   CreateDateColumn,
   Entity,
@@ -64,8 +65,12 @@ export class User {
   updatedAt: Date;
 
   @BeforeInsert()
+  @BeforeUpdate()
   async hashingPassword() {
-    const salt = await bcrypt.genSalt();
-    this.password = await bcrypt.hash(this.password, salt);
+    if (this.password && !this.password.startsWith('$2b$')) {
+      // if it doesn't look like a bcrypt hash
+      const salt = await bcrypt.genSalt();
+      this.password = await bcrypt.hash(this.password, salt);
+    }
   }
 }
