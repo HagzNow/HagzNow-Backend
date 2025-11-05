@@ -31,7 +31,7 @@ export class AuthController {
     return this.authService.signUp(signUpDto);
   }
 
-  // @Serialize(UserDto)
+  @Serialize(UserDto)
   @UseGuards(AuthGuard)
   @Patch('change-password')
   async resetPassword(
