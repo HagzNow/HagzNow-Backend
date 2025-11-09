@@ -1,14 +1,10 @@
-import {
-  BadRequestException,
-  HttpStatus,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { SortDto } from 'src/common/dtos/sort.dto';
 import { ApiResponseUtil } from 'src/common/utils/api-response.util';
 import { applyFilters } from 'src/common/utils/filter.utils';
+import { handleImageUpload } from 'src/common/utils/handle-image-upload.util';
 import { paginate } from 'src/common/utils/paginate';
 import { applySorting } from 'src/common/utils/sort.util';
 import { DeepPartial, Repository } from 'typeorm';
@@ -19,11 +15,6 @@ import { UpdateArenaDto } from './dto/arena/update-arena.dto';
 import { ArenaExtra } from './entities/arena-extra.entity';
 import { Arena } from './entities/arena.entity';
 import { ArenaStatus } from './interfaces/arena-status.interface';
-import axios from 'axios';
-import { Readable } from 'stream';
-import FormData from 'form-data';
-import { uploadToSersawy } from 'src/common/utils/upload-to-sersawy.util';
-import { handleImageUpload } from 'src/common/utils/handle-image-upload.util';
 
 @Injectable()
 export class ArenasService {
@@ -49,11 +40,13 @@ export class ArenasService {
       thumbnail: files?.thumbnail,
       images: files?.images,
     });
-
+    let imagesPath = images.map((imgPath) => {
+      return { path: imgPath };
+    });
     const arena = this.arenaRepository.create({
       ...arenaData,
       thumbnail: thumbnail[0],
-      images,
+      images: imagesPath,
     } as DeepPartial<Arena>);
 
     if (categoryId) {
