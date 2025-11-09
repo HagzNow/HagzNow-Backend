@@ -10,7 +10,7 @@ export class ArenaImage {
   path: string;
 
   @ManyToOne(() => Arena, (arena) => arena.images, {
-    onDelete: 'CASCADE', // if category deleted, arena stays but category becomes null
+    onDelete: 'CASCADE',
   })
   arena: Arena;
 }

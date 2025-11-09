@@ -56,7 +56,7 @@ export class Arena {
 
   @OneToMany(() => ArenaImage, (image) => image.arena, {
     cascade: true,
-    onDelete: 'CASCADE', // if category deleted, arena stays but category becomes null
+    onDelete: 'CASCADE',
     eager: true,
   })
   images: ArenaImage[];
