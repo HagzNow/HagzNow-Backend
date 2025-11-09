@@ -3,11 +3,19 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { SortDto } from 'src/common/dtos/sort.dto';
 import { ApiResponseUtil } from 'src/common/utils/api-response.util';
-import { applyFilters } from 'src/common/utils/filter.utils';
+import {
+  applyExactFilters,
+  applyILikeFilters,
+} from 'src/common/utils/filter.utils';
 import { handleImageUpload } from 'src/common/utils/handle-image-upload.util';
 import { paginate } from 'src/common/utils/paginate';
 import { applySorting } from 'src/common/utils/sort.util';
-import { DeepPartial, Repository } from 'typeorm';
+import {
+  DeepPartial,
+  ObjectLiteral,
+  Repository,
+  SelectQueryBuilder,
+} from 'typeorm';
 import { CategoriesService } from '../categories/categories.service';
 import { ArenaFilterDto } from './dto/arena/arena-filter.dto';
 import { CreateArenaDto } from './dto/arena/create-arena.dto';
@@ -72,8 +80,7 @@ export class ArenasService {
       .where('arenas.status = :status', { status: 'active' });
 
     // Apply filters dynamically
-    applyFilters(query, filters, 'arenas');
-
+    this.applyFilters(query, filters);
     // Apply sorting dynamically
     if (orderBy) {
       applySorting(query, { [orderBy]: direction }, 'arenas');
@@ -145,5 +152,14 @@ export class ArenasService {
 
   async remove(id: string) {
     return await this.arenaRepository.delete(id);
+  }
+
+  private applyFilters<T extends ObjectLiteral>(
+    query: SelectQueryBuilder<T>,
+    filters: ArenaFilterDto,
+  ) {
+    const alias = 'arenas';
+    applyExactFilters(query, { categoryId: filters.categoryId }, alias);
+    applyILikeFilters(query, { name: filters.name }, alias);
   }
 }

@@ -3,16 +3,14 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { ApiResponseUtil } from 'src/common/utils/api-response.util';
-import { applyFilters } from 'src/common/utils/filter.utils';
+import { applyExactFilters } from 'src/common/utils/filter.utils';
+import { handleImageUpload } from 'src/common/utils/handle-image-upload.util';
 import { paginate } from 'src/common/utils/paginate';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserFilterDto } from './dto/user-filter.dto';
 import { User } from './entities/user.entity';
-import { UserRole } from './interfaces/userRole.interface';
-import { UserStatus } from './interfaces/userStatus.interface';
-import { handleImageUpload } from 'src/common/utils/handle-image-upload.util';
 
 @Injectable()
 export class UsersService {
@@ -29,7 +27,11 @@ export class UsersService {
 
   async findAll(paginationDto: PaginationDto, filters: UserFilterDto) {
     const query = this.userRepository.createQueryBuilder('users');
-    applyFilters(query, filters);
+    applyExactFilters(
+      query,
+      { status: filters.status, role: filters.role },
+      'users',
+    );
     return await paginate(query, paginationDto);
   }
 

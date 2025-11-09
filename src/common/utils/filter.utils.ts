@@ -1,13 +1,12 @@
-import { isEnum } from 'class-validator';
 import { ObjectLiteral, SelectQueryBuilder } from 'typeorm';
 
 /**
- * Dynamically applies filters to a query builder.
+ * Apply exact filters (equality) with optional alias
  */
-export function applyFilters<T extends ObjectLiteral>(
+export function applyExactFilters<T extends ObjectLiteral>(
   query: SelectQueryBuilder<T>,
   filters: Record<string, any>,
-  alias?: string,
+  alias: string,
 ): SelectQueryBuilder<T> {
   Object.entries(filters).forEach(([key, value], index) => {
     if (value === undefined || value === null || value === '') return;
@@ -15,20 +14,54 @@ export function applyFilters<T extends ObjectLiteral>(
     const paramName = `${key}_${index}`;
     const column = alias ? `${alias}.${key}` : key;
 
-    const isUuid =
-      typeof value === 'string' &&
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-        value,
-      );
+    query.andWhere(`${column} = :${paramName}`, { [paramName]: value });
+  });
 
-    if (typeof value === 'string' && !isUuid && !isEnum) {
-      // for text-based search
-      query.andWhere(`${column} ILIKE :${paramName}`, {
-        [paramName]: `%${value}%`,
+  return query;
+}
+
+/**
+ * Apply ILIKE (string search) filters with optional alias
+ */
+export function applyILikeFilters<T extends ObjectLiteral>(
+  query: SelectQueryBuilder<T>,
+  filters: Record<string, string>,
+  alias: string,
+): SelectQueryBuilder<T> {
+  Object.entries(filters).forEach(([key, value], index) => {
+    if (!value) return;
+
+    const paramName = `${key}_${index}`;
+    const column = alias ? `${alias}.${key}` : key;
+
+    query.andWhere(`${column} ILIKE :${paramName}`, {
+      [paramName]: `%${value}%`,
+    });
+  });
+
+  return query;
+}
+
+/**
+ * Apply range filters (min/max) with optional alias
+ */
+export function applyRangeFilters<T extends ObjectLiteral>(
+  query: SelectQueryBuilder<T>,
+  ranges: Record<string, { min?: number; max?: number }>,
+  alias: string,
+): SelectQueryBuilder<T> {
+  Object.entries(ranges).forEach(([key, range], index) => {
+    const column = alias ? `${alias}.${key}` : key;
+
+    if (range.min !== undefined) {
+      query.andWhere(`${column} >= :${key}_min_${index}`, {
+        [`${key}_min_${index}`]: range.min,
       });
-    } else {
-      // for exact match (numbers, booleans, uuids)
-      query.andWhere(`${column} = :${paramName}`, { [paramName]: value });
+    }
+    if (range.max !== undefined) {
+      query.andWhere(`${column} <= :${key}_max_${index}`, {
+        [`${key}_max_${index}`]: range.max,
+      });
     }
   });
 

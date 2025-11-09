@@ -3,9 +3,9 @@ import { IsOptional, IsString, IsUUID } from 'class-validator';
 export class ArenaFilterDto {
   @IsOptional()
   @IsString()
-  name?: string;
+  name: string;
 
   @IsOptional()
   @IsUUID()
-  categoryId?: string;
+  categoryId: string;
 }
