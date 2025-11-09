@@ -59,8 +59,11 @@ export class ArenasController {
   @Serialize(ArenaSummaryDto)
   @Roles(UserRole.ADMIN)
   @Get('requests')
-  findRequests(@Query() paginationDto: PaginationDto) {
-    return this.arenasService.findRequests(paginationDto);
+  findRequests(
+    @Query() paginationDto: PaginationDto,
+    @Query() filters: ArenaFilterDto,
+  ) {
+    return this.arenasService.findRequests(paginationDto, filters);
   }
 
   @Serialize(ArenaDetailsDto)

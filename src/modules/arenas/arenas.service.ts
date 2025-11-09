@@ -90,13 +90,15 @@ export class ArenasService {
     return paginate(query, paginationDto);
   }
 
-  async findRequests(paginationDto: PaginationDto) {
+  async findRequests(paginationDto: PaginationDto, filters: ArenaFilterDto) {
     // Start a query builder
     const query = this.arenaRepository
       .createQueryBuilder('arenas')
       .leftJoinAndSelect('arenas.location', 'location')
       .leftJoinAndSelect('arenas.category', 'category');
 
+    // Apply filters dynamically
+    this.applyFilters(query, filters);
     // Paginate (using your existing paginate util)
     return paginate(query, paginationDto);
   }
