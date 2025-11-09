@@ -69,6 +69,21 @@ export class ArenasController {
     return this.arenasService.findRequests(paginationDto, filters);
   }
 
+  @Serialize(ArenaSummaryDto)
+  @Roles(UserRole.OWNER)
+  @Get('owner')
+  async getOwnerArenas(
+    @CurrentUser() owner: User,
+    @Query() paginationDto: PaginationDto,
+    @Query() filters: ArenaFilterDto,
+  ) {
+    return await this.arenasService.findByOwner(
+      owner.id,
+      paginationDto,
+      filters,
+    );
+  }
+
   @Serialize(ArenaDetailsDto)
   @Get(':id')
   findOne(@Param('id') id: string) {

@@ -106,6 +106,20 @@ export class ArenasService {
     return paginate(query, paginationDto);
   }
 
+  async findByOwner(
+    ownerId: string,
+    paginationDto: PaginationDto,
+    filters: ArenaFilterDto,
+  ) {
+    console.log(`OWNER ID = ${ownerId}`);
+    const query = this.arenaRepository
+      .createQueryBuilder('arenas')
+      .leftJoinAndSelect('arenas.owner', 'owner')
+      .where('arenas.ownerId = :ownerId', { ownerId });
+    this.applyFilters(query, filters);
+    return await paginate(query, paginationDto);
+  }
+
   async findOne(id: string) {
     if (!id) return null;
     return await this.arenaRepository.findOneBy({ id });
