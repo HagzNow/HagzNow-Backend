@@ -8,6 +8,7 @@ import { PaginationDto } from '../../common/dtos/pagination.dto';
 import { ArenaExtra } from '../arenas/entities/arena-extra.entity';
 import { ArenaSlot } from '../arenas/entities/arena-slot.entity';
 import { Arena } from '../arenas/entities/arena.entity';
+import { ArenaStatus } from '../arenas/interfaces/arena-status.interface';
 import { User } from '../users/entities/user.entity';
 import { WalletTransaction } from '../wallets/entities/wallet-transaction.entity';
 import { TransactionStage } from '../wallets/interfaces/transaction-stage.interface';
@@ -56,6 +57,13 @@ export class ReservationsService {
           'Arena not found',
           'ARENA_NOT_FOUND',
           HttpStatus.NOT_FOUND,
+        );
+      }
+      if (arena.status !== ArenaStatus.ACTIVE) {
+        return ApiResponseUtil.throwError(
+          'Arena is not active',
+          'ARENA_NOT_ACTIVE',
+          HttpStatus.BAD_REQUEST,
         );
       }
       const extras = await queryRunner.manager.findByIds(
