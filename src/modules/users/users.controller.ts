@@ -1,29 +1,19 @@
 import {
   Body,
   Controller,
-  Delete,
   Get,
-  Param,
-  ParseUUIDPipe,
   Patch,
-  Post,
-  Query,
   UploadedFiles,
   UseGuards,
 } from '@nestjs/common';
-import { Roles } from 'src/common/decorators/roles.decorator';
-import { PaginationDto } from 'src/common/dtos/pagination.dto';
-import { Serialize } from 'src/common/interceptors/serialize.interceptor';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UserFilterDto } from './dto/user-filter.dto';
-import { UserDto } from './dto/user.dto';
-import { UserRole } from './interfaces/userRole.interface';
-import { UsersService } from './users.service';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import { User } from './entities/user.entity';
-import { AuthGuard } from 'src/common/guards/auth.guard';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { UseImageUpload } from 'src/common/decorators/use-image-upload.decorator';
+import { AuthGuard } from 'src/common/guards/auth.guard';
+import { Serialize } from 'src/common/interceptors/serialize.interceptor';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { UserDto } from './dto/user.dto';
+import { User } from './entities/user.entity';
+import { UsersService } from './users.service';
 
 @Controller('users')
 export class UsersController {
@@ -49,14 +39,6 @@ export class UsersController {
     @CurrentUser() { id }: User,
   ) {
     return await this.usersService.update(id, userData, files);
-  }
-
-  // TODO (check what to return based on the rule)
-  @Serialize(UserDto)
-  @Roles(UserRole.ADMIN)
-  @Get(':id')
-  async findOne(@Param('id', new ParseUUIDPipe()) id: string) {
-    return await this.usersService.findOneById(id);
   }
 
   // @Patch(':id')
