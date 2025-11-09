@@ -17,6 +17,7 @@ import {
   SelectQueryBuilder,
 } from 'typeorm';
 import { CategoriesService } from '../categories/categories.service';
+import { User } from '../users/entities/user.entity';
 import { ArenaFilterDto } from './dto/arena/arena-filter.dto';
 import { CreateArenaDto } from './dto/arena/create-arena.dto';
 import { UpdateArenaDto } from './dto/arena/update-arena.dto';
@@ -37,6 +38,7 @@ export class ArenasService {
 
   async create(
     createArenaDto: CreateArenaDto,
+    owner: User,
     files?: {
       thumbnail?: Express.Multer.File[];
       images?: Express.Multer.File[];
@@ -55,6 +57,7 @@ export class ArenasService {
       ...arenaData,
       thumbnail: thumbnail[0],
       images: imagesPath,
+      owner,
     } as DeepPartial<Arena>);
 
     if (categoryId) {

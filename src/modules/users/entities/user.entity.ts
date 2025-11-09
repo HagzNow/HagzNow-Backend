@@ -1,4 +1,5 @@
 import * as bcrypt from 'bcrypt';
+import { Arena } from 'src/modules/arenas/entities/arena.entity';
 import { Reservation } from 'src/modules/reservations/entities/reservation.entity';
 import { Wallet } from 'src/modules/wallets/entities/wallet.entity';
 import {
@@ -59,6 +60,11 @@ export class User {
 
   @Column({ type: 'varchar', nullable: true })
   avatar: string;
+
+  @OneToMany(() => Arena, (arena) => arena.owner, {
+    nullable: true,
+  })
+  arenas?: Arena[];
 
   @UpdateDateColumn({
     type: 'timestamp',

@@ -1,5 +1,6 @@
 import { Category } from 'src/modules/categories/entities/category.entity';
 import { Reservation } from 'src/modules/reservations/entities/reservation.entity';
+import { User } from 'src/modules/users/entities/user.entity';
 import {
   Column,
   Entity,
@@ -82,6 +83,12 @@ export class Arena {
 
   @OneToMany(() => Reservation, (reservation) => reservation.arena)
   reservations: Reservation[];
+
+  @ManyToOne(() => User, (user) => user.arenas, {
+    eager: true,
+  })
+  @JoinColumn({ name: 'ownerId' }) // <- this sets the column name
+  owner: User;
 
   getDepositAmount(totalHours: number): number {
     const totalPrice = this.pricePerHour * totalHours;
