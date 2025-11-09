@@ -119,7 +119,7 @@ export class WalletTransactionService {
       }
 
       // ✅ Step 4: Update wallet balance
-      wallet.balance += amount;
+      wallet.balance += Number(wallet.balance) + amount;
       await manager.getRepository(Wallet).save(wallet);
 
       // ✅ Step 5: Optionally return updated wallet or transaction
