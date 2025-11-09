@@ -1,5 +1,6 @@
 import { Expose, Type } from 'class-transformer';
 import { CategoryDto } from 'src/modules/categories/dto/category.dto';
+import { ArenaStatus } from '../../interfaces/arena-status.interface';
 import { ArenaExtraDto } from '../arena-extra/arena-extra.dto';
 import { ArenaImageDto } from '../arena-image/arena-image.dto';
 import { ArenaLocationDto } from '../arena-location/arena-location.dto';
@@ -50,4 +51,7 @@ export class ArenaDetailsDto {
   @Type(() => ArenaExtraDto)
   @Expose()
   extras?: ArenaExtraDto[];
+
+  @Expose()
+  status: ArenaStatus;
 }
