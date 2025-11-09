@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -10,12 +9,9 @@ import {
   Post,
   Query,
   UploadedFiles,
-  UseInterceptors,
 } from '@nestjs/common';
-import { AnyFilesInterceptor } from '@nestjs/platform-express';
-import { diskStorage, memoryStorage } from 'multer';
-import { extname } from 'path';
 import { Roles } from 'src/common/decorators/roles.decorator';
+import { UseImageUpload } from 'src/common/decorators/use-image-upload.decorator';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { SortDto } from 'src/common/dtos/sort.dto';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
@@ -28,13 +24,13 @@ import { ArenaSummaryDto } from './dto/arena/arena-summary.dto';
 import { CreateArenaDto } from './dto/arena/create-arena.dto';
 import { UpdateArenaStatusDto } from './dto/arena/update-arena-status.dto';
 import { UpdateArenaDto } from './dto/arena/update-arena.dto';
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
-import { UseImageUpload } from 'src/common/decorators/use-image-upload.decorator';
 
 @Controller('arenas')
 export class ArenasController {
   constructor(private readonly arenasService: ArenasService) {}
 
+  @Serialize(ArenaDetailsDto)
+  @Roles(UserRole.OWNER)
   @Post()
   @UseImageUpload([
     { name: 'thumbnail', maxCount: 1 },
