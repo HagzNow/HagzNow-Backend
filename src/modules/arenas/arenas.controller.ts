@@ -83,6 +83,11 @@ export class ArenasController {
       filters,
     );
   }
+  @Roles(UserRole.OWNER)
+  @Get('owner/names')
+  async getOwnerArenasNames(@CurrentUser() owner: User) {
+    return await this.arenasService.findNamesByOwner(owner.id);
+  }
 
   @Serialize(ArenaDetailsDto)
   @Get(':id')

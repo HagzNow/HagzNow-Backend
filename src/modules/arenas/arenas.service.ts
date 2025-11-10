@@ -120,6 +120,14 @@ export class ArenasService {
     return await paginate(query, paginationDto);
   }
 
+  async findNamesByOwner(ownerId: string) {
+    return await this.arenaRepository
+      .createQueryBuilder('arena')
+      .select(['arena.id as id', 'arena.name as name'])
+      .where('arena.ownerId = :ownerId', { ownerId })
+      .getRawMany();
+  }
+
   async findOne(id: string) {
     if (!id) return null;
     return await this.arenaRepository.findOneBy({ id });
