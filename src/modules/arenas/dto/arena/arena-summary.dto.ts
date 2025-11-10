@@ -1,4 +1,5 @@
 import { Expose, Transform } from 'class-transformer';
+import { ArenaStatus } from '../../interfaces/arena-status.interface';
 
 export class ArenaSummaryDto {
   @Expose()
@@ -24,4 +25,7 @@ export class ArenaSummaryDto {
     return [city, governorate].filter(Boolean).join(', ');
   })
   locationSummary: string;
+
+  @Expose()
+  status: ArenaStatus;
 }

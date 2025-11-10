@@ -10,11 +10,13 @@ import {
   Query,
   UploadedFiles,
 } from '@nestjs/common';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { UseImageUpload } from 'src/common/decorators/use-image-upload.decorator';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { SortDto } from 'src/common/dtos/sort.dto';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
+import { User } from '../users/entities/user.entity';
 import { UserRole } from '../users/interfaces/userRole.interface';
 import { ArenasService } from './arenas.service';
 import { ArenaExtraDto } from './dto/arena-extra/arena-extra.dto';
@@ -43,8 +45,9 @@ export class ArenasController {
       thumbnail?: Express.Multer.File[];
       images?: Express.Multer.File[];
     },
+    @CurrentUser() owner: User,
   ) {
-    return this.arenasService.create(createArenaDto, files);
+    return this.arenasService.create(createArenaDto, owner, files);
   }
 
   @Serialize(ArenaSummaryDto)
@@ -64,6 +67,21 @@ export class ArenasController {
     @Query() filters: ArenaFilterDto,
   ) {
     return this.arenasService.findRequests(paginationDto, filters);
+  }
+
+  @Serialize(ArenaSummaryDto)
+  @Roles(UserRole.OWNER)
+  @Get('owner')
+  async getOwnerArenas(
+    @CurrentUser() owner: User,
+    @Query() paginationDto: PaginationDto,
+    @Query() filters: ArenaFilterDto,
+  ) {
+    return await this.arenasService.findByOwner(
+      owner.id,
+      paginationDto,
+      filters,
+    );
   }
 
   @Serialize(ArenaDetailsDto)

@@ -27,11 +27,11 @@ export class ReservationsController {
   @Serialize(ReservationDetailsDto)
   @UseGuards(AuthGuard)
   @Post()
-  create(@Body() createReservationDto: CreateReservationDto) {
-    return this.reservationsService.create(
-      createReservationDto,
-      'e0b4ca5f-0578-4e93-a82f-b7396f9cde29',
-    );
+  create(
+    @Body() createReservationDto: CreateReservationDto,
+    @CurrentUser() user: User,
+  ) {
+    return this.reservationsService.create(createReservationDto, user.id);
   }
 
   @Serialize(ReservationSummaryDto)

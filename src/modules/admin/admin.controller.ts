@@ -36,7 +36,7 @@ export class AdminController {
     return this.AdminService.findAll(paginationDto, filters);
   }
 
-  @Get('user-stats')
+  @Get('users/stats')
   async getUserStats() {
     return await this.AdminService.getStats();
   }
