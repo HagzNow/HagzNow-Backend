@@ -1,9 +1,9 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
-import { PaymobService } from './paymob.service';
-import { WalletsService } from './wallets.service';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { AuthGuard } from 'src/common/guards/auth.guard';
 import { User } from '../users/entities/user.entity';
+import { PaymobService } from './paymob.service';
+import { WalletsService } from './wallets.service';
 
 @Controller('wallet')
 export class WalletController {
@@ -15,7 +15,7 @@ export class WalletController {
   @Get('balance')
   async getBalance(@CurrentUser() user: User) {
     console.log('Getting balance for user:', user.id);
-    return this.walletsService.getBalanceByUserId(user.id);
+    return this.walletsService.getBalanceByUser(user);
   }
 
   @UseGuards(AuthGuard)

@@ -14,14 +14,16 @@ export class WalletsService {
     return await this.walletRepository.save(newWallet);
   }
 
-  async getBalanceByUserId(userId: string) {
+  async getBalanceByUser(user: User) {
     const wallet = await this.walletRepository.findOne({
-      where: { user: { id: userId } },
+      where: { user: { id: user.id } },
     });
     if (!wallet) {
+      // this will only happen in case of teh event listener didn't get executed
+      await this.create(user);
       return 0;
     }
-    return { avaibaleBalance: wallet.balance };
+    return { availableBalance: wallet.balance };
   }
 
   findOne(id: string) {
