@@ -210,8 +210,9 @@ export class ReservationsService {
     return this.findReservationsByDateRelation(user, paginationDto, true);
   }
 
-  findOne(id: string) {
-    return `This action returns a #${id} reservation`;
+  async findOne(id: string) {
+    if (!id) return null;
+    return await this.reservationRepository.findOneBy({ id });
   }
 
   update(id: string, updateReservationDto: UpdateReservationDto) {

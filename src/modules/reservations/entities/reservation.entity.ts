@@ -59,11 +59,13 @@ export class Reservation {
 
   @OneToMany(() => ArenaSlot, (slot) => slot.reservation, {
     onDelete: 'CASCADE',
+    eager: true,
   })
   slots: ArenaSlot[];
 
   @ManyToMany(() => ArenaExtra, (extra) => extra.reservations, {
     onDelete: 'SET NULL',
+    eager: true,
   })
   @JoinTable({
     name: 'reservation_extras',
@@ -74,6 +76,7 @@ export class Reservation {
 
   @ManyToOne(() => User, (user) => user.reservations, {
     onDelete: 'CASCADE',
+    eager: true,
   })
   user: User;
 }

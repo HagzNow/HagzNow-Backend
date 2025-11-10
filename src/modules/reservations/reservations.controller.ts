@@ -62,6 +62,7 @@ export class ReservationsController {
     return this.reservationsService.findAll();
   }
 
+  @Serialize(ReservationDetailsDto)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.reservationsService.findOne(id);
