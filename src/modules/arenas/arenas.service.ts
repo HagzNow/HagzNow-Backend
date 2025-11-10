@@ -111,7 +111,6 @@ export class ArenasService {
     paginationDto: PaginationDto,
     filters: ArenaFilterDto,
   ) {
-    console.log(`OWNER ID = ${ownerId}`);
     const query = this.arenaRepository
       .createQueryBuilder('arenas')
       .leftJoinAndSelect('arenas.owner', 'owner')

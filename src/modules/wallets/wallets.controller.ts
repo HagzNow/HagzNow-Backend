@@ -14,7 +14,6 @@ export class WalletController {
   @UseGuards(AuthGuard)
   @Get('balance')
   async getBalance(@CurrentUser() user: User) {
-    console.log('Getting balance for user:', user.id);
     return this.walletsService.getBalanceByUser(user);
   }
 

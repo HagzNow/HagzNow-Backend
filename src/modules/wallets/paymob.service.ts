@@ -59,7 +59,6 @@ export class PaymobService {
         400,
       );
     }
-    console.log(obj);
 
     if (obj.success) {
       const amount = obj.amount_cents / 100;
@@ -103,7 +102,6 @@ export class PaymobService {
       },
       user,
     );
-    console.log('Order created:', newWalletTransaction);
     return response.data.id;
   }
 
