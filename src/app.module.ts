@@ -27,9 +27,14 @@ import { Wallet } from './modules/wallets/entities/wallet.entity';
 import { WalletModule } from './modules/wallets/wallets.module';
 import { OwnersModule } from './modules/owners/owners.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { BullModule } from '@nestjs/bullmq';
+import { SettlementsProcessor } from './modules/reservations/queue/settlements.processor';
+import { ReservationsProducer } from './modules/reservations/queue/reservations.producer';
+import { bullConfig } from './modules/reservations/queue/bull.config';
 
 @Module({
   imports: [
+    BullModule.forRoot({ connection: { host: 'localhost', port: 6379 } }),
     EventEmitterModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRootAsync({

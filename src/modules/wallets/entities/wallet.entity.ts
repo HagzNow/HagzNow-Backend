@@ -16,6 +16,9 @@ export class Wallet {
   @Column({ type: 'decimal', default: 0 })
   balance: number;
 
+  @Column({ type: 'decimal', default: 0 })
+  heldAmount: number;
+
   @Column({ type: 'varchar', default: 'ج.م' })
   currency: string;
 

@@ -5,10 +5,22 @@ import { Reservation } from './entities/reservation.entity';
 import { ReservationsController } from './reservations.controller';
 import { ReservationsService } from './reservations.service';
 import { AuthModule } from '../auth/auth.module';
+import { BullModule } from '@nestjs/bullmq';
+import { SettlementsProcessor } from './queue/settlements.processor';
+import { ReservationsProducer } from './queue/reservations.producer';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Reservation]), ArenasModule, AuthModule],
+  imports: [
+    BullModule.registerQueue({ name: 'settlements' }),
+    TypeOrmModule.forFeature([Reservation]),
+    ArenasModule,
+    AuthModule,
+  ],
   controllers: [ReservationsController],
-  providers: [ReservationsService],
+  providers: [
+    ReservationsService,
+    ReservationsProducer, // <-- add
+    SettlementsProcessor,
+  ], // <-- add (so the processor is discovered)],
 })
 export class ReservationsModule {}

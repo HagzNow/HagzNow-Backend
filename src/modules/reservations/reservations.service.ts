@@ -17,6 +17,9 @@ import { CreateReservationDto } from './dto/create-reservation.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
 import { Reservation } from './entities/reservation.entity';
 import { ReservationStatus } from './interfaces/reservation-status.interface';
+import { ReservationsProducer } from './queue/reservations.producer';
+import { DateTime } from 'luxon';
+import { Wallet } from '../wallets/entities/wallet.entity';
 
 @Injectable()
 export class ReservationsService {
@@ -24,6 +27,7 @@ export class ReservationsService {
    *
    */
   constructor(
+    private readonly producer: ReservationsProducer,
     private readonly dataSource: DataSource,
     @InjectRepository(Reservation)
     private reservationRepository: Repository<Reservation>,
@@ -59,6 +63,8 @@ export class ReservationsService {
           HttpStatus.NOT_FOUND,
         );
       }
+      const arenaOwnerWallet = arena.owner.wallet;
+
       if (arena.status !== ArenaStatus.ACTIVE) {
         return ApiResponseUtil.throwError(
           'Arena is not active',
@@ -142,9 +148,21 @@ export class ReservationsService {
       });
 
       user.wallet.balance -= totalAmount;
-      // user.wallet.heldAmount = (user.wallet.heldAmount || 0) + totalAmount;
+      user.wallet.heldAmount =
+        Number(user.wallet.heldAmount || 0) + totalAmount;
+      arenaOwnerWallet.heldAmount =
+        Number(arenaOwnerWallet.heldAmount || 0) + totalAmount;
 
-      await queryRunner.manager.save([walletTx, user.wallet]);
+      await queryRunner.manager.save([walletTx, user.wallet, arenaOwnerWallet]);
+
+      const tz = 'Africa/Cairo';
+      // const runAt = DateTime.fromISO(dto.date, { zone: tz }).startOf('day');
+      const runAt = DateTime.now().plus({ seconds: 200 });
+      await this.producer.scheduleSettlement(
+        reservation.id,
+        runAt,
+        totalAmount,
+      );
 
       // 6️⃣ Commit DB transaction
       await queryRunner.commitTransaction();
@@ -152,20 +170,11 @@ export class ReservationsService {
       // 7️⃣ Emit reservation created event
       this.eventEmitter.emit('reservation.created', reservation);
 
-      // 8️⃣ Schedule BullMQ settlement job
-      // await this.reservationQueue.add(
-      //   `settle:${reservation.id}`,
-      //   { reservationId: reservation.id },
-      //   {
-      //     delay: reservation.holdExpiresAt.getTime() - Date.now(),
-      //     removeOnComplete: true,
-      //     removeOnFail: true,
-      //   },
-      // );
       reservation.slots = addedSlots;
       return reservation;
     } catch (err) {
       await queryRunner.rollbackTransaction();
+      console.error('Error creating reservation:', err);
       throw err;
     } finally {
       await queryRunner.release();
@@ -175,6 +184,127 @@ export class ReservationsService {
   async findAll() {
     return await this.reservationRepository.find();
   }
+
+  async settleReservation(reservationId: string) {
+    console.log('Settling reservation:', reservationId);
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const reservation = await this.reservationRepository.findOne({
+        where: { id: reservationId },
+        relations: ['user', 'arena', 'arena.owner'],
+      });
+      if (!reservation) {
+        console.log('Reservation not found:', reservationId);
+        return ApiResponseUtil.throwError(
+          'Reservation not found',
+          'RESERVATION_NOT_FOUND',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+      if (reservation.status !== ReservationStatus.HOLD) {
+        console.log('Reservation not in HOLD status:', reservationId);
+        return ApiResponseUtil.throwError(
+          'Reservation is not in HOLD status',
+          'RESERVATION_NOT_IN_HOLD',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      const user = reservation.user;
+      const userWallet = user.wallet;
+      const arenaOwnerWallet = reservation.arena.owner.wallet;
+      const adminWallet = await queryRunner.manager.findOne(Wallet, {
+        where: { id: process.env.ADMIN_WALLET_ID },
+      });
+      if (!adminWallet) {
+        console.log('Admin wallet not found');
+        return ApiResponseUtil.throwError(
+          'Admin wallet not found',
+          'ADMIN_WALLET_NOT_FOUND',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      // Update reservation status to CONFIRMED
+      reservation.status = ReservationStatus.CONFIRMED;
+
+      const transaction = await queryRunner.manager.findOne(WalletTransaction, {
+        where: {
+          referenceId: reservation.id,
+          stage: TransactionStage.HOLD,
+        },
+      });
+      if (!transaction) {
+        console.log(
+          'Associated wallet transaction not found for reservation:',
+          reservationId,
+        );
+        return ApiResponseUtil.throwError(
+          'Associated wallet transaction not found',
+          'WALLET_TRANSACTION_NOT_FOUND',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      // Update wallet transaction stage to COMPLETED
+      transaction.stage = TransactionStage.SETTLED;
+
+      // Update user wallet held amount
+      userWallet.heldAmount =
+        Number(userWallet.heldAmount || 0) - reservation.totalAmount;
+
+      // Apply admin fee and credit arena owner's wallet
+      const adminFeeRate = 0.1;
+      const amountToCredit = reservation.totalAmount * (1 - adminFeeRate);
+
+      // Create wallet transaction for arena owner
+      const ownerWalletTx = queryRunner.manager.create(WalletTransaction, {
+        wallet: arenaOwnerWallet,
+        amount: amountToCredit,
+        type: TransactionType.PAYMENT,
+        stage: TransactionStage.INSTANT,
+        referenceId: reservation.id,
+      });
+
+      arenaOwnerWallet.heldAmount =
+        Number(arenaOwnerWallet.heldAmount || 0) - reservation.totalAmount;
+      arenaOwnerWallet.balance += amountToCredit;
+
+      //  Add admin fee
+      const adminFeeTx = queryRunner.manager.create(WalletTransaction, {
+        wallet: adminWallet,
+        amount: reservation.totalAmount * adminFeeRate,
+        type: TransactionType.FEE,
+        stage: TransactionStage.INSTANT,
+        referenceId: reservation.id,
+      });
+      adminWallet.balance += reservation.totalAmount * adminFeeRate;
+
+      await queryRunner.manager.save([
+        reservation,
+        transaction,
+        userWallet,
+        arenaOwnerWallet,
+        ownerWalletTx,
+        adminWallet,
+        adminFeeTx,
+      ]);
+
+      await queryRunner.commitTransaction();
+
+      console.log('Reservation settled successfully:', reservationId);
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      console.error('Error creating reservation:', err);
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async cancelReservation(reservationId: string) {}
 
   // 🔒 Private reusable query builder
   private async findReservationsByDateRelation(

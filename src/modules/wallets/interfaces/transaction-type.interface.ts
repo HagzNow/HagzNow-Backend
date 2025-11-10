@@ -3,4 +3,5 @@ export enum TransactionType {
   WITHDRAWAL = 'withdrawal', // Owner withdraws from wallet
   PAYMENT = 'payment', // Paying for a reservation
   REFUND = 'refund', // Refund issued to user
+  FEE = 'fee', // Service fee charged
 }
