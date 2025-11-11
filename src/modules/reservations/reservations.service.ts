@@ -157,7 +157,7 @@ export class ReservationsService {
         referenceId: reservation.id,
       });
 
-      user.wallet.balance -= Number(user.wallet.balance) - totalAmount;
+      user.wallet.balance = Number(user.wallet.balance) - totalAmount;
       user.wallet.heldAmount =
         Number(user.wallet.heldAmount || 0) + totalAmount;
       arenaOwnerWallet.heldAmount =
@@ -283,7 +283,7 @@ export class ReservationsService {
 
       arenaOwnerWallet.heldAmount =
         Number(arenaOwnerWallet.heldAmount || 0) - reservation.totalAmount;
-      arenaOwnerWallet.balance +=
+      arenaOwnerWallet.balance =
         Number(arenaOwnerWallet.balance || 0) + amountToCredit;
 
       //  Add admin fee
@@ -294,7 +294,7 @@ export class ReservationsService {
         stage: TransactionStage.INSTANT,
         referenceId: reservation.id,
       });
-      adminWallet.balance +=
+      adminWallet.balance =
         (adminWallet.balance || 0) + reservation.totalAmount * adminFeeRate;
 
       await queryRunner.manager.save([
@@ -376,7 +376,7 @@ export class ReservationsService {
       const userWallet = transaction.wallet;
       userWallet.heldAmount =
         Number(userWallet.heldAmount || 0) - Number(reservation.totalAmount);
-      userWallet.balance += Number(reservation.totalAmount);
+      userWallet.balance = Number(reservation.totalAmount);
 
       // Update arena owner wallet held amount
       const arenaOwnerWallet = reservation.arena.owner.wallet;
