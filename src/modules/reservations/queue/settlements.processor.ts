@@ -1,7 +1,6 @@
 // reservations/queue/settlements.processor.ts
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Injectable } from '@nestjs/common';
-import { Reservation } from '../entities/reservation.entity';
 import { ReservationsService } from '../reservations.service';
 
 @Injectable()
@@ -12,8 +11,19 @@ export class SettlementsProcessor extends WorkerHost {
   }
 
   async process(job) {
-    if (job.name === 'settleReservation') {
-      this.reservationsService.settleReservation(job.data.reservationId);
+    try {
+      await this.reservationsService.settleReservation(job.data.reservationId);
+      return;
+    } catch (err) {
+      console.log('Settlement failed — rescheduling for later...', err);
+
+      // Reschedule after 10 minutes
+      const thirtyMin = 10 * 60 * 1000;
+
+      await job.moveToDelayed(Date.now() + thirtyMin);
+
+      // IMPORTANT: return instead of throwing, because we manually rescheduled
+      return;
     }
   }
 }
