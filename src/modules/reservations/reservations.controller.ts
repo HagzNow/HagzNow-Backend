@@ -7,13 +7,13 @@ import {
   Patch,
   Post,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import { AuthGuard } from 'src/common/guards/auth.guard';
+import { Roles } from 'src/common/decorators/roles.decorator';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { PaginationDto } from '../../common/dtos/pagination.dto';
 import { User } from '../users/entities/user.entity';
+import { UserRole } from '../users/interfaces/userRole.interface';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { ReservationDetailsDto } from './dto/reservation-details.dto';
 import { ReservationSummaryDto } from './dto/reservation-summary.dto';
@@ -25,7 +25,7 @@ export class ReservationsController {
   constructor(private readonly reservationsService: ReservationsService) {}
 
   @Serialize(ReservationDetailsDto)
-  @UseGuards(AuthGuard)
+  @Roles(UserRole.USER)
   @Post()
   create(
     @Body() createReservationDto: CreateReservationDto,
@@ -35,7 +35,7 @@ export class ReservationsController {
   }
 
   @Serialize(ReservationSummaryDto)
-  @UseGuards(AuthGuard)
+  @Roles(UserRole.USER)
   @Get('past')
   findPastReservations(
     @Query() paginationDto: PaginationDto,
@@ -45,7 +45,7 @@ export class ReservationsController {
   }
 
   @Serialize(ReservationSummaryDto)
-  @UseGuards(AuthGuard)
+  @Roles(UserRole.USER)
   @Get('upcoming')
   findUpcomingReservations(
     @Query() paginationDto: PaginationDto,
@@ -76,6 +76,7 @@ export class ReservationsController {
     return this.reservationsService.update(id, updateReservationDto);
   }
 
+  @Roles(UserRole.USER)
   @Patch('cancel/:id')
   cancel(@Param('id') id: string) {
     return this.reservationsService.cancelReservation(id);
