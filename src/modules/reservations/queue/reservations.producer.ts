@@ -1,9 +1,8 @@
 // reservations/queue/reservations.producer.ts
-import { Injectable } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
+import { Injectable } from '@nestjs/common';
 import { Queue } from 'bullmq';
 import { DateTime } from 'luxon';
-import { ConnectionIsNotSetError } from 'typeorm';
 
 @Injectable()
 export class ReservationsProducer {
@@ -22,17 +21,28 @@ export class ReservationsProducer {
 
     const delay = Math.max(0, runAt.toMillis() - Date.now());
 
-    await this.queue.add(
+    // Add job to the queue
+    const job = await this.queue.add(
       'settleReservation',
       { reservationId, amount },
       {
         jobId: `settle-${reservationId}`,
         delay,
-        attempts: 5,
-        backoff: { type: 'exponential', delay: 1000 },
+        attempts: 1,
         removeOnComplete: true,
         removeOnFail: false,
       },
     );
+
+    // Log job details to verify
+    console.log('Settlement job scheduled:', {
+      id: job.id,
+      name: job.name,
+      data: job.data,
+      delay: job.delay,
+      timestamp: job.timestamp,
+    });
+
+    return job; // Return the job so the caller can inspect it
   }
 }
