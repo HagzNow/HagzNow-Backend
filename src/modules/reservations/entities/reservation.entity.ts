@@ -29,6 +29,7 @@ export class Reservation {
 
   @ManyToOne(() => Arena, (arena) => arena.reservations, {
     onDelete: 'CASCADE',
+    eager: true,
   })
   arena: Arena;
 
