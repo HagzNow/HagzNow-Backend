@@ -12,6 +12,16 @@ export class ReservationsProducer {
     return `settle-${reservationId}`;
   }
 
+  async removeSettlement(reservationId: string) {
+    const jobId = this.getJobId(reservationId);
+    const job = await this.queue.getJob(jobId);
+
+    if (!job) return false; // nothing to remove
+
+    await job.remove();
+    return true;
+  }
+
   async scheduleSettlement(
     reservationId: string,
     runAt: DateTime, // DateTime
