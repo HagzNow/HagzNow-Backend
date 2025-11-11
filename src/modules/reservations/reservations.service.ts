@@ -1,6 +1,7 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InjectRepository } from '@nestjs/typeorm';
+import { DateTime } from 'luxon';
 import { ApiResponseUtil } from 'src/common/utils/api-response.util';
 import { paginate } from 'src/common/utils/paginate';
 import { DataSource, In, Repository } from 'typeorm';
@@ -11,6 +12,7 @@ import { Arena } from '../arenas/entities/arena.entity';
 import { ArenaStatus } from '../arenas/interfaces/arena-status.interface';
 import { User } from '../users/entities/user.entity';
 import { WalletTransaction } from '../wallets/entities/wallet-transaction.entity';
+import { Wallet } from '../wallets/entities/wallet.entity';
 import { TransactionStage } from '../wallets/interfaces/transaction-stage.interface';
 import { TransactionType } from '../wallets/interfaces/transaction-type.interface';
 import { CreateReservationDto } from './dto/create-reservation.dto';
@@ -18,8 +20,6 @@ import { UpdateReservationDto } from './dto/update-reservation.dto';
 import { Reservation } from './entities/reservation.entity';
 import { ReservationStatus } from './interfaces/reservation-status.interface';
 import { ReservationsProducer } from './queue/reservations.producer';
-import { DateTime } from 'luxon';
-import { Wallet } from '../wallets/entities/wallet.entity';
 
 @Injectable()
 export class ReservationsService {
@@ -81,7 +81,8 @@ export class ReservationsService {
           'Some extras not found for this arena',
           'ARENA_EXTRAS_NOT_FOUND',
           HttpStatus.BAD_REQUEST,
-      );
+        );
+      }
 
       const playAmount = arena.getDepositAmount(dto.slots.length);
       const extrasAmount = extras.reduce(
@@ -163,7 +164,7 @@ export class ReservationsService {
 
       const tz = 'Africa/Cairo';
       // const runAt = DateTime.fromISO(dto.date, { zone: tz }).startOf('day');
-      const runAt = DateTime.now().plus({ seconds: 200 });
+      const runAt = DateTime.now().plus({ seconds: 600 });
       await this.producer.scheduleSettlement(
         reservation.id,
         runAt,
@@ -313,7 +314,87 @@ export class ReservationsService {
     }
   }
 
-  async cancelReservation(reservationId: string) {}
+  async cancelReservation(reservationId: string) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    // Remove from the settlement queue
+    try {
+      const removed = await this.producer.removeSettlement(reservationId);
+      // In case of not removed from the queue, throw error (it means it was not found)
+      if (!removed) {
+        return ApiResponseUtil.throwError(
+          'Reservation settlement job not found in queue',
+          'SETTLEMENT_JOB_NOT_FOUND',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+      // Load reservation & update its status
+      const reservation = await queryRunner.manager.findOne(Reservation, {
+        where: { id: reservationId },
+        relations: ['user', 'arena', 'arena.owner'],
+      });
+      if (!reservation) {
+        return ApiResponseUtil.throwError(
+          'Reservation not found',
+          'RESERVATION_NOT_FOUND',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+      // Load associated wallet transaction
+      const transaction = await queryRunner.manager.findOne(WalletTransaction, {
+        where: {
+          referenceId: reservationId,
+          stage: TransactionStage.HOLD,
+        },
+        relations: ['wallet'],
+      });
+      if (!transaction) {
+        return ApiResponseUtil.throwError(
+          'Associated wallet transaction not found',
+          'WALLET_TRANSACTION_NOT_FOUND',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+      // Update reservation status to CANCELED
+      reservation.status = ReservationStatus.CANCELED;
+
+      // Add transaction for refund
+      const refundTransaction = queryRunner.manager.create(WalletTransaction, {
+        ...transaction,
+        id: undefined,
+        stage: TransactionStage.REFUND,
+      });
+
+      // Refund user wallet
+      const userWallet = transaction.wallet;
+      userWallet.heldAmount =
+        Number(userWallet.heldAmount || 0) - Number(reservation.totalAmount);
+      userWallet.balance += Number(reservation.totalAmount);
+
+      // Update arena owner wallet held amount
+      const arenaOwnerWallet = reservation.arena.owner.wallet;
+      arenaOwnerWallet.heldAmount =
+        Number(arenaOwnerWallet.heldAmount || 0) -
+        Number(reservation.totalAmount);
+
+      await queryRunner.manager.save([
+        reservation,
+        refundTransaction,
+        userWallet,
+        arenaOwnerWallet,
+      ]);
+      await queryRunner.commitTransaction();
+      console.log('Reservation canceled successfully:', reservationId);
+      return true;
+    } catch (err) {
+      console.error('Error cancelling reservation:', err);
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
+  }
 
   // 🔒 Private reusable query builder
   private async findReservationsByDateRelation(
