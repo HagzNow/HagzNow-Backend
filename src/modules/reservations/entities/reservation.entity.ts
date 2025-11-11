@@ -22,7 +22,7 @@ export class Reservation {
   id: string;
 
   @Column({ type: 'date' })
-  dateOfReservation: string;
+  dateOfReservation: Date;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

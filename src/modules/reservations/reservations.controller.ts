@@ -15,6 +15,7 @@ import { PaginationDto } from '../../common/dtos/pagination.dto';
 import { User } from '../users/entities/user.entity';
 import { UserRole } from '../users/interfaces/userRole.interface';
 import { CreateReservationDto } from './dto/create-reservation.dto';
+import { ReservationCalenderCardDto } from './dto/reservation-calender-card.dto';
 import { ReservationDetailsDto } from './dto/reservation-details.dto';
 import { ReservationSummaryDto } from './dto/reservation-summary.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
@@ -57,9 +58,27 @@ export class ReservationsController {
     );
   }
 
+  // @Get()
+  // findAll() {
+  //   return this.reservationsService.findAll();
+  // }
+
+  @Serialize(ReservationCalenderCardDto)
+  @Roles(UserRole.OWNER || UserRole.ADMIN)
   @Get()
-  findAll() {
-    return this.reservationsService.findAll();
+  async getReservationsByFilters(
+    @Query('arenaId') arenaId: string,
+    @Query('startDate') startDate: Date,
+    @Query('endDate') endDate: Date,
+    @CurrentUser() user: User,
+  ) {
+    console.log('Received Dates:', startDate, endDate);
+    return this.reservationsService.findReservationsByDateRange(
+      arenaId,
+      user,
+      startDate,
+      endDate,
+    );
   }
 
   @Serialize(ReservationDetailsDto)
