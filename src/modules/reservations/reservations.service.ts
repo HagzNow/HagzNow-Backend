@@ -376,7 +376,8 @@ export class ReservationsService {
       const userWallet = transaction.wallet;
       userWallet.heldAmount =
         Number(userWallet.heldAmount || 0) - Number(reservation.totalAmount);
-      userWallet.balance = Number(reservation.totalAmount);
+      userWallet.balance =
+        Number(userWallet.balance || 0) + Number(reservation.totalAmount);
 
       // Update arena owner wallet held amount
       const arenaOwnerWallet = reservation.arena.owner.wallet;
