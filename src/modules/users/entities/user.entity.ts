@@ -48,7 +48,7 @@ export class User {
   @Column()
   password: string;
 
-  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
 
   @OneToOne(() => Wallet, (wallet) => wallet.user, {

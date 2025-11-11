@@ -27,7 +27,7 @@ export class WalletTransaction {
   })
   stage: TransactionStage;
 
-  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
 
   @Column({ type: 'varchar', nullable: true })
