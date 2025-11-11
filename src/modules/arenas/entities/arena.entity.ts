@@ -39,7 +39,7 @@ export class Arena {
   @Column({ type: 'decimal' })
   pricePerHour: number;
 
-  @Column({ type: 'decimal', default: 20 })
+  @Column({ type: 'decimal', default: 100 })
   depositPercent: number;
 
   @Column({ type: 'text', nullable: true })
