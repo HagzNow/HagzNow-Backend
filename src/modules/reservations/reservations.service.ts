@@ -254,9 +254,12 @@ export class ReservationsService {
         );
       }
 
-      // Update wallet transaction stage to COMPLETED
-      transaction.stage = TransactionStage.SETTLED;
-
+      // Add transaction for settled
+      const settledTransaction = queryRunner.manager.create(WalletTransaction, {
+        ...transaction,
+        id: undefined,
+        stage: TransactionStage.SETTLED,
+      });
       // Update user wallet held amount
       userWallet.heldAmount =
         Number(userWallet.heldAmount || 0) - reservation.totalAmount;
