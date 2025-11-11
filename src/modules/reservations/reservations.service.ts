@@ -72,9 +72,15 @@ export class ReservationsService {
           HttpStatus.BAD_REQUEST,
         );
       }
-      const extras = await queryRunner.manager.findByIds(
-        ArenaExtra,
-        dto.extras || [],
+      const extras = await queryRunner.manager.findBy(ArenaExtra, {
+        id: In(dto.extras || []),
+        arena: { id: dto.arenaId },
+      });
+      if (extras.length !== (dto.extras || []).length) {
+        return ApiResponseUtil.throwError(
+          'Some extras not found for this arena',
+          'ARENA_EXTRAS_NOT_FOUND',
+          HttpStatus.BAD_REQUEST,
       );
 
       const playAmount = arena.getDepositAmount(dto.slots.length);
