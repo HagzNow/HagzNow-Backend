@@ -4,13 +4,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DateTime } from 'luxon';
 import { ApiResponseUtil } from 'src/common/utils/api-response.util';
 import { paginate } from 'src/common/utils/paginate';
-import { DataSource, In, Repository } from 'typeorm';
+import { Between, DataSource, In, Repository } from 'typeorm';
 import { PaginationDto } from '../../common/dtos/pagination.dto';
+import { ArenasService } from '../arenas/arenas.service';
 import { ArenaExtra } from '../arenas/entities/arena-extra.entity';
 import { ArenaSlot } from '../arenas/entities/arena-slot.entity';
 import { Arena } from '../arenas/entities/arena.entity';
 import { ArenaStatus } from '../arenas/interfaces/arena-status.interface';
 import { User } from '../users/entities/user.entity';
+import { UserRole } from '../users/interfaces/userRole.interface';
 import { WalletTransaction } from '../wallets/entities/wallet-transaction.entity';
 import { Wallet } from '../wallets/entities/wallet.entity';
 import { TransactionStage } from '../wallets/interfaces/transaction-stage.interface';
@@ -32,6 +34,7 @@ export class ReservationsService {
     @InjectRepository(Reservation)
     private reservationRepository: Repository<Reservation>,
     private readonly eventEmitter: EventEmitter2,
+    private readonly arenasService: ArenasService,
   ) {}
   async create(dto: CreateReservationDto, userId: string) {
     const queryRunner = this.dataSource.createQueryRunner();
@@ -154,7 +157,7 @@ export class ReservationsService {
         referenceId: reservation.id,
       });
 
-      user.wallet.balance -= totalAmount;
+      user.wallet.balance -= Number(user.wallet.balance) - totalAmount;
       user.wallet.heldAmount =
         Number(user.wallet.heldAmount || 0) + totalAmount;
       arenaOwnerWallet.heldAmount =
@@ -280,7 +283,8 @@ export class ReservationsService {
 
       arenaOwnerWallet.heldAmount =
         Number(arenaOwnerWallet.heldAmount || 0) - reservation.totalAmount;
-      arenaOwnerWallet.balance += amountToCredit;
+      arenaOwnerWallet.balance +=
+        Number(arenaOwnerWallet.balance || 0) + amountToCredit;
 
       //  Add admin fee
       const adminFeeTx = queryRunner.manager.create(WalletTransaction, {
@@ -290,7 +294,8 @@ export class ReservationsService {
         stage: TransactionStage.INSTANT,
         referenceId: reservation.id,
       });
-      adminWallet.balance += reservation.totalAmount * adminFeeRate;
+      adminWallet.balance +=
+        (adminWallet.balance || 0) + reservation.totalAmount * adminFeeRate;
 
       await queryRunner.manager.save([
         reservation,
@@ -430,6 +435,37 @@ export class ReservationsService {
     return this.findReservationsByDateRelation(user, paginationDto, true);
   }
 
+  async findReservationsByDateRange(
+    arenaId: string,
+    user: User,
+    startDate: Date,
+    endDate: Date,
+  ) {
+    const arena = await this.arenasService.findOne(arenaId);
+    if (!arena) {
+      return ApiResponseUtil.throwError(
+        'Arena not found',
+        'ARENA_NOT_FOUND',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    if (arena.owner.id !== user.id || user.role !== UserRole.ADMIN) {
+      return ApiResponseUtil.throwError(
+        'Unauthorized access to arena reservations',
+        'UNAUTHORIZED_ACCESS',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+    const reservations = await this.reservationRepository.find({
+      where: {
+        arena: { id: arenaId },
+        dateOfReservation: Between(startDate, endDate),
+      },
+    });
+
+    return reservations;
+  }
+
   async findOne(id: string) {
     if (!id) return null;
     return await this.reservationRepository.findOneBy({ id });
@@ -441,5 +477,9 @@ export class ReservationsService {
 
   remove(id: string) {
     return `This action removes a #${id} reservation`;
+  }
+  stringToDate(dateStr: string): Date {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day); // month is 0-based in JS Date
   }
 }
