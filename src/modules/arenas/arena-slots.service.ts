@@ -6,6 +6,7 @@ import { ApiResponseUtil } from 'src/common/utils/api-response.util';
 import { Repository } from 'typeorm';
 import { ArenaSlot } from './entities/arena-slot.entity';
 import { Arena } from './entities/arena.entity';
+import { ArenasService } from './arenas.service';
 
 @Injectable()
 export class ArenaSlotsService {
@@ -15,6 +16,8 @@ export class ArenaSlotsService {
 
     @InjectRepository(Arena)
     private readonly arenaRepo: Repository<Arena>,
+
+    private readonly arenasService: ArenasService,
   ) {}
 
   async getAvailableSlots(arenaId: string, date: string) {
@@ -61,5 +64,21 @@ export class ArenaSlotsService {
       date,
       availableHours,
     };
+  }
+
+  async getOccupancyRate(ownerId: string) {
+    const bookedSlotsCount = await this.slotRepo
+      .createQueryBuilder('slot')
+      .innerJoin('slot.arena', 'arena')
+      .where('arena.ownerId = :ownerId', { ownerId })
+      .getCount();
+
+    const totalSlotsCount =
+      await this.arenasService.getTotalArenaSlotsCount(ownerId);
+
+    const occupancyRate =
+      totalSlotsCount === 0 ? 0 : (bookedSlotsCount / totalSlotsCount) * 100;
+
+    return occupancyRate;
   }
 }
