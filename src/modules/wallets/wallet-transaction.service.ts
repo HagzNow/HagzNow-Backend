@@ -129,4 +129,18 @@ export class WalletTransactionService {
   async prcessFailedTransaction(referenceId: string) {
     return await this.updateByRefernceId(referenceId, TransactionStage.FAILED);
   }
+
+  async getTotalTransactionsAmountByUserId(userId: string) {
+    const result = await this.walletTransactionRepository
+      .createQueryBuilder('transaction')
+      .leftJoin('transaction.wallet', 'wallet')
+      .where('wallet.userId = :userId', { userId })
+      .andWhere('transaction.stage = :stage', {
+        stage: TransactionStage.SETTLED,
+      })
+      .select('SUM(transaction.amount)', 'total')
+      .getRawOne();
+
+    return result.total || 0;
+  }
 }
