@@ -130,13 +130,38 @@ export class WalletTransactionService {
     return await this.updateByRefernceId(referenceId, TransactionStage.FAILED);
   }
 
-  async getTotalTransactionsAmountByUserId(userId: string) {
+  async getTotalTransactionsAmountByUserId(
+    userId: string,
+    startDate?: Date,
+    endDate?: Date,
+  ) {
+    const today = new Date();
+    // Set default date range to last month to today if not provided
+    if (!startDate) {
+      startDate = new Date(
+        today.getFullYear(),
+        today.getMonth() - 1,
+        today.getDate() + 1, // ✔ correct
+      );
+    }
+    if (!endDate) {
+      endDate = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate() + 1,
+      );
+    }
+    // Query to calculate total amount
     const result = await this.walletTransactionRepository
       .createQueryBuilder('transaction')
       .leftJoin('transaction.wallet', 'wallet')
-      .where('wallet.userId = :userId', { userId })
+      .where('transaction.userId = :userId', { userId })
       .andWhere('transaction.stage = :stage', {
         stage: TransactionStage.SETTLED,
+      })
+      .andWhere('transaction.createdAt BETWEEN :startDate AND :endDate', {
+        startDate,
+        endDate,
       })
       .select('SUM(transaction.amount)', 'total')
       .getRawOne();

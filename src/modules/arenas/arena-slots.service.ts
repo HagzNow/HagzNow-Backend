@@ -66,19 +66,82 @@ export class ArenaSlotsService {
     };
   }
 
-  async getOccupancyRate(ownerId: string) {
+  async getOccupancyRate(ownerId: string, startDate?: Date, endDate?: Date) {
+    // Set default date range to last month to today if not provided
+    const today = new Date();
+    if (!startDate) {
+      startDate = new Date(
+        today.getFullYear(),
+        today.getMonth() - 1,
+        today.getDate() + 1, // ✔ correct
+      );
+    }
+    if (!endDate) {
+      endDate = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate() + 1,
+      );
+    }
+
+    // Step 1: Get count of booked slots for arenas owned by the owner in the date range/
     const bookedSlotsCount = await this.slotRepo
       .createQueryBuilder('slot')
       .innerJoin('slot.arena', 'arena')
       .where('arena.ownerId = :ownerId', { ownerId })
+      .andWhere('slot.isCanceled = :isCanceled', { isCanceled: false })
+      .andWhere('slot.date BETWEEN :startDate AND :endDate', {
+        startDate,
+        endDate,
+      })
       .getCount();
 
+    // Step 2: Get total available slots for arenas owned by the owner in the date range
     const totalSlotsCount =
       await this.arenasService.getTotalArenaSlotsCount(ownerId);
 
+    // Step 3: Calculate occupancy rate
     const occupancyRate =
       totalSlotsCount === 0 ? 0 : (bookedSlotsCount / totalSlotsCount) * 100;
 
     return occupancyRate;
+  }
+
+  async getPopularBookingTimes(
+    ownerId: string,
+    startDate?: Date,
+    endDate?: Date,
+  ) {
+    // Set default date range to last month to today if not provided
+    if (!startDate) {
+      const today = new Date();
+      startDate = new Date(
+        today.getFullYear(),
+        today.getMonth() - 1,
+        today.getDay(),
+      );
+    }
+    if (!endDate) {
+      const today = new Date();
+      endDate = new Date(today.getFullYear(), today.getMonth(), today.getDay());
+    }
+
+    // Query to get popular booking times
+    const result = await this.slotRepo
+      .createQueryBuilder('slot')
+      .innerJoin('slot.arena', 'arena')
+      .where('arena.ownerId = :ownerId', { ownerId })
+      .andWhere('slot.isCanceled = :isCanceled', { isCanceled: false })
+      .andWhere('slot.date BETWEEN :startDate AND :endDate', {
+        startDate,
+        endDate,
+      })
+      .select('slot.hour', 'hour')
+      .addSelect('COUNT(slot.id)', 'bookingCount')
+      .groupBy('slot.hour')
+      .orderBy('COUNT(slot.id)', 'DESC')
+      .getRawMany();
+
+    return result;
   }
 }

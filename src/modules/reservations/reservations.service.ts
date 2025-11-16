@@ -490,15 +490,39 @@ export class ReservationsService {
     return `This action removes a #${id} reservation`;
   }
 
-  async getNumberOfReservationsByOwner(ownerId: string) {
-    // Get count of reservations for arenas owned by the owner in the past month
+  async getNumberOfReservationsByOwner(
+    ownerId: string,
+    startDate?: Date,
+    endDate?: Date,
+  ) {
+    const today = new Date();
+    // Set default date range to last month to today if not provided
+    if (!startDate) {
+      startDate = new Date(
+        today.getFullYear(),
+        today.getMonth() - 1,
+        today.getDate() + 1, // ✔ correct
+      );
+    }
+    if (!endDate) {
+      endDate = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate() + 1,
+      );
+    }
+    // Get count of reservations for arenas owned by the owner in the date range
     const count = await this.reservationRepository
       .createQueryBuilder('reservation')
       .leftJoin('reservation.arena', 'arena')
-      .where('reservation.dateOfReservation >= :oneMonthAgo', {
-        oneMonthAgo: new Date(new Date().setMonth(new Date().getMonth() - 1)),
+      .where('reservation.dateOfReservation BETWEEN :startDate AND :endDate', {
+        startDate,
+        endDate,
       })
-      .where('arena.ownerId = :ownerId', { ownerId })
+      .andWhere('arena.ownerId = :ownerId', { ownerId })
+      .andWhere('reservation.status != :status', {
+        status: ReservationStatus.CANCELED,
+      })
       .getCount();
 
     return count;

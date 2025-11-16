@@ -187,13 +187,35 @@ export class ArenasService {
     return await this.arenaRepository.delete(id);
   }
 
-  async getTotalArenaSlotsCount(ownerId: string) {
+  async getTotalArenaSlotsCount(
+    ownerId: string,
+    startDate?: Date,
+    endDate?: Date,
+  ) {
+    const today = new Date();
+    // Set default date range to last month to today if not provided
+    if (!startDate) {
+      startDate = new Date(
+        today.getFullYear(),
+        today.getMonth() - 1,
+        today.getDate() + 1, // ✔ correct
+      );
+    }
+    if (!endDate) {
+      endDate = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate() + 1,
+      );
+    }
+    const totalDays =
+      (endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24) + 1;
     const arenas = await this.arenaRepository
       .createQueryBuilder('arena')
       .where('arena.ownerId = :ownerId', { ownerId })
       .getMany();
     const totalAvailableSlots = arenas.reduce((total, arena) => {
-      return total + arena.totalAvailableHours();
+      return total + arena.totalAvailableHours() * totalDays;
     }, 0);
     return totalAvailableSlots;
   }
