@@ -463,6 +463,7 @@ export class ReservationsService {
       where: {
         arena: { id: arenaId },
         dateOfReservation: Between(startDate, endDate),
+        status: In([ReservationStatus.HOLD, ReservationStatus.CONFIRMED]),
       },
     });
 
