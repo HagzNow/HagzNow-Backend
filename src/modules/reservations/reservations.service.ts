@@ -109,7 +109,7 @@ export class ReservationsService {
           arena: { id: dto.arenaId },
           date: dto.date,
           hour: In(dto.slots),
-          // isCanceled: false,
+          isCanceled: false,
         },
       });
 
@@ -143,6 +143,7 @@ export class ReservationsService {
           reservation,
           date: dto.date,
           hour,
+          isCanceled: false,
         });
         await queryRunner.manager.save(slot);
         addedSlots.push(slot);
@@ -339,7 +340,7 @@ export class ReservationsService {
       // Load reservation & update its status
       const reservation = await queryRunner.manager.findOne(Reservation, {
         where: { id: reservationId },
-        relations: ['user', 'arena', 'arena.owner'],
+        relations: ['user', 'arena', 'arena.owner', 'slots'],
       });
       if (!reservation) {
         return ApiResponseUtil.throwError(
@@ -366,6 +367,11 @@ export class ReservationsService {
       // Update reservation status to CANCELED
       reservation.status = ReservationStatus.CANCELED;
 
+      // Mark all slots as canceled
+      for (const slot of reservation.slots) {
+        slot.isCanceled = true;
+      }
+
       // Add transaction for refund
       const refundTransaction = queryRunner.manager.create(WalletTransaction, {
         ...transaction,
@@ -389,6 +395,7 @@ export class ReservationsService {
 
       await queryRunner.manager.save([
         reservation,
+        ...reservation.slots,
         refundTransaction,
         userWallet,
         arenaOwnerWallet,

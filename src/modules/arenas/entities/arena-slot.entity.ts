@@ -9,7 +9,9 @@ import {
 import { Arena } from './arena.entity';
 
 @Entity('arena_slots')
-@Index('unique_arena_date_hour', ['arena', 'date', 'hour'], { unique: true })
+@Index('unique_arena_date_hour', ['arena', 'date', 'hour', 'isCanceled'], {
+  unique: true,
+})
 export class ArenaSlot {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -19,6 +21,9 @@ export class ArenaSlot {
 
   @Column({ type: 'int', unsigned: true })
   hour: number;
+
+  @Column({ default: false })
+  isCanceled: boolean;
 
   @ManyToOne(() => Arena, (arena) => arena.slots, { onDelete: 'CASCADE' })
   arena: Arena;
