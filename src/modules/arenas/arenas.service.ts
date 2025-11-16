@@ -119,6 +119,12 @@ export class ArenasService {
     this.applyFilters(query, filters);
     return await paginate(query, paginationDto);
   }
+  async getNumberOfArenasByOwner(ownerId: string) {
+    const count = await this.arenaRepository.count({
+      where: { owner: { id: ownerId } },
+    });
+    return count;
+  }
 
   async findNamesByOwner(ownerId: string) {
     return await this.arenaRepository
@@ -179,6 +185,17 @@ export class ArenasService {
 
   async remove(id: string) {
     return await this.arenaRepository.delete(id);
+  }
+
+  async getTotalArenaSlotsCount(ownerId: string) {
+    const arenas = await this.arenaRepository
+      .createQueryBuilder('arena')
+      .where('arena.ownerId = :ownerId', { ownerId })
+      .getMany();
+    const totalAvailableSlots = arenas.reduce((total, arena) => {
+      return total + arena.totalAvailableHours();
+    }, 0);
+    return totalAvailableSlots;
   }
 
   private applyFilters<T extends ObjectLiteral>(
