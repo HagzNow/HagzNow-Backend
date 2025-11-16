@@ -94,4 +94,8 @@ export class Arena {
     const totalPrice = this.pricePerHour * totalHours;
     return (totalPrice * this.depositPercent) / 100;
   }
+
+  totalAvailableHours(): number {
+    return this.closingHour - this.openingHour;
+  }
 }
