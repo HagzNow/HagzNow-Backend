@@ -2,6 +2,7 @@ import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { TransactionStage } from '../interfaces/transaction-stage.interface';
 import { TransactionType } from '../interfaces/transaction-type.interface';
 import { Wallet } from './wallet.entity';
+import { User } from '../../users/entities/user.entity';
 
 @Entity('wallet_transactions')
 export class WalletTransaction {
@@ -32,6 +33,9 @@ export class WalletTransaction {
     eager: true,
   })
   wallet: Wallet;
+
+  @ManyToOne(() => User, { onDelete: 'RESTRICT', eager: false })
+  user: User;
 
   // @Column({ unique: true, nullable: true })
   // orderId: number;

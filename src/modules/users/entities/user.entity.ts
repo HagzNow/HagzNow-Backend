@@ -15,6 +15,7 @@ import {
 } from 'typeorm';
 import { UserRole } from '../interfaces/userRole.interface';
 import { UserStatus } from '../interfaces/userStatus.interface';
+import { WalletTransaction } from 'src/modules/wallets/entities/wallet-transaction.entity';
 
 @Entity('users')
 export class User {
@@ -66,6 +67,9 @@ export class User {
     nullable: true,
   })
   arenas?: Arena[];
+
+  @OneToMany(() => WalletTransaction, (transaction) => transaction.user)
+  transactions: WalletTransaction[];
 
   @UpdateDateColumn({
     type: 'timestamp',
