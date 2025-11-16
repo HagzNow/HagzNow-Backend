@@ -452,7 +452,7 @@ export class ReservationsService {
         HttpStatus.NOT_FOUND,
       );
     }
-    if (arena.owner.id !== user.id || user.role !== UserRole.ADMIN) {
+    if (arena.owner.id !== user.id && user.role !== UserRole.ADMIN) {
       return ApiResponseUtil.throwError(
         'Unauthorized access to arena reservations',
         'UNAUTHORIZED_ACCESS',
