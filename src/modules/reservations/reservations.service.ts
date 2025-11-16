@@ -489,6 +489,20 @@ export class ReservationsService {
   remove(id: string) {
     return `This action removes a #${id} reservation`;
   }
+
+  async getNumberOfReservationsByOwner(ownerId: string) {
+    // Get count of reservations for arenas owned by the owner in the past month
+    const count = await this.reservationRepository
+      .createQueryBuilder('reservation')
+      .leftJoin('reservation.arena', 'arena')
+      .where('reservation.dateOfReservation >= :oneMonthAgo', {
+        oneMonthAgo: new Date(new Date().setMonth(new Date().getMonth() - 1)),
+      })
+      .where('arena.ownerId = :ownerId', { ownerId })
+      .getCount();
+
+    return count;
+  }
   stringToDate(dateStr: string): Date {
     const [year, month, day] = dateStr.split('-').map(Number);
     return new Date(year, month - 1, day); // month is 0-based in JS Date
