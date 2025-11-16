@@ -5,11 +5,18 @@ import { Arena } from '../arenas/entities/arena.entity';
 import { User } from '../users/entities/user.entity';
 import { OwnersController } from './owners.controller';
 import { OwnersService } from './owners.service';
+import { Reservation } from '../reservations/entities/reservation.entity';
+import { ReservationsModule } from '../reservations/reservations.module';
+import { WalletModule } from '../wallets/wallets.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, Arena]),
     forwardRef(() => ArenasModule),
+    ArenasModule,
+    ReservationsModule,
+    WalletModule,
+    Arena,
   ],
   controllers: [OwnersController],
   providers: [OwnersService],

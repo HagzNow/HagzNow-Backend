@@ -24,6 +24,6 @@ import { Arena } from './entities/arena.entity';
   ],
   controllers: [ArenasController, ArenaSlotsController],
   providers: [ArenasService, ArenaSlotsService],
-  exports: [ArenasService],
+  exports: [ArenasService, ArenaSlotsService],
 })
 export class ArenasModule {}

@@ -22,5 +22,6 @@ import { ReservationsService } from './reservations.service';
     ReservationsProducer, // <-- add
     SettlementsProcessor,
   ], // <-- add (so the processor is discovered)],
+  exports: [ReservationsService],
 })
 export class ReservationsModule {}

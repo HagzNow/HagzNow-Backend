@@ -25,5 +25,6 @@ import { WalletTransactionController } from './wallet-transaction.controller';
     PaymobService,
     WalletTransactionService,
   ],
+  exports: [WalletsService, WalletTransactionService],
 })
 export class WalletModule {}
