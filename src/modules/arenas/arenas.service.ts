@@ -220,6 +220,50 @@ export class ArenasService {
     return totalAvailableSlots;
   }
 
+  async getMostReservedArenaByOwner(
+    ownerId: string,
+    startDate?: Date,
+    endDate?: Date,
+  ) {
+    const today = new Date();
+    // Set default date range to last month to today if not provided
+    if (!startDate) {
+      startDate = new Date(
+        today.getFullYear(),
+        today.getMonth() - 1,
+        today.getDate() + 1, // ✔ correct
+      );
+    }
+    if (!endDate) {
+      endDate = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate() + 1,
+      );
+    }
+
+    const result = await this.arenaRepository
+      .createQueryBuilder('arena')
+      .leftJoin('arena.reservations', 'reservation')
+      .where('arena.ownerId = :ownerId', { ownerId })
+      .andWhere(
+        'reservation.dateOfReservation BETWEEN :startDate AND :endDate',
+        {
+          startDate,
+          endDate,
+        },
+      )
+      .select('arena.id', 'arenaId')
+      .addSelect('arena.name', 'arenaName')
+      .addSelect('COUNT(reservation.id)', 'reservationCount')
+      .groupBy('arena.id')
+      .orderBy('COUNT(reservation.id)', 'DESC')
+      .limit(1)
+      .getRawOne();
+
+    return result;
+  }
+
   private applyFilters<T extends ObjectLiteral>(
     query: SelectQueryBuilder<T>,
     filters: ArenaFilterDto,
