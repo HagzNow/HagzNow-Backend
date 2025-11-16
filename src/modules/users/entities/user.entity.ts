@@ -6,7 +6,6 @@ import {
   BeforeInsert,
   BeforeUpdate,
   Column,
-  CreateDateColumn,
   Entity,
   JoinColumn,
   OneToMany,
@@ -48,7 +47,7 @@ export class User {
   @Column()
   password: string;
 
-  @CreateDateColumn({ type: 'timestamp', update: false })
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
   @OneToOne(() => Wallet, (wallet) => wallet.user, {

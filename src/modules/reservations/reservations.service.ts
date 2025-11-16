@@ -262,6 +262,7 @@ export class ReservationsService {
       const settledTransaction = queryRunner.manager.create(WalletTransaction, {
         ...transaction,
         id: undefined,
+        createdAt: undefined,
         stage: TransactionStage.SETTLED,
       });
       // Update user wallet held amount
@@ -369,6 +370,7 @@ export class ReservationsService {
       const refundTransaction = queryRunner.manager.create(WalletTransaction, {
         ...transaction,
         id: undefined,
+        createdAt: undefined,
         stage: TransactionStage.REFUND,
       });
 

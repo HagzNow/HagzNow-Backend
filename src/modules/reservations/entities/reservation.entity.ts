@@ -5,7 +5,6 @@ import { Arena } from 'src/modules/arenas/entities/arena.entity';
 import { User } from 'src/modules/users/entities/user.entity';
 import {
   Column,
-  CreateDateColumn,
   Entity,
   JoinTable,
   ManyToMany,
@@ -24,7 +23,7 @@ export class Reservation {
   @Column({ type: 'date' })
   dateOfReservation: Date;
 
-  @CreateDateColumn({ name: 'created_at' })
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
   @ManyToOne(() => Arena, (arena) => arena.reservations, {

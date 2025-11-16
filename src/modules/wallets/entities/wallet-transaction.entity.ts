@@ -1,10 +1,4 @@
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { TransactionStage } from '../interfaces/transaction-stage.interface';
 import { TransactionType } from '../interfaces/transaction-type.interface';
 import { Wallet } from './wallet.entity';
@@ -27,7 +21,7 @@ export class WalletTransaction {
   })
   stage: TransactionStage;
 
-  @CreateDateColumn({ type: 'timestamp', update: false })
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
   @Column({ type: 'varchar', nullable: true })
