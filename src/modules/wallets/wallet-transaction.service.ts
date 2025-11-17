@@ -4,7 +4,7 @@ import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { ApiResponseUtil } from 'src/common/utils/api-response.util';
 import { paginate } from 'src/common/utils/paginate';
 import { applySorting } from 'src/common/utils/sort.util';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 import { User } from '../users/entities/user.entity';
 import { CreateWalletTransactionDto } from './dto/create-wallet-transaction.dto';
 import { WalletTransaction } from './entities/wallet-transaction.entity';
@@ -23,8 +23,12 @@ export class WalletTransactionService {
   async create(
     createWalletTransactionDto: CreateWalletTransactionDto,
     user: User,
+    manager?: EntityManager,
   ) {
-    const wallet = await this.walletService.findOneByUserId(user.id);
+    const repo = manager
+      ? manager.getRepository(WalletTransaction)
+      : this.walletTransactionRepository;
+    const wallet = await this.walletService.findOneByUserId(user.id, manager);
     if (!wallet) {
       return ApiResponseUtil.throwError(
         'Wallet not found for this user',
@@ -33,12 +37,12 @@ export class WalletTransactionService {
       );
     }
 
-    const newWalletTransaction = this.walletTransactionRepository.create({
+    const newWalletTransaction = repo.create({
       wallet,
       ...createWalletTransactionDto,
       user,
     });
-    return await this.walletTransactionRepository.save(newWalletTransaction);
+    return await repo.save(newWalletTransaction);
   }
 
   async findAll(paginationDto: PaginationDto, user: User) {
