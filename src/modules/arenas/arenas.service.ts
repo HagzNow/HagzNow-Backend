@@ -12,6 +12,8 @@ import { paginate } from 'src/common/utils/paginate';
 import { applySorting } from 'src/common/utils/sort.util';
 import {
   DeepPartial,
+  EntityManager,
+  In,
   ObjectLiteral,
   Repository,
   SelectQueryBuilder,
@@ -134,15 +136,53 @@ export class ArenasService {
       .getRawMany();
   }
 
-  async findOne(id: string) {
-    if (!id) return null;
-    return await this.arenaRepository.findOneBy({ id });
+  async findOne(id: string, manager?: EntityManager) {
+    // In case id is undefined or null without this it will return first value
+    if (!id)
+      return ApiResponseUtil.throwError(
+        'Arena not found',
+        'ARENA_NOT_FOUND',
+        HttpStatus.NOT_FOUND,
+      );
+
+    const repo = manager ? manager.getRepository(Arena) : this.arenaRepository;
+    const arena = await repo.findOneBy({ id });
+    if (!arena) {
+      return ApiResponseUtil.throwError(
+        'Arena not found',
+        'ARENA_NOT_FOUND',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    return arena;
   }
 
   async getActiveExtras(arenaId: string) {
     return this.extraRepository.find({
       where: { arena: { id: arenaId }, isActive: true },
     });
+  }
+
+  async findArenaExtrasByIds(
+    arenaId: string,
+    extraIds: string[],
+    manager?: EntityManager,
+  ) {
+    const repo = manager
+      ? manager.getRepository(ArenaExtra)
+      : this.extraRepository;
+    const extras = await repo.findBy({
+      arena: { id: arenaId },
+      id: In(extraIds || []),
+    });
+    if (extras.length !== (extraIds || []).length) {
+      return ApiResponseUtil.throwError(
+        'Some extras not found for this arena',
+        'ARENA_EXTRAS_NOT_FOUND',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    return extras;
   }
 
   async update(id: string, updateArenaDto: UpdateArenaDto) {
