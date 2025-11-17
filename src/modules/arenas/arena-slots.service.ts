@@ -3,10 +3,11 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ApiResponseUtil } from 'src/common/utils/api-response.util';
-import { Repository } from 'typeorm';
+import { EntityManager, In, Repository } from 'typeorm';
+import { Reservation } from '../reservations/entities/reservation.entity';
+import { ArenasService } from './arenas.service';
 import { ArenaSlot } from './entities/arena-slot.entity';
 import { Arena } from './entities/arena.entity';
-import { ArenasService } from './arenas.service';
 
 @Injectable()
 export class ArenaSlotsService {
@@ -19,6 +20,26 @@ export class ArenaSlotsService {
 
     private readonly arenasService: ArenasService,
   ) {}
+
+  async createSlots(
+    arena: Arena,
+    reservation: Reservation,
+    date: string,
+    hours: number[],
+    manager?: EntityManager,
+  ) {
+    const repo = manager ? manager.getRepository(ArenaSlot) : this.slotRepo;
+    const slots: ArenaSlot[] = hours.map((hour) =>
+      repo.create({
+        arena,
+        reservation,
+        date,
+        hour,
+        isCanceled: false,
+      }),
+    );
+    return await repo.save(slots);
+  }
 
   async getAvailableSlots(arenaId: string, date: string) {
     // Step 0: validate date
@@ -64,6 +85,32 @@ export class ArenaSlotsService {
       date,
       availableHours,
     };
+  }
+
+  async checkIfSlotsBooked(
+    arenaId: string,
+    date: string,
+    hours: number[],
+    manager?: EntityManager,
+  ) {
+    const repo = manager ? manager.getRepository(ArenaSlot) : this.slotRepo;
+    const bookedSlots = await repo.find({
+      where: {
+        arena: { id: arenaId },
+        date,
+        hour: In(hours),
+        isCanceled: false,
+      },
+    });
+    if (bookedSlots.length > 0) {
+      const bookedHours = bookedSlots.map((s) => s.hour);
+      return ApiResponseUtil.throwError(
+        `Some slots are already booked for this arena: ${bookedHours.join(', ')}`,
+        'SLOTS_ALREADY_BOOKED',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    return;
   }
 
   async getOccupancyRate(ownerId: string, startDate?: Date, endDate?: Date) {
