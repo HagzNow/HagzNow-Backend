@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { User } from '../users/entities/user.entity';
 import { Wallet } from './entities/wallet.entity';
 
@@ -30,8 +30,11 @@ export class WalletsService {
     return `This action returns a #${id} wallet`;
   }
 
-  findOneByUserId(userId: string) {
-    return this.walletRepository.findOne({ where: { user: { id: userId } } });
+  findOneByUserId(userId: string, manager?: EntityManager) {
+    const repo = manager
+      ? manager.getRepository(Wallet)
+      : this.walletRepository;
+    return repo.findOne({ where: { user: { id: userId } } });
   }
 
   update(userId: string, balance: number) {
