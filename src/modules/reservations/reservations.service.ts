@@ -13,7 +13,6 @@ import { ArenaStatus } from '../arenas/interfaces/arena-status.interface';
 import { User } from '../users/entities/user.entity';
 import { UserRole } from '../users/interfaces/userRole.interface';
 import { UsersService } from '../users/users.service';
-import { WalletTransaction } from '../wallets/entities/wallet-transaction.entity';
 import { Wallet } from '../wallets/entities/wallet.entity';
 import { TransactionStage } from '../wallets/interfaces/transaction-stage.interface';
 import { TransactionType } from '../wallets/interfaces/transaction-type.interface';
@@ -338,20 +337,12 @@ export class ReservationsService {
         );
       }
       // Load associated wallet transaction
-      const transaction = await queryRunner.manager.findOne(WalletTransaction, {
-        where: {
-          referenceId: reservationId,
-          stage: TransactionStage.HOLD,
-        },
-        relations: ['wallet'],
-      });
-      if (!transaction) {
-        return ApiResponseUtil.throwError(
-          'Associated wallet transaction not found',
-          'WALLET_TRANSACTION_NOT_FOUND',
-          HttpStatus.NOT_FOUND,
+      const transaction =
+        await this.walletTransactionService.findOneByReferenceId(
+          reservation.id,
+          queryRunner.manager,
         );
-      }
+
       // Update reservation status to CANCELED
       reservation.status = ReservationStatus.CANCELED;
 
@@ -361,12 +352,15 @@ export class ReservationsService {
       }
 
       // Add transaction for refund
-      const refundTransaction = queryRunner.manager.create(WalletTransaction, {
-        ...transaction,
-        id: undefined,
-        createdAt: undefined,
-        stage: TransactionStage.REFUND,
-      });
+      const refundTransaction = await this.walletTransactionService.create(
+        {
+          ...transaction,
+          stage: TransactionStage.REFUND,
+          type: TransactionType.REFUND,
+        },
+        reservation.user,
+        queryRunner.manager,
+      );
 
       // Refund user wallet
       const userWallet = transaction.wallet;
