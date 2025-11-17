@@ -1,4 +1,5 @@
 import { Expose, Transform } from 'class-transformer';
+import { ReservationStatus } from '../interfaces/reservation-status.interface';
 
 export class ReservationSummaryDto {
   @Expose()
@@ -21,4 +22,7 @@ export class ReservationSummaryDto {
 
   @Expose()
   totalAmount: number;
+
+  @Expose()
+  status: ReservationStatus;
 }

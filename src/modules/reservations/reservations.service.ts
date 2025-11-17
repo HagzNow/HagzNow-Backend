@@ -430,6 +430,9 @@ export class ReservationsService {
           : 'reservation.dateOfReservation >= :today',
         { today },
       )
+      .andWhere('reservation.status = :status', {
+        status: ReservationStatus.CONFIRMED,
+      })
       .orderBy('reservation.dateOfReservation', isPast ? 'DESC' : 'ASC');
 
     return await paginate(query, paginationDto);
