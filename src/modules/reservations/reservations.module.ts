@@ -3,6 +3,8 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ArenasModule } from '../arenas/arenas.module';
 import { AuthModule } from '../auth/auth.module';
+import { UsersModule } from '../users/users.module';
+import { WalletModule } from '../wallets/wallets.module';
 import { Reservation } from './entities/reservation.entity';
 import { ReservationsProducer } from './queue/reservations.producer';
 import { SettlementsProcessor } from './queue/settlements.processor';
@@ -15,6 +17,8 @@ import { ReservationsService } from './reservations.service';
     TypeOrmModule.forFeature([Reservation]),
     ArenasModule,
     AuthModule,
+    UsersModule,
+    WalletModule,
   ],
   controllers: [ReservationsController],
   providers: [

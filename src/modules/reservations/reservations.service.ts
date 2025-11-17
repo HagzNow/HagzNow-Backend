@@ -6,17 +6,18 @@ import { ApiResponseUtil } from 'src/common/utils/api-response.util';
 import { paginate } from 'src/common/utils/paginate';
 import { Between, DataSource, In, Repository } from 'typeorm';
 import { PaginationDto } from '../../common/dtos/pagination.dto';
+import { ArenaSlotsService } from '../arenas/arena-slots.service';
 import { ArenasService } from '../arenas/arenas.service';
-import { ArenaExtra } from '../arenas/entities/arena-extra.entity';
 import { ArenaSlot } from '../arenas/entities/arena-slot.entity';
-import { Arena } from '../arenas/entities/arena.entity';
 import { ArenaStatus } from '../arenas/interfaces/arena-status.interface';
 import { User } from '../users/entities/user.entity';
 import { UserRole } from '../users/interfaces/userRole.interface';
+import { UsersService } from '../users/users.service';
 import { WalletTransaction } from '../wallets/entities/wallet-transaction.entity';
 import { Wallet } from '../wallets/entities/wallet.entity';
 import { TransactionStage } from '../wallets/interfaces/transaction-stage.interface';
 import { TransactionType } from '../wallets/interfaces/transaction-type.interface';
+import { WalletTransactionService } from '../wallets/wallet-transaction.service';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
 import { Reservation } from './entities/reservation.entity';
@@ -35,6 +36,9 @@ export class ReservationsService {
     private reservationRepository: Repository<Reservation>,
     private readonly eventEmitter: EventEmitter2,
     private readonly arenasService: ArenasService,
+    private readonly arenaSlotsService: ArenaSlotsService,
+    private readonly usersService: UsersService,
+    private readonly walletTransactionService: WalletTransactionService,
   ) {}
   async create(dto: CreateReservationDto, userId: string) {
     const queryRunner = this.dataSource.createQueryRunner();
@@ -42,32 +46,22 @@ export class ReservationsService {
     await queryRunner.startTransaction();
 
     try {
-      const user = await queryRunner.manager.findOne(User, {
-        where: { id: userId },
-        relations: ['wallet'],
-      });
+      // Load user
+      const user = await this.usersService.findOneById(
+        userId,
+        queryRunner.manager,
+      );
 
-      if (!user) {
-        return ApiResponseUtil.throwError(
-          'User not found',
-          'USER_NOT_FOUND',
-          HttpStatus.NOT_FOUND,
-        );
-      }
+      // Load arena
+      const arena = await this.arenasService.findOne(
+        dto.arenaId,
+        queryRunner.manager,
+      );
 
-      const arena = await queryRunner.manager.findOne(Arena, {
-        where: { id: dto.arenaId },
-      });
-
-      if (!arena) {
-        return ApiResponseUtil.throwError(
-          'Arena not found',
-          'ARENA_NOT_FOUND',
-          HttpStatus.NOT_FOUND,
-        );
-      }
+      // Load arena owner wallet
       const arenaOwnerWallet = arena.owner.wallet;
 
+      // Make sure arena is active
       if (arena.status !== ArenaStatus.ACTIVE) {
         return ApiResponseUtil.throwError(
           'Arena is not active',
@@ -75,18 +69,22 @@ export class ReservationsService {
           HttpStatus.BAD_REQUEST,
         );
       }
-      const extras = await queryRunner.manager.findBy(ArenaExtra, {
-        id: In(dto.extras || []),
-        arena: { id: dto.arenaId },
-      });
-      if (extras.length !== (dto.extras || []).length) {
-        return ApiResponseUtil.throwError(
-          'Some extras not found for this arena',
-          'ARENA_EXTRAS_NOT_FOUND',
-          HttpStatus.BAD_REQUEST,
-        );
-      }
+      // Load extras
+      const extras = await this.arenasService.findArenaExtrasByIds(
+        dto.arenaId,
+        dto.extras || [],
+        queryRunner.manager,
+      );
 
+      // Validate slots are not already booked
+      await this.arenaSlotsService.checkIfSlotsBooked(
+        dto.arenaId,
+        dto.date,
+        dto.slots,
+        queryRunner.manager,
+      );
+
+      // Calculate amounts
       const playAmount = arena.getDepositAmount(dto.slots.length);
       const extrasAmount = extras.reduce(
         (sum, extra) => sum + Number(extra.price),
@@ -94,7 +92,7 @@ export class ReservationsService {
       );
       const totalAmount = playAmount + extrasAmount;
 
-      // 1️⃣ Check user balance
+      // Check user balance
       if (!user.wallet || user.wallet.balance < totalAmount) {
         return ApiResponseUtil.throwError(
           'Insufficient wallet balance',
@@ -103,26 +101,7 @@ export class ReservationsService {
         );
       }
 
-      // 2️⃣ Validate slots are not already booked
-      const existingSlots = await queryRunner.manager.find(ArenaSlot, {
-        where: {
-          arena: { id: dto.arenaId },
-          date: dto.date,
-          hour: In(dto.slots),
-          isCanceled: false,
-        },
-      });
-
-      if (existingSlots.length > 0) {
-        const bookedHours = existingSlots.map((s) => s.hour);
-        return ApiResponseUtil.throwError(
-          `Some slots are already booked for this arena: ${bookedHours.join(', ')}`,
-          'SLOTS_ALREADY_BOOKED',
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-
-      // 3️⃣ Create reservation (HOLD)
+      // Create reservation (HOLD)
       const reservation = queryRunner.manager.create(Reservation, {
         dateOfReservation: dto.date,
         arena,
@@ -135,30 +114,27 @@ export class ReservationsService {
       });
       await queryRunner.manager.save(reservation);
 
-      // 4️⃣ Create arena slots linked to this reservation
-      const addedSlots: ArenaSlot[] = [];
-      for (const hour of dto.slots) {
-        const slot = queryRunner.manager.create(ArenaSlot, {
-          arena,
-          reservation,
-          date: dto.date,
-          hour,
-          isCanceled: false,
-        });
-        await queryRunner.manager.save(slot);
-        addedSlots.push(slot);
-      }
+      // Create arena slots linked to this reservation
+      const addedSlots: ArenaSlot[] = await this.arenaSlotsService.createSlots(
+        arena,
+        reservation,
+        dto.date,
+        dto.slots.map((h) => Number(h)),
+        queryRunner.manager,
+      );
 
       // 5️⃣ Create wallet HOLD transaction
-      const walletTx = queryRunner.manager.create(WalletTransaction, {
-        wallet: user.wallet,
-        amount: totalAmount,
-        type: TransactionType.PAYMENT,
-        stage: TransactionStage.HOLD,
-        referenceId: reservation.id,
+      const walletTx = await this.walletTransactionService.create(
+        {
+          amount: totalAmount,
+          stage: TransactionStage.HOLD,
+          type: TransactionType.PAYMENT,
+          referenceId: reservation.id,
+        },
         user,
-      });
-
+        queryRunner.manager,
+      );
+      // Update wallets
       user.wallet.balance = Number(user.wallet.balance) - totalAmount;
       user.wallet.heldAmount =
         Number(user.wallet.heldAmount || 0) + totalAmount;
