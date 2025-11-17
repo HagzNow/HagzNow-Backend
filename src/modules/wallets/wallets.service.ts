@@ -21,9 +21,9 @@ export class WalletsService {
     if (!wallet) {
       // this will only happen in case of teh event listener didn't get executed
       await this.create(user);
-      return 0;
+      return { availableBalance: 0, heldAmount: 0 };
     }
-    return { availableBalance: wallet.balance };
+    return { availableBalance: wallet.balance, heldAmount: wallet.heldAmount };
   }
 
   findOne(id: string) {
