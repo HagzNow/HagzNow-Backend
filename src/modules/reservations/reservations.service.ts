@@ -218,31 +218,21 @@ export class ReservationsService {
       // Update reservation status to CONFIRMED
       reservation.status = ReservationStatus.CONFIRMED;
 
-      const transaction = await queryRunner.manager.findOne(WalletTransaction, {
-        where: {
-          referenceId: reservation.id,
-          stage: TransactionStage.HOLD,
-        },
-      });
-      if (!transaction) {
-        console.log(
-          'Associated wallet transaction not found for reservation:',
-          reservationId,
+      const transaction =
+        await this.walletTransactionService.findOneByReferenceId(
+          reservation.id,
+          queryRunner.manager,
         );
-        return ApiResponseUtil.throwError(
-          'Associated wallet transaction not found',
-          'WALLET_TRANSACTION_NOT_FOUND',
-          HttpStatus.NOT_FOUND,
-        );
-      }
 
       // Add transaction for settled
-      const settledTransaction = queryRunner.manager.create(WalletTransaction, {
-        ...transaction,
-        id: undefined,
-        createdAt: undefined,
-        stage: TransactionStage.SETTLED,
-      });
+      const settledTransaction = await this.walletTransactionService.create(
+        {
+          ...transaction,
+          stage: TransactionStage.SETTLED,
+        },
+        user,
+        queryRunner.manager,
+      );
       // Update user wallet held amount
       userWallet.heldAmount =
         Number(userWallet.heldAmount || 0) - reservation.totalAmount;
@@ -252,15 +242,18 @@ export class ReservationsService {
       const amountToCredit = reservation.totalAmount * (1 - adminFeeRate);
 
       // Create wallet transaction for arena owner
-      const ownerWalletTx = queryRunner.manager.create(WalletTransaction, {
-        wallet: arenaOwnerWallet,
-        amount: amountToCredit,
-        type: TransactionType.PAYMENT,
-        stage: TransactionStage.INSTANT,
-        referenceId: reservation.id,
-        user: reservation.arena.owner,
-      });
+      const ownerWalletTx = await this.walletTransactionService.create(
+        {
+          amount: amountToCredit,
+          type: TransactionType.PAYMENT,
+          stage: TransactionStage.INSTANT,
+          referenceId: reservation.id,
+        },
+        reservation.arena.owner,
+        queryRunner.manager,
+      );
 
+      // Update arena owner wallet
       arenaOwnerWallet.heldAmount =
         Number(arenaOwnerWallet.heldAmount || 0) - reservation.totalAmount;
       arenaOwnerWallet.balance =
@@ -278,15 +271,18 @@ export class ReservationsService {
           HttpStatus.NOT_FOUND,
         );
       }
-      const adminFeeTx = queryRunner.manager.create(WalletTransaction, {
-        wallet: adminWallet,
-        amount:
-          Number(reservation.totalAmount) * Number(process.env.ADMIN_FEE_RATE),
-        type: TransactionType.FEE,
-        stage: TransactionStage.INSTANT,
-        referenceId: reservation.id,
-        user: admin,
-      });
+      const adminFeeTx = await this.walletTransactionService.create(
+        {
+          amount:
+            Number(reservation.totalAmount) *
+            Number(process.env.ADMIN_FEE_RATE),
+          type: TransactionType.FEE,
+          stage: TransactionStage.INSTANT,
+          referenceId: reservation.id,
+        },
+        admin,
+        queryRunner.manager,
+      );
       adminWallet.balance =
         Number(adminWallet.balance || 0) +
         Number(reservation.totalAmount) * Number(process.env.ADMIN_FEE_RATE);

@@ -63,14 +63,36 @@ export class WalletTransactionService {
     return await paginate(query, paginationDto);
   }
 
-  async findOne(id: string) {
-    return await this.walletTransactionRepository.findBy({ id });
+  async findOne(id: string, manager?: EntityManager) {
+    const repo = manager
+      ? manager.getRepository(WalletTransaction)
+      : this.walletTransactionRepository;
+    const transaction = await repo.findOne({ where: { id } });
+    if (!transaction) {
+      return ApiResponseUtil.throwError(
+        'Associated wallet transaction not found',
+        'WALLET_TRANSACTION_NOT_FOUND',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    return transaction;
   }
 
-  async findOneByReferenceId(referenceId: string) {
-    return await this.walletTransactionRepository.findOne({
-      where: { referenceId },
+  async findOneByReferenceId(referenceId: string, manager?: EntityManager) {
+    const repo = manager
+      ? manager.getRepository(WalletTransaction)
+      : this.walletTransactionRepository;
+    const transaction = await repo.findOne({
+      where: { referenceId, stage: TransactionStage.HOLD },
     });
+    if (!transaction) {
+      return ApiResponseUtil.throwError(
+        'Associated wallet transaction not found',
+        'WALLET_TRANSACTION_NOT_FOUND',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    return transaction;
   }
 
   update(id: string) {
