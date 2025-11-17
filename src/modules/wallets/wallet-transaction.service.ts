@@ -21,7 +21,7 @@ export class WalletTransactionService {
     private walletService: WalletsService,
   ) {}
   async create(
-    createwqalletTransactionDto: CreateWalletTransactionDto,
+    createWalletTransactionDto: CreateWalletTransactionDto,
     user: User,
   ) {
     const wallet = await this.walletService.findOneByUserId(user.id);
@@ -35,7 +35,8 @@ export class WalletTransactionService {
 
     const newWalletTransaction = this.walletTransactionRepository.create({
       wallet,
-      ...createwqalletTransactionDto,
+      ...createWalletTransactionDto,
+      user,
     });
     return await this.walletTransactionRepository.save(newWalletTransaction);
   }
@@ -71,7 +72,7 @@ export class WalletTransactionService {
   update(id: string) {
     return `This action updates a #${id} wallet`;
   }
-  async updateByRefernceId(referenceId: string, stage: TransactionStage) {
+  async updateByReferenceId(referenceId: string, stage: TransactionStage) {
     return await this.walletTransactionRepository.update(
       { referenceId },
       { stage },
@@ -126,8 +127,8 @@ export class WalletTransactionService {
       return { wallet, transaction };
     });
   }
-  async prcessFailedTransaction(referenceId: string) {
-    return await this.updateByRefernceId(referenceId, TransactionStage.FAILED);
+  async processFailedTransaction(referenceId: string) {
+    return await this.updateByReferenceId(referenceId, TransactionStage.FAILED);
   }
 
   async getTotalTransactionsAmountByUserId(

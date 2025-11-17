@@ -1,11 +1,11 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 import * as crypto from 'crypto';
-import { WalletTransactionService } from './wallet-transaction.service';
+import { ApiResponseUtil } from 'src/common/utils/api-response.util';
+import { User } from '../users/entities/user.entity';
 import { TransactionStage } from './interfaces/transaction-stage.interface';
 import { TransactionType } from './interfaces/transaction-type.interface';
-import { User } from '../users/entities/user.entity';
-import { ApiResponseUtil } from 'src/common/utils/api-response.util';
+import { WalletTransactionService } from './wallet-transaction.service';
 
 @Injectable()
 export class PaymobService {
@@ -69,7 +69,7 @@ export class PaymobService {
       );
     } else {
       const referenceId = obj.order.id.toString();
-      this.walletTransactionService.prcessFailedTransaction(referenceId);
+      this.walletTransactionService.processFailedTransaction(referenceId);
     }
 
     return { received: true };

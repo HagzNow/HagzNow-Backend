@@ -156,6 +156,7 @@ export class ReservationsService {
         type: TransactionType.PAYMENT,
         stage: TransactionStage.HOLD,
         referenceId: reservation.id,
+        user,
       });
 
       user.wallet.balance = Number(user.wallet.balance) - totalAmount;
@@ -281,6 +282,7 @@ export class ReservationsService {
         type: TransactionType.PAYMENT,
         stage: TransactionStage.INSTANT,
         referenceId: reservation.id,
+        user: reservation.arena.owner,
       });
 
       arenaOwnerWallet.heldAmount =
@@ -289,15 +291,29 @@ export class ReservationsService {
         Number(arenaOwnerWallet.balance || 0) + amountToCredit;
 
       //  Add admin fee
+      const admin = await queryRunner.manager.findOne(User, {
+        where: { id: process.env.ADMIN_ID },
+      });
+      if (!admin) {
+        console.log('Admin user not found');
+        return ApiResponseUtil.throwError(
+          'Admin user not found',
+          'ADMIN_USER_NOT_FOUND',
+          HttpStatus.NOT_FOUND,
+        );
+      }
       const adminFeeTx = queryRunner.manager.create(WalletTransaction, {
         wallet: adminWallet,
-        amount: reservation.totalAmount * adminFeeRate,
+        amount:
+          Number(reservation.totalAmount) * Number(process.env.ADMIN_FEE_RATE),
         type: TransactionType.FEE,
         stage: TransactionStage.INSTANT,
         referenceId: reservation.id,
+        user: admin,
       });
       adminWallet.balance =
-        (adminWallet.balance || 0) + reservation.totalAmount * adminFeeRate;
+        Number(adminWallet.balance || 0) +
+        Number(reservation.totalAmount) * Number(process.env.ADMIN_FEE_RATE);
 
       await queryRunner.manager.save([
         reservation,
