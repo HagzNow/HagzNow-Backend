@@ -6,7 +6,7 @@ import { ApiResponseUtil } from 'src/common/utils/api-response.util';
 import { applyExactFilters } from 'src/common/utils/filter.utils';
 import { handleImageUpload } from 'src/common/utils/handle-image-upload.util';
 import { paginate } from 'src/common/utils/paginate';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserFilterDto } from './dto/user-filter.dto';
@@ -35,7 +35,7 @@ export class UsersService {
     return await paginate(query, paginationDto);
   }
 
-  async findOneById(id: string) {
+  async findOneById(id: string, manager?: EntityManager) {
     // In case id is undefined or null without this it will return first value
     if (!id)
       return ApiResponseUtil.throwError(
@@ -43,7 +43,17 @@ export class UsersService {
         'USER_NOT_FOUND',
         HttpStatus.NOT_FOUND,
       );
-    return await this.userRepository.findOneBy({ id });
+
+    const repo = manager ? manager.getRepository(User) : this.userRepository;
+    const user = await repo.findOneBy({ id });
+    if (!user) {
+      return ApiResponseUtil.throwError(
+        'User not found',
+        'USER_NOT_FOUND',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    return user;
   }
   async findOne(email: string) {
     return await this.userRepository.findOneBy({ email });
