@@ -226,7 +226,9 @@ export class ReservationsService {
       // Add transaction for settled
       const settledTransaction = await this.walletTransactionService.create(
         {
-          ...transaction,
+          amount: reservation.totalAmount,
+          type: TransactionType.PAYMENT,
+          referenceId: reservation.id,
           stage: TransactionStage.SETTLED,
         },
         user,
@@ -289,6 +291,7 @@ export class ReservationsService {
       await queryRunner.manager.save([
         reservation,
         transaction,
+        settledTransaction,
         userWallet,
         arenaOwnerWallet,
         ownerWalletTx,
@@ -354,7 +357,8 @@ export class ReservationsService {
       // Add transaction for refund
       const refundTransaction = await this.walletTransactionService.create(
         {
-          ...transaction,
+          amount: reservation.totalAmount,
+          referenceId: reservation.id,
           stage: TransactionStage.REFUND,
           type: TransactionType.REFUND,
         },
