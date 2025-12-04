@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 import * as crypto from 'crypto';
 import { ApiResponseUtil } from 'src/common/utils/api-response.util';
+import { DataSource } from 'typeorm';
 import { User } from '../users/entities/user.entity';
 import { TransactionStage } from './interfaces/transaction-stage.interface';
 import { TransactionType } from './interfaces/transaction-type.interface';
@@ -14,12 +15,15 @@ export class PaymobService {
   private integrationId = process.env.PAYMOB_INTEGRATION_ID;
   private iframeId = process.env.PAYMOB_IFRAME_ID;
   private hmacSecret = process.env.PAYMOB_HMAC_SECRET;
-  constructor(private walletTransactionService: WalletTransactionService) {}
+  constructor(
+    private walletTransactionService: WalletTransactionService,
+    private readonly dataSource: DataSource,
+  ) {}
 
   // -----------------------------
   // 🧩 Webhook handler
   // -----------------------------
-  handleWebhook(payload: any, hmac: string) {
+  async handleWebhook(payload: any, hmac: string) {
     const obj = payload.obj;
 
     const dataToHash = [
@@ -52,7 +56,17 @@ export class PaymobService {
       .update(dataToHash)
       .digest('hex');
 
-    if (calculatedHmac !== hmac) {
+    const hmacValid = calculatedHmac === hmac;
+
+    // ⭐ Audit Log FIRST
+    await this.logWebhookPayload(
+      'paymob',
+      obj.success ? 'transaction_success' : 'transaction_failed',
+      hmacValid,
+      payload,
+    );
+
+    if (!hmacValid) {
       return ApiResponseUtil.throwError(
         'Invalid HMAC signature',
         'INVALID_HMAC',
@@ -144,5 +158,18 @@ export class PaymobService {
 
   getIframeUrl(paymentToken: string) {
     return `https://accept.paymob.com/api/acceptance/iframes/${this.iframeId}?payment_token=${paymentToken}`;
+  }
+
+  async logWebhookPayload(
+    provider: string,
+    eventType: string,
+    hmacValid: boolean,
+    payload: any,
+  ) {
+    await this.dataSource.query(
+      `INSERT INTO webhook_audit (provider, event_type, hmac_valid, payload)
+       VALUES ($1, $2, $3, $4)`,
+      [provider, eventType, hmacValid, payload],
+    );
   }
 }

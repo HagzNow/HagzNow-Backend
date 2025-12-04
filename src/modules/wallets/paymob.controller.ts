@@ -6,7 +6,7 @@ export class PaymobWebhookController {
   constructor(private readonly paymobService: PaymobService) {}
 
   @Post('webhook')
-  handleWebhook(@Body() payload: any, @Query('hmac') hmac: string) {
-    return this.paymobService.handleWebhook(payload, hmac);
+  async handleWebhook(@Body() payload: any, @Query('hmac') hmac: string) {
+    return await this.paymobService.handleWebhook(payload, hmac);
   }
 }
