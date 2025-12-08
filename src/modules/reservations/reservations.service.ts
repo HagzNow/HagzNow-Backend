@@ -144,7 +144,7 @@ export class ReservationsService {
 
       const tz = 'Africa/Cairo';
       // const runAt = DateTime.fromISO(dto.date, { zone: tz }).startOf('day');
-      const runAt = DateTime.now().plus({ seconds: 600 });
+      const runAt = DateTime.now().plus({ seconds: 200 });
       await this.producer.scheduleSettlement(
         reservation.id,
         runAt,
@@ -466,6 +466,16 @@ export class ReservationsService {
   async findOne(id: string) {
     if (!id) return null;
     return await this.reservationRepository.findOneBy({ id });
+  }
+
+  async hasUserReservedThisArenaBefore(arenaId: string, userId: string) {
+    return await this.reservationRepository.exist({
+      where: {
+        arena: { id: arenaId },
+        user: { id: userId },
+        status: ReservationStatus.CONFIRMED,
+      },
+    });
   }
 
   update(id: string, updateReservationDto: UpdateReservationDto) {

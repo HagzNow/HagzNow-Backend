@@ -7,9 +7,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 // import { databaseProviders } from './database/database.providers';
+import { BullModule } from '@nestjs/bullmq';
 import { APP_GUARD } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { RolesGuard } from './common/guards/roles.guard';
+import { AdminModule } from './modules/admin/admin.module';
 import { ArenasModule } from './modules/arenas/arenas.module';
 import { ArenaExtra } from './modules/arenas/entities/arena-extra.entity';
 import { ArenaImage } from './modules/arenas/entities/arena-image.entity';
@@ -18,19 +20,16 @@ import { ArenaSlot } from './modules/arenas/entities/arena-slot.entity';
 import { Arena } from './modules/arenas/entities/arena.entity';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { Category } from './modules/categories/entities/category.entity';
+import { OwnersModule } from './modules/owners/owners.module';
 import { Reservation } from './modules/reservations/entities/reservation.entity';
 import { ReservationsModule } from './modules/reservations/reservations.module';
+import { Review } from './modules/reviews/entities/review.entity';
+import { ReviewsModule } from './modules/reviews/reviews.module';
 import { User } from './modules/users/entities/user.entity';
 import { CurrentUserMiddleware } from './modules/users/middlewares/current-user.middleware';
 import { WalletTransaction } from './modules/wallets/entities/wallet-transaction.entity';
 import { Wallet } from './modules/wallets/entities/wallet.entity';
 import { WalletModule } from './modules/wallets/wallets.module';
-import { OwnersModule } from './modules/owners/owners.module';
-import { AdminModule } from './modules/admin/admin.module';
-import { BullModule } from '@nestjs/bullmq';
-import { SettlementsProcessor } from './modules/reservations/queue/settlements.processor';
-import { ReservationsProducer } from './modules/reservations/queue/reservations.producer';
-import { bullConfig } from './modules/reservations/queue/bull.config';
 
 @Module({
   imports: [
@@ -62,6 +61,7 @@ import { bullConfig } from './modules/reservations/queue/bull.config';
           Wallet,
           WalletTransaction,
           Reservation,
+          Review,
         ],
       }),
     }),
@@ -73,6 +73,7 @@ import { bullConfig } from './modules/reservations/queue/bull.config';
     CategoriesModule,
     WalletModule,
     ReservationsModule,
+    ReviewsModule,
   ],
   controllers: [AppController],
   providers: [

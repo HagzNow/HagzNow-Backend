@@ -1,6 +1,7 @@
 import * as bcrypt from 'bcrypt';
 import { Arena } from 'src/modules/arenas/entities/arena.entity';
 import { Reservation } from 'src/modules/reservations/entities/reservation.entity';
+import { WalletTransaction } from 'src/modules/wallets/entities/wallet-transaction.entity';
 import { Wallet } from 'src/modules/wallets/entities/wallet.entity';
 import {
   BeforeInsert,
@@ -13,9 +14,9 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Review } from '../../reviews/entities/review.entity';
 import { UserRole } from '../interfaces/userRole.interface';
 import { UserStatus } from '../interfaces/userStatus.interface';
-import { WalletTransaction } from 'src/modules/wallets/entities/wallet-transaction.entity';
 
 @Entity('users')
 export class User {
@@ -67,6 +68,9 @@ export class User {
     nullable: true,
   })
   arenas?: Arena[];
+
+  @OneToMany(() => Review, (review) => review.user, { nullable: true })
+  reviews?: Review[];
 
   @OneToMany(() => WalletTransaction, (transaction) => transaction.user)
   transactions: WalletTransaction[];

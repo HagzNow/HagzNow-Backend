@@ -10,6 +10,7 @@ import {
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { Review } from '../../reviews/entities/review.entity';
 import { ArenaStatus } from '../interfaces/arena-status.interface';
 import { ArenaExtra } from './arena-extra.entity';
 import { ArenaImage } from './arena-image.entity';
@@ -89,6 +90,9 @@ export class Arena {
   })
   @JoinColumn({ name: 'ownerId' }) // <- this sets the column name
   owner: User;
+
+  @OneToMany(() => Review, (review) => review.arena, { nullable: true })
+  reviews: Review[];
 
   getDepositAmount(totalHours: number): number {
     const totalPrice = this.pricePerHour * totalHours;
