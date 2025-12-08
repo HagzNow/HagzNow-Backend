@@ -33,7 +33,7 @@ export class ReservationsController {
     @Body() createReservationDto: CreateReservationDto,
     @CurrentUser() user: User,
   ) {
-    return this.reservationsService.create(createReservationDto, user.id);
+    return this.reservationsService.create(createReservationDto, user);
   }
 
   @Serialize(ReservationSummaryDto)

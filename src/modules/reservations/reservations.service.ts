@@ -51,18 +51,12 @@ export class ReservationsService {
     private readonly usersService: UsersService,
     private readonly walletTransactionService: WalletTransactionService,
   ) {}
-  async create(dto: CreateReservationDto, userId: string) {
+  async create(dto: CreateReservationDto, user: User) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
-      // Load user
-      const user = await this.usersService.findOneById(
-        userId,
-        queryRunner.manager,
-      );
-
       // Load arena
       const arena = await this.arenasService.findOne(
         dto.arenaId,
