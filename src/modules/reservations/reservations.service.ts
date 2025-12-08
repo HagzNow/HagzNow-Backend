@@ -3,8 +3,19 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DateTime } from 'luxon';
 import { ApiResponseUtil } from 'src/common/utils/api-response.util';
+import {
+  applyExactFilters,
+  applyILikeFilters,
+} from 'src/common/utils/filter.utils';
 import { paginate } from 'src/common/utils/paginate';
-import { Between, DataSource, In, Repository } from 'typeorm';
+import {
+  Between,
+  DataSource,
+  In,
+  ObjectLiteral,
+  Repository,
+  SelectQueryBuilder,
+} from 'typeorm';
 import { PaginationDto } from '../../common/dtos/pagination.dto';
 import { ArenaSlotsService } from '../arenas/arena-slots.service';
 import { ArenasService } from '../arenas/arenas.service';
@@ -18,6 +29,7 @@ import { TransactionStage } from '../wallets/interfaces/transaction-stage.interf
 import { TransactionType } from '../wallets/interfaces/transaction-type.interface';
 import { WalletTransactionService } from '../wallets/wallet-transaction.service';
 import { CreateReservationDto } from './dto/create-reservation.dto';
+import { ReservationFilterDto } from './dto/reservation-filter.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
 import { Reservation } from './entities/reservation.entity';
 import { ReservationStatus } from './interfaces/reservation-status.interface';
@@ -401,6 +413,7 @@ export class ReservationsService {
   private async findReservationsByDateRelation(
     user: User,
     paginationDto: PaginationDto,
+    filters: ReservationFilterDto,
     isPast: boolean,
   ) {
     const today = new Date();
@@ -418,17 +431,51 @@ export class ReservationsService {
       )
       .orderBy('reservation.dateOfReservation', isPast ? 'DESC' : 'ASC');
 
+    // Apply filters
+    this.applyFilters(query, filters);
+
     return await paginate(query, paginationDto);
   }
 
+  private applyFilters<T extends ObjectLiteral>(
+    query: SelectQueryBuilder<T>,
+    filters: ReservationFilterDto,
+  ) {
+    const alias = '';
+    applyExactFilters(
+      query,
+      { 'arena.categoryId': filters.arenaCategoryId },
+      alias,
+    );
+    applyILikeFilters(query, { 'arena.name': filters.arenaName }, alias);
+  }
+
   // 🌅 Upcoming reservations (today or future)
-  async findUpcomingReservations(paginationDto: PaginationDto, user: User) {
-    return this.findReservationsByDateRelation(user, paginationDto, false);
+  async findUpcomingReservations(
+    paginationDto: PaginationDto,
+    filters: ReservationFilterDto,
+    user: User,
+  ) {
+    return this.findReservationsByDateRelation(
+      user,
+      paginationDto,
+      filters,
+      false,
+    );
   }
 
   // 🌇 Past reservations (before today)
-  async findPastReservations(paginationDto: PaginationDto, user: User) {
-    return this.findReservationsByDateRelation(user, paginationDto, true);
+  async findPastReservations(
+    paginationDto: PaginationDto,
+    filters: ReservationFilterDto,
+    user: User,
+  ) {
+    return this.findReservationsByDateRelation(
+      user,
+      paginationDto,
+      filters,
+      true,
+    );
   }
 
   async findReservationsByDateRange(
@@ -436,6 +483,7 @@ export class ReservationsService {
     user: User,
     startDate: Date,
     endDate: Date,
+    filters: ReservationFilterDto,
   ) {
     const arena = await this.arenasService.findOne(arenaId);
     if (!arena) {

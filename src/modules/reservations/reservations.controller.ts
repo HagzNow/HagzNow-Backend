@@ -17,6 +17,7 @@ import { UserRole } from '../users/interfaces/userRole.interface';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { ReservationCalenderCardDto } from './dto/reservation-calender-card.dto';
 import { ReservationDetailsDto } from './dto/reservation-details.dto';
+import { ReservationFilterDto } from './dto/reservation-filter.dto';
 import { ReservationSummaryDto } from './dto/reservation-summary.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
 import { ReservationsService } from './reservations.service';
@@ -40,9 +41,14 @@ export class ReservationsController {
   @Get('past')
   findPastReservations(
     @Query() paginationDto: PaginationDto,
+    @Query() filters: ReservationFilterDto,
     @CurrentUser() user: User,
   ) {
-    return this.reservationsService.findPastReservations(paginationDto, user);
+    return this.reservationsService.findPastReservations(
+      paginationDto,
+      filters,
+      user,
+    );
   }
 
   @Serialize(ReservationSummaryDto)
@@ -50,10 +56,12 @@ export class ReservationsController {
   @Get('upcoming')
   findUpcomingReservations(
     @Query() paginationDto: PaginationDto,
+    @Query() filters: ReservationFilterDto,
     @CurrentUser() user: User,
   ) {
     return this.reservationsService.findUpcomingReservations(
       paginationDto,
+      filters,
       user,
     );
   }
@@ -70,6 +78,7 @@ export class ReservationsController {
     @Query('arenaId') arenaId: string,
     @Query('startDate') startDate: Date,
     @Query('endDate') endDate: Date,
+    @Query() filters: ReservationFilterDto,
     @CurrentUser() user: User,
   ) {
     console.log('Received Dates:', startDate, endDate);
@@ -78,6 +87,7 @@ export class ReservationsController {
       user,
       startDate,
       endDate,
+      filters,
     );
   }
 
