@@ -1,5 +1,6 @@
 import { forwardRef, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { ApiResponseUtil } from 'src/common/utils/api-response.util';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 import { User } from '../users/entities/user.entity';
@@ -37,6 +38,43 @@ export class WalletsService {
     if (!wallet) return false;
 
     wallet.heldAmount = Number(wallet.heldAmount) + amount;
+    await repo.save(wallet);
+    return true;
+  }
+
+  async unlockAmount(userId: string, amount: number, manager?: EntityManager) {
+    const repo = manager
+      ? manager.getRepository(Wallet)
+      : this.walletRepository;
+    const wallet = await repo.findOne({ where: { user: { id: userId } } });
+    if (!wallet)
+      return ApiResponseUtil.throwError(
+        'Wallet not found for this user',
+        'WALLET_NOT_FOUND',
+        HttpStatus.BAD_REQUEST,
+      );
+    wallet.heldAmount = Number(wallet.heldAmount) - amount;
+    await repo.save(wallet);
+    return true;
+  }
+
+  async unlockAmountAndRefund(
+    userId: string,
+    amount: number,
+    manager?: EntityManager,
+  ) {
+    const repo = manager
+      ? manager.getRepository(Wallet)
+      : this.walletRepository;
+    const wallet = await repo.findOne({ where: { user: { id: userId } } });
+    if (!wallet)
+      return ApiResponseUtil.throwError(
+        'Wallet not found for this user',
+        'WALLET_NOT_FOUND',
+        HttpStatus.BAD_REQUEST,
+      );
+    wallet.heldAmount = Number(wallet.heldAmount) - amount;
+    wallet.balance = Number(wallet.balance) + amount;
     await repo.save(wallet);
     return true;
   }
@@ -88,7 +126,7 @@ export class WalletsService {
     return { message: 'Withdrawal successful', balance: wallet.balance };
   }
 
-  async processWithdrawal(amount: number, user: User) {
+  async requestWithdrawal(amount: number, user: User) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -113,14 +151,14 @@ export class WalletsService {
         );
       }
 
-      // 3. Deduct amount from wallet
-      await this.deduceAmount(amount, user, queryRunner.manager);
+      // 3. Lock amount
+      await this.lockAmount(user.id, amount, queryRunner.manager);
 
       // 4. Create local INSTANT wallet transaction
       const newWithdrawTx = await this.walletTransactionService.create(
         {
           amount,
-          stage: TransactionStage.INSTANT,
+          stage: TransactionStage.PENDING,
           type: TransactionType.WITHDRAWAL,
           referenceId: 'withdraw_' + Date.now(),
         },
@@ -130,6 +168,52 @@ export class WalletsService {
       // 5. Commit transaction
       await queryRunner.commitTransaction();
       return newWithdrawTx;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+  async findWithdrawalRequests(paginationDto: PaginationDto) {
+    return await this.walletTransactionService.findWithdrawalRequests(
+      paginationDto,
+    );
+  }
+
+  async acceptWithdrawalRequests(transactionId: string) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const transaction =
+        await this.walletTransactionService.findOne(transactionId);
+      if (!transaction) {
+        return ApiResponseUtil.throwError(
+          'Transaction not found',
+          'TRANSACTION_NOT_FOUND',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      await this.walletTransactionService.create(
+        {
+          amount: transaction.amount,
+          stage: TransactionStage.SETTLED,
+          type: TransactionType.WITHDRAWAL,
+          referenceId: transaction.referenceId,
+        },
+        transaction.user,
+        queryRunner.manager,
+      );
+      await this.unlockAmount(
+        transaction.user.id,
+        transaction.amount,
+        queryRunner.manager,
+      );
+      await queryRunner.commitTransaction();
+      return { message: 'Withdrawal request accepted successfully' };
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw error;

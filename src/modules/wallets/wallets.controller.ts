@@ -1,6 +1,15 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { Roles } from 'src/common/decorators/roles.decorator';
+import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { AuthGuard } from 'src/common/guards/auth.guard';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { User } from '../users/entities/user.entity';
@@ -47,10 +56,30 @@ export class WalletController {
 
   @Serialize(WalletTransactionResponseDto)
   @UseGuards(AuthGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
-  @Post('withdraw')
+  @Roles(UserRole.OWNER)
+  @Post('request-withdraw')
   async withdraw(@Body('amount') amount: number, @CurrentUser() user: User) {
-    return await this.walletsService.processWithdrawal(amount, user);
+    return await this.walletsService.requestWithdrawal(amount, user);
+  }
+
+  @Serialize(WalletTransactionResponseDto)
+  @Roles(UserRole.ADMIN)
+  @Get('withdrawal-requests')
+  async findWithdrawalRequests(
+    @CurrentUser() user: User,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    return await this.walletsService.findWithdrawalRequests(paginationDto);
+  }
+
+  @Serialize(WalletTransactionResponseDto)
+  @Roles(UserRole.ADMIN)
+  @Get('accept-withdrawal-requests')
+  async acceptWithdrawalRequests(
+    @Query() transactionId: string,
+    @CurrentUser() user: User,
+  ) {
+    return await this.walletsService.acceptWithdrawalRequests(transactionId);
   }
 
   @Get(':id')

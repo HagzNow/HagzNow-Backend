@@ -10,6 +10,7 @@ import { CreateWalletTransactionDto } from './dto/create-wallet-transaction.dto'
 import { WalletTransaction } from './entities/wallet-transaction.entity';
 import { Wallet } from './entities/wallet.entity';
 import { TransactionStage } from './interfaces/transaction-stage.interface';
+import { TransactionType } from './interfaces/transaction-type.interface';
 import { WalletsService } from './wallets.service';
 
 @Injectable()
@@ -147,6 +148,15 @@ export class WalletTransactionService {
   }
   async processFailedTransaction(referenceId: string) {
     return await this.updateByReferenceId(referenceId, TransactionStage.FAILED);
+  }
+  async findWithdrawalRequests(paginationDto: PaginationDto) {
+    return await this.walletTransactionRepository.find({
+      where: {
+        type: TransactionType.WITHDRAWAL,
+        stage: TransactionStage.PENDING,
+      },
+      relations: ['user', 'wallet'],
+    });
   }
 
   async getTotalTransactionsAmountByUserId(

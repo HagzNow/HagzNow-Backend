@@ -1,4 +1,5 @@
-import { Expose } from 'class-transformer';
+import { Expose, Transform } from 'class-transformer';
+import { PayoutMethod } from 'src/modules/users/interfaces/payout-method.interface';
 import { TransactionStage } from '../interfaces/transaction-stage.interface';
 import { TransactionType } from '../interfaces/transaction-type.interface';
 
@@ -17,4 +18,20 @@ export class WalletTransactionResponseDto {
 
   @Expose()
   referenceId: string;
+
+  @Expose()
+  @Transform(({ obj }) => obj.user.name)
+  userName: string;
+
+  @Expose()
+  @Transform(({ obj }) => obj.user.email)
+  userEmail: string;
+
+  @Expose()
+  @Transform(({ obj }) => obj.user.phone)
+  userPhone: string;
+
+  @Expose()
+  @Transform(({ obj }) => obj.user.payoutMethod)
+  userPayoutMethod: PayoutMethod;
 }
