@@ -46,17 +46,9 @@ export class WalletTransactionService {
   }
 
   async findAll(paginationDto: PaginationDto, user: User) {
-    const wallet = await this.walletService.findOneByUserId(user.id);
-    if (!wallet) {
-      return ApiResponseUtil.throwError(
-        'Wallet not found for this user',
-        'WALLET_NOT_FOUND',
-        400,
-      );
-    }
     const query = this.walletTransactionRepository
       .createQueryBuilder('transaction')
-      .where('transaction.walletId = :walletId', { walletId: wallet.id });
+      .where('transaction.userId = :userId', { userId: user.id });
 
     applySorting(query, { createdAt: 'DESC' }, 'transaction');
 
