@@ -15,6 +15,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Review } from '../../reviews/entities/review.entity';
+import { PayoutMethod } from '../interfaces/payout-method.interface';
 import { UserRole } from '../interfaces/userRole.interface';
 import { UserStatus } from '../interfaces/userStatus.interface';
 
@@ -33,6 +34,10 @@ export class User {
   email: string;
   @Column()
   phone: string;
+
+  @Column({ default: PayoutMethod.WALLET })
+  payoutMethod: PayoutMethod;
+
   @Column({
     type: 'enum',
     enum: UserRole,
