@@ -1,4 +1,5 @@
 import { IsOptional, IsString, IsUUID } from 'class-validator';
+import { ReservationStatus } from '../interfaces/reservation-status.interface';
 
 export class ReservationFilterDto {
   @IsOptional()
@@ -8,4 +9,8 @@ export class ReservationFilterDto {
   @IsOptional()
   @IsUUID()
   arenaCategoryId: string;
+
+  @IsOptional()
+  @IsString()
+  status: ReservationStatus;
 }

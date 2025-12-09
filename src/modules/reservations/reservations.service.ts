@@ -525,6 +525,7 @@ export class ReservationsService {
       { 'arena.categoryId': filters.arenaCategoryId },
       alias,
     );
+    applyExactFilters(query, { 'reservation.status': filters.status }, alias);
     applyILikeFilters(query, { 'arena.name': filters.arenaName }, alias);
   }
 
