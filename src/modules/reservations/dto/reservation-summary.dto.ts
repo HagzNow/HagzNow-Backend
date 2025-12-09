@@ -14,6 +14,10 @@ export class ReservationSummaryDto {
   arenaName: string;
 
   @Expose()
+  @Transform(({ obj }) => obj.arena.category.name)
+  arenaCategory: string;
+
+  @Expose()
   dateOfReservation: string;
 
   @Expose()

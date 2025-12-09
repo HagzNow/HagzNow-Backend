@@ -499,6 +499,7 @@ export class ReservationsService {
     const query = this.reservationRepository
       .createQueryBuilder('reservation')
       .leftJoinAndSelect('reservation.arena', 'arena')
+      .leftJoinAndSelect('arena.category', 'category')
       .leftJoinAndSelect('reservation.slots', 'slots')
       .where('reservation.userId = :userId', { userId: user.id })
       .andWhere(
