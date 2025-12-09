@@ -35,6 +35,18 @@ export class ReservationsController {
   ) {
     return this.reservationsService.create(createReservationDto, user);
   }
+  @Serialize(ReservationDetailsDto)
+  @Roles(UserRole.OWNER)
+  @Post('owner/manual')
+  createManualReservation(
+    @Body() createReservationDto: CreateReservationDto,
+    @CurrentUser() user: User,
+  ) {
+    return this.reservationsService.createManualReservation(
+      createReservationDto,
+      user,
+    );
+  }
 
   @Serialize(ReservationSummaryDto)
   @Roles(UserRole.USER)

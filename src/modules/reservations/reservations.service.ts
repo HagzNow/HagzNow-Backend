@@ -32,6 +32,7 @@ import { CreateReservationDto } from './dto/create-reservation.dto';
 import { ReservationFilterDto } from './dto/reservation-filter.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
 import { Reservation } from './entities/reservation.entity';
+import { PaymentMethod } from './interfaces/payment-methods.interface';
 import { ReservationStatus } from './interfaces/reservation-status.interface';
 import { ReservationsProducer } from './queue/reservations.producer';
 
@@ -164,6 +165,89 @@ export class ReservationsService {
       this.eventEmitter.emit('reservation.created', reservation);
 
       reservation.slots = addedSlots;
+      return reservation;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      console.error('Error creating reservation:', err);
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async createManualReservation(dto: CreateReservationDto, user: User) {
+    // Similar to create method but without wallet and transaction logic
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // Load arena
+      const arena = await this.arenasService.findOne(
+        dto.arenaId,
+        queryRunner.manager,
+      );
+      if (arena.status !== ArenaStatus.ACTIVE) {
+        return ApiResponseUtil.throwError(
+          'Arena is not active',
+          'ARENA_NOT_ACTIVE',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      // Check arena ownership
+      if (arena.owner.id !== user.id) {
+        return ApiResponseUtil.throwError(
+          'Unauthorized access to arena reservations',
+          'UNAUTHORIZED_ACCESS',
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+      // Load extras
+      const extras = await this.arenasService.findArenaExtrasByIds(
+        dto.arenaId,
+        dto.extras || [],
+        queryRunner.manager,
+      );
+      // validate all extras found
+      if (extras.length !== (dto.extras || []).length) {
+        return ApiResponseUtil.throwError(
+          'One or more extras not found',
+          'EXTRAS_NOT_FOUND',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+      // Validate slots are not already booked
+      await this.arenaSlotsService.checkIfSlotsBooked(
+        dto.arenaId,
+        dto.date,
+        dto.slots,
+        queryRunner.manager,
+      );
+
+      const reservation = queryRunner.manager.create(Reservation, {
+        dateOfReservation: dto.date,
+        arena,
+        status: ReservationStatus.CONFIRMED,
+        playTotalAmount: 0,
+        extrasTotalAmount: 0,
+        totalAmount: 0,
+        extras: dto.extras ? extras : [],
+        user,
+        paymentMethod: PaymentMethod.MANUAL,
+      });
+      await queryRunner.manager.save(reservation);
+      const addedSlots: ArenaSlot[] = await this.arenaSlotsService.createSlots(
+        arena,
+        reservation,
+        dto.date,
+        dto.slots.map((h) => Number(h)),
+        queryRunner.manager,
+      );
+      reservation.slots = addedSlots;
+
+      await queryRunner.manager.save(reservation);
+      //Commit DB transaction
+      await queryRunner.commitTransaction();
       return reservation;
     } catch (err) {
       await queryRunner.rollbackTransaction();
