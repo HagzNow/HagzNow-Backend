@@ -102,8 +102,13 @@ export class ArenasController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateArenaDto: UpdateArenaDto) {
-    return this.arenasService.update(id, updateArenaDto);
+  @Roles(UserRole.OWNER)
+  update(
+    @Param('id') id: string,
+    @Body() updateArenaDto: UpdateArenaDto,
+    @CurrentUser() owner: User,
+  ) {
+    return this.arenasService.update(id, updateArenaDto, owner);
   }
 
   @Roles(UserRole.ADMIN)

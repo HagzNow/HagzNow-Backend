@@ -185,16 +185,26 @@ export class ArenasService {
     return extras;
   }
 
-  async update(id: string, updateArenaDto: UpdateArenaDto) {
+  async update(id: string, updateArenaDto: UpdateArenaDto, owner: User) {
     const arena = await this.arenaRepository.findOne({
       where: { id },
       relations: ['images', 'location'], // Load relations if needed
     });
 
     if (!arena) {
-      throw new NotFoundException('Arena not found');
+      return ApiResponseUtil.throwError(
+        'Arena not found',
+        'ARENA_NOT_FOUND',
+        HttpStatus.NOT_FOUND,
+      );
     }
-
+    if (arena.owner.id !== owner.id) {
+      return ApiResponseUtil.throwError(
+        'You are not authorized to update this arena',
+        'UNAUTHORIZED',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
     // TODO fix update image
     this.arenaRepository.merge(arena, updateArenaDto);
 
