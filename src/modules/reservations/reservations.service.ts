@@ -52,12 +52,25 @@ export class ReservationsService {
     private readonly usersService: UsersService,
     private readonly walletTransactionService: WalletTransactionService,
   ) {}
-  async create(dto: CreateReservationDto, user: User) {
+  async create(dto: CreateReservationDto, userId: string) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
+      // Load user
+      const user = await this.usersService.findOneById(
+        userId,
+        queryRunner.manager,
+      );
+      if (!user) {
+        return ApiResponseUtil.throwError(
+          'User not found',
+          'USER_NOT_FOUND',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
       // Load arena
       const arena = await this.arenasService.findOne(
         dto.arenaId,
