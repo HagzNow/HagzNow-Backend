@@ -20,7 +20,7 @@ export class WalletTransactionResponseDto {
   referenceId: string;
 
   @Expose()
-  @Transform(({ obj }) => obj.user.name)
+  @Transform(({ obj }) => obj.user.fName + ' ' + obj.user.lName)
   userName: string;
 
   @Expose()
