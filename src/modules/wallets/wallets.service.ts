@@ -271,6 +271,61 @@ export class WalletsService {
     }
   }
 
+  async rejectWithdrawalRequests(transactionId: string) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const transaction =
+        await this.walletTransactionService.findOne(transactionId);
+      if (!transaction) {
+        return ApiResponseUtil.throwError(
+          'Transaction not found',
+          'TRANSACTION_NOT_FOUND',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+      if (
+        transaction.stage !== TransactionStage.PENDING ||
+        transaction.type !== TransactionType.WITHDRAWAL
+      ) {
+        return ApiResponseUtil.throwError(
+          'Invalid transaction stage or type',
+          'INVALID_TRANSACTION_STAGE',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      // Unlock amount from user's heldAmount and refund to balance
+      await this.unlockAmountAndRefund(
+        transaction.user.id,
+        transaction.amount,
+        queryRunner.manager,
+      );
+      // Update transaction stage to processed
+      transaction.stage = TransactionStage.PROCESSED;
+
+      // Add transaction for rejected
+      await this.walletTransactionService.create(
+        {
+          amount: transaction.amount,
+          stage: TransactionStage.REJECTED,
+          type: TransactionType.WITHDRAWAL,
+          referenceId: transaction.referenceId,
+        },
+        transaction.user,
+        queryRunner.manager,
+      );
+      await queryRunner.manager.save(transaction);
+      await queryRunner.commitTransaction();
+      return { message: 'Withdrawal request rejected successfully' };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
   update(userId: string, balance: number) {
     return `This action updates a #${userId} wallet`;
   }

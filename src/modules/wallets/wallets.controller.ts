@@ -81,8 +81,12 @@ export class WalletController {
     return await this.walletsService.acceptWithdrawalRequests(transactionId);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.walletsService.findOne(id);
+  @Roles(UserRole.ADMIN)
+  @Post('reject-withdrawal-requests/:transactionId')
+  async rejectWithdrawalRequests(
+    @Param('transactionId') transactionId: string,
+    @CurrentUser() user: User,
+  ) {
+    return await this.walletsService.rejectWithdrawalRequests(transactionId);
   }
 }

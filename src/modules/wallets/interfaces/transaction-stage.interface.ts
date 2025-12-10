@@ -6,4 +6,5 @@ export enum TransactionStage {
   PENDING = 'pending', // Awaiting external processing
   FAILED = 'failed', // Transaction failed
   PROCESSED = 'processed', // Transaction has been processed
+  REJECTED = 'rejected', // Transaction has been rejected
 }
