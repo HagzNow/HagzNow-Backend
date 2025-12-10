@@ -197,6 +197,16 @@ export class WalletsService {
           HttpStatus.NOT_FOUND,
         );
       }
+      if (
+        transaction.stage !== TransactionStage.PENDING ||
+        transaction.type !== TransactionType.WITHDRAWAL
+      ) {
+        return ApiResponseUtil.throwError(
+          'Only pending withdrawal transactions can be accepted',
+          'INVALID_TRANSACTION_STAGE',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
 
       await this.walletTransactionService.create(
         {
