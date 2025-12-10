@@ -1,6 +1,7 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { Roles } from 'src/common/decorators/roles.decorator';
+import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { User } from '../users/entities/user.entity';
 import { UserRole } from '../users/interfaces/userRole.interface';
@@ -21,10 +22,13 @@ export class ReviewsController {
 
   @Serialize(ReviewSummaryDto)
   @Get('arena/:arenaId')
-  async findByArena(@Param('arenaId') arenaId: string) {
+  async findByArena(
+    @Param('arenaId') arenaId: string,
+    @Query() paginationDto: PaginationDto,
+  ) {
     if (!arenaId) {
       throw new Error('Arena ID is required');
     }
-    return this.reviewsService.findByArena(arenaId);
+    return this.reviewsService.findByArena(arenaId, paginationDto);
   }
 }

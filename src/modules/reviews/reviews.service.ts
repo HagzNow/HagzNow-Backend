@@ -1,6 +1,8 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { ApiResponseUtil } from 'src/common/utils/api-response.util';
+import { paginate } from 'src/common/utils/paginate';
 import { Repository } from 'typeorm';
 import { ArenasService } from '../arenas/arenas.service';
 import { ReservationsService } from '../reservations/reservations.service';
@@ -50,10 +52,15 @@ export class ReviewsService {
     return this.reviewsRepo.save(review);
   }
 
-  async findByArena(arenaId: string) {
-    return this.reviewsRepo.find({
-      where: { arena: { id: arenaId } },
-      order: { createdAt: 'DESC' },
-    });
+  async findByArena(
+    arenaId: string,
+    paginationDto: PaginationDto = { page: 1, limit: 10 },
+  ) {
+    const query = this.reviewsRepo
+      .createQueryBuilder('review')
+      .where('review.arenaId = :arenaId', { arenaId })
+      .leftJoinAndSelect('review.user', 'user')
+      .orderBy('review.createdAt', 'DESC');
+    return paginate(query, paginationDto);
   }
 }
