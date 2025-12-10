@@ -4,6 +4,7 @@ import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { ApiResponseUtil } from 'src/common/utils/api-response.util';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 import { User } from '../users/entities/user.entity';
+import { UserRole } from '../users/interfaces/userRole.interface';
 import { Wallet } from './entities/wallet.entity';
 import { TransactionStage } from './interfaces/transaction-stage.interface';
 import { TransactionType } from './interfaces/transaction-type.interface';
@@ -204,6 +205,14 @@ export class WalletsService {
         return ApiResponseUtil.throwError(
           'Only pending withdrawal transactions can be accepted',
           'INVALID_TRANSACTION_STAGE',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      if (transaction.user.role !== UserRole.OWNER) {
+        return ApiResponseUtil.throwError(
+          'Only owners can request withdrawals',
+          'INVALID_USER_ROLE',
           HttpStatus.BAD_REQUEST,
         );
       }
