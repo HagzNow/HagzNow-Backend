@@ -87,6 +87,17 @@ export class WalletTransactionService {
     }
     return transaction;
   }
+  async findSettledTransactionsByReferenceId(
+    referenceId: string,
+    manager?: EntityManager,
+  ) {
+    const repo = manager
+      ? manager.getRepository(WalletTransaction)
+      : this.walletTransactionRepository;
+    return await repo.findOne({
+      where: { referenceId, stage: TransactionStage.SETTLED },
+    });
+  }
 
   update(id: string) {
     return `This action updates a #${id} wallet`;

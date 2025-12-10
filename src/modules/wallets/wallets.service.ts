@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { ApiResponseUtil } from 'src/common/utils/api-response.util';
 import { DataSource, EntityManager, Repository } from 'typeorm';
+import { v4 as uuidv4 } from 'uuid'; // <-- Import v4 function
 import { User } from '../users/entities/user.entity';
 import { UserRole } from '../users/interfaces/userRole.interface';
 import { Wallet } from './entities/wallet.entity';
@@ -162,7 +163,7 @@ export class WalletsService {
           amount,
           stage: TransactionStage.PENDING,
           type: TransactionType.WITHDRAWAL,
-          referenceId: 'withdraw_' + Date.now(),
+          referenceId: uuidv4(),
         },
         user,
         queryRunner.manager,
@@ -216,7 +217,32 @@ export class WalletsService {
           HttpStatus.BAD_REQUEST,
         );
       }
+      if (!transaction.referenceId) {
+        return ApiResponseUtil.throwError(
+          'Transaction referenceId is missing',
+          'MISSING_REFERENCE_ID',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      // Make sure the there isn't any settled transaction with the same referenceId
+      const existingSettledTx =
+        await this.walletTransactionService.findSettledTransactionsByReferenceId(
+          transaction.referenceId,
+          queryRunner.manager,
+        );
 
+      if (existingSettledTx) {
+        console.log('existingSettledTx', existingSettledTx);
+        return ApiResponseUtil.throwError(
+          'A transaction with the same referenceId has already been settled',
+          'DUPLICATE_SETTLED_TRANSACTION',
+          HttpStatus.CONFLICT,
+        );
+      }
+      // update transaction stage to processed
+      transaction.stage = TransactionStage.PROCESSED;
+
+      // Create SETTLED transaction
       await this.walletTransactionService.create(
         {
           amount: transaction.amount,
@@ -227,11 +253,14 @@ export class WalletsService {
         transaction.user,
         queryRunner.manager,
       );
+
+      // Unlock amount from user's heldAmount
       await this.unlockAmount(
         transaction.user.id,
         transaction.amount,
         queryRunner.manager,
       );
+      await queryRunner.manager.save(transaction);
       await queryRunner.commitTransaction();
       return { message: 'Withdrawal request accepted successfully' };
     } catch (error) {
