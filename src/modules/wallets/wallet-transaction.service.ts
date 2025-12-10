@@ -161,13 +161,16 @@ export class WalletTransactionService {
     return await this.updateByReferenceId(referenceId, TransactionStage.FAILED);
   }
   async findWithdrawalRequests(paginationDto: PaginationDto) {
-    return await this.walletTransactionRepository.find({
-      where: {
+    const query =
+      this.walletTransactionRepository.createQueryBuilder('transaction');
+    query
+      .where({
         type: TransactionType.WITHDRAWAL,
         stage: TransactionStage.PENDING,
-      },
-      relations: ['user', 'wallet'],
-    });
+      })
+      .leftJoinAndSelect('transaction.user', 'user')
+      .leftJoinAndSelect('transaction.wallet', 'wallet');
+    return await paginate(query, paginationDto);
   }
 
   async getTotalTransactionsAmountByUserId(
