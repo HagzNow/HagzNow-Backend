@@ -5,4 +5,5 @@ export enum TransactionStage {
   SETTLED = 'settled', // Hold completed → sent to owner
   PENDING = 'pending', // Awaiting external processing
   FAILED = 'failed', // Transaction failed
+  PROCESSED = 'processed', // Transaction has been processed
 }
