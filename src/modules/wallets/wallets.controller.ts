@@ -74,9 +74,9 @@ export class WalletController {
 
   @Serialize(WalletTransactionResponseDto)
   @Roles(UserRole.ADMIN)
-  @Get('accept-withdrawal-requests')
+  @Post('accept-withdrawal-requests/:transactionId')
   async acceptWithdrawalRequests(
-    @Query() transactionId: string,
+    @Param('transactionId') transactionId: string,
     @CurrentUser() user: User,
   ) {
     return await this.walletsService.acceptWithdrawalRequests(transactionId);
