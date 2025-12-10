@@ -14,7 +14,7 @@ export class ReviewSummaryDto {
   createdAt: string;
 
   @Expose()
-  @Transform(({ obj }) => obj.user?.name ?? 'N/A')
+  @Transform(({ obj }) => obj.user.fName + ' ' + obj.user.lName)
   userName: string;
 
   @Expose()
