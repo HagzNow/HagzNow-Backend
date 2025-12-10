@@ -312,6 +312,8 @@ export class ReservationsService {
           reservation.id,
           queryRunner.manager,
         );
+      // Update transaction stage to PROCESSED
+      transaction.stage = TransactionStage.PROCESSED;
 
       // Add transaction for settled
       const settledTransaction = await this.walletTransactionService.create(
@@ -435,6 +437,9 @@ export class ReservationsService {
           reservation.id,
           queryRunner.manager,
         );
+
+      // Update transaction stage to processed
+      transaction.stage = TransactionStage.PROCESSED;
 
       // Update reservation status to CANCELED
       reservation.status = ReservationStatus.CANCELED;
