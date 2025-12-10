@@ -331,14 +331,14 @@ export class ReservationsService {
         Number(userWallet.heldAmount || 0) - reservation.totalAmount;
 
       // Apply admin fee and credit arena owner's wallet
-      const adminFeeRate = 0.1;
-      const amountToCredit = reservation.totalAmount * (1 - adminFeeRate);
+      const amountToCredit =
+        reservation.totalAmount * (1 - Number(process.env.ADMIN_FEE_RATE));
 
       // Create wallet transaction for arena owner
       const ownerWalletTx = await this.walletTransactionService.create(
         {
           amount: amountToCredit,
-          type: TransactionType.PAYMENT,
+          type: TransactionType.DEPOSIT,
           stage: TransactionStage.INSTANT,
           referenceId: reservation.id,
         },
@@ -369,7 +369,7 @@ export class ReservationsService {
           amount:
             Number(reservation.totalAmount) *
             Number(process.env.ADMIN_FEE_RATE),
-          type: TransactionType.FEE,
+          type: TransactionType.DEPOSIT,
           stage: TransactionStage.INSTANT,
           referenceId: reservation.id,
         },
