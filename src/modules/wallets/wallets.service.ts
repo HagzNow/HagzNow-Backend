@@ -37,6 +37,7 @@ export class WalletsService {
     const wallet = await repo.findOne({ where: { user: { id: userId } } });
     if (!wallet) return false;
 
+    wallet.balance = Number(wallet.balance) - amount;
     wallet.heldAmount = Number(wallet.heldAmount) + amount;
     await repo.save(wallet);
     return true;
