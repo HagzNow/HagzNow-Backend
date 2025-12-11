@@ -105,6 +105,13 @@ export class WalletsService {
     return repo.findOne({ where: { user: { id: userId } } });
   }
 
+  async findOneByUserIdForUpdate(userId: string, manager: EntityManager) {
+    return manager.findOne(Wallet, {
+      where: { user: { id: userId } },
+      lock: { mode: 'pessimistic_write' },
+    });
+  }
+
   async deduceAmount(amount: number, user: User, manager?: EntityManager) {
     const repo = manager
       ? manager.getRepository(Wallet)
