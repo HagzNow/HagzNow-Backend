@@ -80,6 +80,7 @@ export class ArenasService {
     // Start a query builder
     const query = this.arenaRepository
       .createQueryBuilder('arenas')
+      .leftJoinAndSelect('arenas.reviews', 'review')
       .leftJoinAndSelect('arenas.location', 'location')
       .leftJoinAndSelect('arenas.category', 'category')
       .where('arenas.status = :status', { status: 'active' });
@@ -116,6 +117,9 @@ export class ArenasService {
   ) {
     const query = this.arenaRepository
       .createQueryBuilder('arenas')
+      .leftJoinAndSelect('arenas.reviews', 'review')
+      .leftJoinAndSelect('arenas.location', 'location')
+      .leftJoinAndSelect('arenas.category', 'category')
       .leftJoinAndSelect('arenas.owner', 'owner')
       .where('arenas.ownerId = :ownerId', { ownerId });
     this.applyFilters(query, filters);
