@@ -1,6 +1,7 @@
 import { Expose } from 'class-transformer';
 import { UserRole } from '../interfaces/userRole.interface';
 import { UserStatus } from '../interfaces/userStatus.interface';
+import { PayoutMethod } from '../interfaces/payout-method.interface';
 
 export class UserDto {
   @Expose()
@@ -26,4 +27,7 @@ export class UserDto {
 
   @Expose()
   avatar?: string;
+
+  @Expose()
+  payoutMethod: PayoutMethod;
 }

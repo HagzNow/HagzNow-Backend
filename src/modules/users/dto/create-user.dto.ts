@@ -1,5 +1,13 @@
-import { IsEmail, IsIn, IsString, Length, Matches } from 'class-validator';
+import {
+  IsEmail,
+  IsEnum,
+  IsIn,
+  IsString,
+  Length,
+  Matches,
+} from 'class-validator';
 import { UserRole } from '../interfaces/userRole.interface';
+import { PayoutMethod } from '../interfaces/payout-method.interface';
 
 export class CreateUserDto {
   @IsString()
@@ -31,4 +39,9 @@ export class CreateUserDto {
   role: UserRole;
 
   avatar?: string;
+
+  @IsEnum(PayoutMethod, {
+    message: 'Payout method must be wallet, instapay',
+  })
+  payoutMethod?: PayoutMethod;
 }
