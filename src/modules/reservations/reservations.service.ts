@@ -164,7 +164,7 @@ export class ReservationsService {
 
       const tz = 'Africa/Cairo';
       // const runAt = DateTime.fromISO(dto.date, { zone: tz }).startOf('day');
-      const runAt = DateTime.now().plus({ seconds: 200 });
+      const runAt = DateTime.now().plus({ seconds: 50 });
       await this.producer.scheduleSettlement(
         reservation.id,
         runAt,

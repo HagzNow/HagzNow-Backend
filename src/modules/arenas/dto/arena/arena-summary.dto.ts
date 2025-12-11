@@ -27,5 +27,19 @@ export class ArenaSummaryDto {
   locationSummary: string;
 
   @Expose()
+  @Transform(({ obj }) => {
+    console.log('Reviews:', obj.reviews);
+    if (!obj.reviews || obj.reviews.length === 0) {
+      return 0;
+    }
+    const totalRating = obj.reviews.reduce(
+      (acc, review) => acc + Number(review.rating),
+      0,
+    );
+    return parseFloat((totalRating / obj.reviews.length).toFixed(2));
+  })
+  averageRating: number;
+
+  @Expose()
   status: ArenaStatus;
 }

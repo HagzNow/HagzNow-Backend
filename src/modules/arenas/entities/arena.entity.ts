@@ -91,7 +91,10 @@ export class Arena {
   @JoinColumn({ name: 'ownerId' }) // <- this sets the column name
   owner: User;
 
-  @OneToMany(() => Review, (review) => review.arena, { nullable: true })
+  @OneToMany(() => Review, (review) => review.arena, {
+    nullable: true,
+    eager: true,
+  })
   reviews: Review[];
 
   getDepositAmount(totalHours: number): number {
