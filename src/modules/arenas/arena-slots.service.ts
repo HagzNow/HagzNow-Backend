@@ -87,7 +87,7 @@ export class ArenaSlotsService {
     };
   }
 
-  async checkIfSlotsBooked(
+  async getBookedHours(
     arenaId: string,
     date: string,
     hours: number[],
@@ -102,15 +102,17 @@ export class ArenaSlotsService {
         isCanceled: false,
       },
     });
-    if (bookedSlots.length > 0) {
-      const bookedHours = bookedSlots.map((s) => s.hour);
-      return ApiResponseUtil.throwError(
-        `Some slots are already booked for this arena: ${bookedHours.join(', ')}`,
-        'SLOTS_ALREADY_BOOKED',
-        HttpStatus.BAD_REQUEST,
-      );
+    const bookedHours = bookedSlots.map((s) => s.hour);
+
+    return bookedHours;
+  }
+
+  async cancelSlots(slots: ArenaSlot[], manager?: EntityManager) {
+    const repo = manager ? manager.getRepository(ArenaSlot) : this.slotRepo;
+    for (const slot of slots) {
+      slot.isCanceled = true;
     }
-    return;
+    return await repo.save(slots);
   }
 
   async getOccupancyRate(ownerId: string, startDate?: Date, endDate?: Date) {
