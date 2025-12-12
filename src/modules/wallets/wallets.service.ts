@@ -24,11 +24,56 @@ export class WalletsService {
     return await this.walletRepository.save(newWallet);
   }
 
-  async hasEnoughBalance(userId: string, amount: number) {
-    const wallet = await this.findOneByUserId(userId);
+  async hasEnoughBalance(
+    userId: string,
+    amount: number,
+    manager?: EntityManager,
+  ) {
+    const repo = manager
+      ? manager.getRepository(Wallet)
+      : this.walletRepository;
+
+    const wallet = await this.findOneByUserId(userId, repo.manager);
     if (!wallet) return false;
     console.log('wallet.balance', wallet.balance, 'amount', amount);
     return wallet.balance >= amount;
+  }
+
+  async addToHeldAmount(
+    userId: string,
+    amount: number,
+    manager?: EntityManager,
+  ) {
+    const repo = manager
+      ? manager.getRepository(Wallet)
+      : this.walletRepository;
+    const wallet = await this.findOneByUserIdForUpdate(userId, repo.manager);
+    if (!wallet) return false;
+    wallet.heldAmount = Number(wallet.heldAmount) + amount;
+    await repo.save(wallet);
+    return true;
+  }
+
+  async removeFromHeldAmount(
+    userId: string,
+    amount: number,
+    manager?: EntityManager,
+  ) {
+    const repo = manager
+      ? manager.getRepository(Wallet)
+      : this.walletRepository;
+    const wallet = await this.findOneByUserIdForUpdate(userId, repo.manager);
+    if (!wallet) return false;
+    if (Number(wallet.heldAmount) < amount) {
+      return ApiResponseUtil.throwError(
+        'Insufficient held amount',
+        'INSUFFICIENT_HELD_AMOUNT',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    wallet.heldAmount = Number(wallet.heldAmount) - amount;
+    await repo.save(wallet);
+    return true;
   }
 
   async lockAmount(userId: string, amount: number, manager?: EntityManager) {
@@ -36,9 +81,21 @@ export class WalletsService {
       ? manager.getRepository(Wallet)
       : this.walletRepository;
 
-    const wallet = await repo.findOne({ where: { user: { id: userId } } });
-    if (!wallet) return false;
+    const wallet = await this.findOneByUserIdForUpdate(userId, repo.manager);
+    if (!wallet)
+      return ApiResponseUtil.throwError(
+        'Wallet not found for this user',
+        'WALLET_NOT_FOUND',
+        HttpStatus.BAD_REQUEST,
+      );
 
+    if (Number(wallet.balance) < amount) {
+      return ApiResponseUtil.throwError(
+        'Insufficient balance',
+        'INSUFFICIENT_BALANCE',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
     wallet.balance = Number(wallet.balance) - amount;
     wallet.heldAmount = Number(wallet.heldAmount) + amount;
     await repo.save(wallet);
@@ -49,19 +106,26 @@ export class WalletsService {
     const repo = manager
       ? manager.getRepository(Wallet)
       : this.walletRepository;
-    const wallet = await repo.findOne({ where: { user: { id: userId } } });
+    const wallet = await this.findOneByUserIdForUpdate(userId, repo.manager);
     if (!wallet)
       return ApiResponseUtil.throwError(
         'Wallet not found for this user',
         'WALLET_NOT_FOUND',
         HttpStatus.BAD_REQUEST,
       );
+    if (Number(wallet.heldAmount) < amount) {
+      return ApiResponseUtil.throwError(
+        'Insufficient held amount',
+        'INSUFFICIENT_HELD_AMOUNT',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
     wallet.heldAmount = Number(wallet.heldAmount) - amount;
     await repo.save(wallet);
     return true;
   }
 
-  async unlockAmountAndRefund(
+  async releaseHeldAmount(
     userId: string,
     amount: number,
     manager?: EntityManager,
@@ -69,13 +133,20 @@ export class WalletsService {
     const repo = manager
       ? manager.getRepository(Wallet)
       : this.walletRepository;
-    const wallet = await repo.findOne({ where: { user: { id: userId } } });
+    const wallet = await this.findOneByUserIdForUpdate(userId, repo.manager);
     if (!wallet)
       return ApiResponseUtil.throwError(
         'Wallet not found for this user',
         'WALLET_NOT_FOUND',
         HttpStatus.BAD_REQUEST,
       );
+    if (Number(wallet.heldAmount) < amount) {
+      return ApiResponseUtil.throwError(
+        'Insufficient held amount',
+        'INSUFFICIENT_HELD_AMOUNT',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
     wallet.heldAmount = Number(wallet.heldAmount) - amount;
     wallet.balance = Number(wallet.balance) + amount;
     await repo.save(wallet);
@@ -83,9 +154,7 @@ export class WalletsService {
   }
 
   async getBalanceByUser(user: User) {
-    const wallet = await this.walletRepository.findOne({
-      where: { user: { id: user.id } },
-    });
+    const wallet = await this.findOneByUserId(user.id);
     if (!wallet) {
       // this will only happen in case of teh event listener didn't get executed
       await this.create(user);
@@ -105,7 +174,10 @@ export class WalletsService {
     return repo.findOne({ where: { user: { id: userId } } });
   }
 
-  async findOneByUserIdForUpdate(userId: string, manager: EntityManager) {
+  private async findOneByUserIdForUpdate(
+    userId: string,
+    manager: EntityManager,
+  ) {
     return manager.findOne(Wallet, {
       where: { user: { id: userId } },
       lock: { mode: 'pessimistic_write' },
@@ -302,8 +374,8 @@ export class WalletsService {
           HttpStatus.BAD_REQUEST,
         );
       }
-      // Unlock amount from user's heldAmount and refund to balance
-      await this.unlockAmountAndRefund(
+      // Release held amount back to user's balance
+      await this.releaseHeldAmount(
         transaction.user.id,
         transaction.amount,
         queryRunner.manager,
