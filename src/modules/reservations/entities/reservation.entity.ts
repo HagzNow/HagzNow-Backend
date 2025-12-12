@@ -79,4 +79,13 @@ export class Reservation {
     eager: true,
   })
   user: User;
+
+  calculateOwnerAmount(): number {
+    const adminFeeRate = Number(process.env.ADMIN_FEE_RATE);
+    return this.totalAmount * (1 - adminFeeRate);
+  }
+  calculateAdminAmount(): number {
+    const adminFeeRate = Number(process.env.ADMIN_FEE_RATE);
+    return Number(this.totalAmount) * adminFeeRate;
+  }
 }
