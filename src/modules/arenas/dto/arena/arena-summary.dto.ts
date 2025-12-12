@@ -28,7 +28,6 @@ export class ArenaSummaryDto {
 
   @Expose()
   @Transform(({ obj }) => {
-    console.log('Reviews:', obj.reviews);
     if (!obj.reviews || obj.reviews.length === 0) {
       return 0;
     }
