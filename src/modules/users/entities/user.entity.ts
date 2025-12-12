@@ -57,9 +57,7 @@ export class User {
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
-  @OneToOne(() => Wallet, (wallet) => wallet.user, {
-    eager: true,
-  })
+  @OneToOne(() => Wallet, (wallet) => wallet.user)
   @JoinColumn()
   wallet: Wallet;
 
