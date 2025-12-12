@@ -102,11 +102,33 @@ export class WalletTransactionService {
   update(id: string) {
     return `This action updates a #${id} wallet`;
   }
-  async updateByReferenceId(referenceId: string, stage: TransactionStage) {
-    return await this.walletTransactionRepository.update(
-      { referenceId },
-      { stage },
-    );
+  async updateByReferenceId(
+    referenceId: string,
+    stage: TransactionStage,
+    queryManager?: EntityManager,
+  ) {
+    const repo = queryManager
+      ? queryManager.getRepository(WalletTransaction)
+      : this.walletTransactionRepository;
+
+    // ⚠ MUST use QueryBuilder or TypeORM may generate hidden joins
+    const transaction = await repo
+      .createQueryBuilder('tx')
+      .where('tx.referenceId = :referenceId', { referenceId })
+      .setLock('pessimistic_write')
+      .getOne();
+
+    if (!transaction) {
+      return ApiResponseUtil.throwError(
+        'Transaction not found',
+        'TRANSACTION_NOT_FOUND',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    transaction.stage = stage;
+
+    return repo.save(transaction);
   }
 
   async processCompleteTransaction(amount: number, referenceId: string) {
