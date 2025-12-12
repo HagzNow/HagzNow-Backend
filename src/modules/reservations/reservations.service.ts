@@ -78,20 +78,6 @@ export class ReservationsService {
         queryRunner.manager,
       );
 
-      // Load arena owner wallet
-      const arenaOwnerWallet =
-        await this.walletsService.findOneByUserIdForUpdate(
-          arena.owner.id,
-          queryRunner.manager,
-        );
-      if (!arenaOwnerWallet) {
-        return ApiResponseUtil.throwError(
-          'Arena owner wallet not found',
-          'ARENA_OWNER_WALLET_NOT_FOUND',
-          HttpStatus.NOT_FOUND,
-        );
-      }
-
       // Make sure arena is active
       if (arena.status !== ArenaStatus.ACTIVE) {
         return ApiResponseUtil.throwError(
@@ -107,13 +93,31 @@ export class ReservationsService {
         queryRunner.manager,
       );
 
+      // validate all extras found
+      if (extras.length !== (dto.extras || []).length) {
+        return ApiResponseUtil.throwError(
+          'One or more extras not found',
+          'EXTRAS_NOT_FOUND',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
       // Validate slots are not already booked
-      await this.arenaSlotsService.checkIfSlotsBooked(
+      const bookedHours = await this.arenaSlotsService.getBookedHours(
         dto.arenaId,
         dto.date,
         dto.slots,
         queryRunner.manager,
       );
+      if (bookedHours.length > 0) {
+        return ApiResponseUtil.throwError(
+          `Some slots are already booked for this arena: ${bookedHours.join(
+            ', ',
+          )}`,
+          'SLOTS_ALREADY_BOOKED',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
 
       // Calculate amounts
       const playAmount = arena.getDepositAmount(dto.slots.length);
@@ -123,8 +127,17 @@ export class ReservationsService {
       );
       const totalAmount = playAmount + extrasAmount;
 
+      // Calculate amounts to credit for owner
+      const amountToCredit =
+        totalAmount * (1 - Number(process.env.ADMIN_FEE_RATE));
+
       // Check user balance
-      if (!user.wallet || user.wallet.balance < totalAmount) {
+      const hasEnoughBalance = await this.walletsService.hasEnoughBalance(
+        userId,
+        totalAmount,
+        queryRunner.manager,
+      );
+      if (!hasEnoughBalance) {
         return ApiResponseUtil.throwError(
           'Insufficient wallet balance',
           'INSUFFICIENT_BALANCE',
@@ -154,7 +167,7 @@ export class ReservationsService {
         queryRunner.manager,
       );
 
-      // 5️⃣ Create wallet HOLD transaction
+      // Create wallet HOLD transaction for user
       const walletTx = await this.walletTransactionService.create(
         {
           amount: totalAmount,
@@ -165,28 +178,39 @@ export class ReservationsService {
         user,
         queryRunner.manager,
       );
-      // Update wallets
-      const userWallet = await this.walletsService.findOneByUserIdForUpdate(
+      // Update user wallet held amount
+      await this.walletsService.lockAmount(
         user.id,
+        totalAmount,
         queryRunner.manager,
       );
-      if (!userWallet) {
+
+      // Update arena owner wallet held amount
+      await this.walletsService.addToHeldAmount(
+        arena.owner.id,
+        amountToCredit,
+        queryRunner.manager,
+      );
+
+      // Update admin wallet held amount
+      const adminId = process.env.ADMIN_ID;
+      if (!adminId) {
         return ApiResponseUtil.throwError(
-          'User wallet not found',
-          'USER_WALLET_NOT_FOUND',
-          HttpStatus.NOT_FOUND,
+          'Admin ID not configured',
+          'ADMIN_ID_NOT_CONFIGURED',
+          HttpStatus.INTERNAL_SERVER_ERROR,
         );
       }
-      userWallet.balance = Number(userWallet.balance) - totalAmount;
-      userWallet.heldAmount = Number(userWallet.heldAmount || 0) + totalAmount;
-      arenaOwnerWallet.heldAmount =
-        Number(arenaOwnerWallet.heldAmount || 0) + totalAmount;
+      await this.walletsService.addToHeldAmount(
+        adminId,
+        totalAmount * Number(process.env.ADMIN_FEE_RATE),
+        queryRunner.manager,
+      );
 
-      await queryRunner.manager.save([walletTx, userWallet, arenaOwnerWallet]);
-
+      // Schedule reservation settlement
       const tz = 'Africa/Cairo';
       // const runAt = DateTime.fromISO(dto.date, { zone: tz }).startOf('day');
-      const runAt = DateTime.now().plus({ seconds: 50 });
+      const runAt = DateTime.now().plus({ seconds: 1000 });
       await this.producer.scheduleSettlement(
         reservation.id,
         runAt,
@@ -252,12 +276,19 @@ export class ReservationsService {
         );
       }
       // Validate slots are not already booked
-      await this.arenaSlotsService.checkIfSlotsBooked(
+      const bookedHours = await this.arenaSlotsService.getBookedHours(
         dto.arenaId,
         dto.date,
         dto.slots,
         queryRunner.manager,
       );
+      if (bookedHours.length > 0) {
+        return ApiResponseUtil.throwError(
+          'One or more slots are already booked',
+          'SLOTS_ALREADY_BOOKED',
+          HttpStatus.CONFLICT,
+        );
+      }
 
       const reservation = queryRunner.manager.create(Reservation, {
         dateOfReservation: dto.date,
@@ -280,7 +311,6 @@ export class ReservationsService {
       );
       reservation.slots = addedSlots;
 
-      await queryRunner.manager.save(reservation);
       //Commit DB transaction
       await queryRunner.commitTransaction();
       return reservation;
@@ -303,7 +333,7 @@ export class ReservationsService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-      const reservation = await this.reservationRepository.findOne({
+      const reservation = await queryRunner.manager.findOne(Reservation, {
         where: { id: reservationId },
         relations: ['user', 'arena', 'arena.owner'],
       });
@@ -325,31 +355,7 @@ export class ReservationsService {
       }
 
       const user = reservation.user;
-      const userWallet = await this.walletsService.findOneByUserIdForUpdate(
-        user.id,
-        queryRunner.manager,
-      );
-      if (!userWallet) {
-        console.log('User wallet not found');
-        return ApiResponseUtil.throwError(
-          'User wallet not found',
-          'USER_WALLET_NOT_FOUND',
-          HttpStatus.NOT_FOUND,
-        );
-      }
-      const arenaOwnerWallet =
-        await this.walletsService.findOneByUserIdForUpdate(
-          reservation.arena.owner.id,
-          queryRunner.manager,
-        );
-      if (!arenaOwnerWallet) {
-        console.log('Arena owner wallet not found');
-        return ApiResponseUtil.throwError(
-          'Arena owner wallet not found',
-          'ARENA_OWNER_WALLET_NOT_FOUND',
-          HttpStatus.NOT_FOUND,
-        );
-      }
+
       const adminId = process.env.ADMIN_ID;
       if (!adminId) {
         console.log('Admin ID not configured');
@@ -359,29 +365,17 @@ export class ReservationsService {
           HttpStatus.INTERNAL_SERVER_ERROR,
         );
       }
-      const adminWallet = await this.walletsService.findOneByUserIdForUpdate(
-        adminId,
-        queryRunner.manager,
-      );
-      if (!adminWallet) {
-        console.log('Admin wallet not found');
-        return ApiResponseUtil.throwError(
-          'Admin wallet not found',
-          'ADMIN_WALLET_NOT_FOUND',
-          HttpStatus.NOT_FOUND,
-        );
-      }
 
       // Update reservation status to CONFIRMED
       reservation.status = ReservationStatus.CONFIRMED;
 
+      // Update wallet transaction stage to PROCESSED
       const transaction =
-        await this.walletTransactionService.findOneByReferenceId(
+        await this.walletTransactionService.updateByReferenceId(
           reservation.id,
+          TransactionStage.PROCESSED,
           queryRunner.manager,
         );
-      // Update transaction stage to PROCESSED
-      transaction.stage = TransactionStage.PROCESSED;
 
       // Add transaction for settled
       const settledTransaction = await this.walletTransactionService.create(
@@ -394,13 +388,22 @@ export class ReservationsService {
         user,
         queryRunner.manager,
       );
-      // Update user wallet held amount
-      userWallet.heldAmount =
-        Number(userWallet.heldAmount || 0) - reservation.totalAmount;
+      // Unlock user wallet held amount
+      await this.walletsService.unlockAmount(
+        user.id,
+        reservation.totalAmount,
+        queryRunner.manager,
+      );
 
-      // Apply admin fee and credit arena owner's wallet
-      const amountToCredit =
-        reservation.totalAmount * (1 - Number(process.env.ADMIN_FEE_RATE));
+      // Calculate amounts to credit for owner
+      const amountToCredit = reservation.calculateOwnerAmount();
+
+      // Release held amount from arena owner wallet
+      await this.walletsService.releaseHeldAmount(
+        reservation.arena.owner.id,
+        amountToCredit,
+        queryRunner.manager,
+      );
 
       // Create wallet transaction for arena owner
       const ownerWalletTx = await this.walletTransactionService.create(
@@ -414,12 +417,6 @@ export class ReservationsService {
         queryRunner.manager,
       );
 
-      // Update arena owner wallet
-      arenaOwnerWallet.heldAmount =
-        Number(arenaOwnerWallet.heldAmount || 0) - reservation.totalAmount;
-      arenaOwnerWallet.balance =
-        Number(arenaOwnerWallet.balance || 0) + amountToCredit;
-
       //  Add admin fee
       const admin = await queryRunner.manager.findOne(User, {
         where: { id: process.env.ADMIN_ID },
@@ -432,6 +429,7 @@ export class ReservationsService {
           HttpStatus.NOT_FOUND,
         );
       }
+      // Add admin fee to admin wallet
       const adminFeeTx = await this.walletTransactionService.create(
         {
           amount:
@@ -444,18 +442,19 @@ export class ReservationsService {
         admin,
         queryRunner.manager,
       );
-      adminWallet.balance =
-        Number(adminWallet.balance || 0) +
-        Number(reservation.totalAmount) * Number(process.env.ADMIN_FEE_RATE);
+
+      // Release held amount from admin wallet
+      await this.walletsService.releaseHeldAmount(
+        admin.id,
+        Number(reservation.totalAmount) * Number(process.env.ADMIN_FEE_RATE),
+        queryRunner.manager,
+      );
 
       await queryRunner.manager.save([
         reservation,
         transaction,
         settledTransaction,
-        userWallet,
-        arenaOwnerWallet,
         ownerWalletTx,
-        adminWallet,
         adminFeeTx,
       ]);
 
@@ -506,16 +505,28 @@ export class ReservationsService {
           queryRunner.manager,
         );
 
+      if (!transaction || transaction.stage !== TransactionStage.HOLD) {
+        return ApiResponseUtil.throwError(
+          'Associated wallet transaction not found or not in HOLD stage',
+          'WALLET_TRANSACTION_NOT_FOUND_OR_INVALID_STAGE',
+          HttpStatus.NOT_FOUND,
+        );
+      }
       // Update transaction stage to processed
-      transaction.stage = TransactionStage.PROCESSED;
+      await this.walletTransactionService.updateByReferenceId(
+        reservation.id,
+        TransactionStage.PROCESSED,
+        queryRunner.manager,
+      );
 
       // Update reservation status to CANCELED
       reservation.status = ReservationStatus.CANCELED;
 
       // Mark all slots as canceled
-      for (const slot of reservation.slots) {
-        slot.isCanceled = true;
-      }
+      await this.arenaSlotsService.cancelSlots(
+        reservation.slots,
+        queryRunner.manager,
+      );
 
       // Add transaction for refund
       const refundTransaction = await this.walletTransactionService.create(
@@ -530,35 +541,36 @@ export class ReservationsService {
       );
 
       // Refund user wallet
-      const userWallet = await this.walletsService.findOneByUserIdForUpdate(
+      await this.walletsService.releaseHeldAmount(
         reservation.user.id,
+        Number(reservation.totalAmount),
         queryRunner.manager,
       );
-      if (!userWallet) {
+      const amountToCredit = reservation.calculateOwnerAmount();
+
+      // Remove held amount from arena owner wallet
+      await this.walletsService.removeFromHeldAmount(
+        reservation.arena.owner.id,
+        amountToCredit,
+        queryRunner.manager,
+      );
+
+      // Remove held amount from admin wallet
+      const adminId = process.env.ADMIN_ID;
+      if (!adminId) {
         return ApiResponseUtil.throwError(
-          'User wallet not found',
-          'USER_WALLET_NOT_FOUND',
-          HttpStatus.NOT_FOUND,
+          'Admin ID not configured',
+          'ADMIN_ID_NOT_CONFIGURED',
+          HttpStatus.INTERNAL_SERVER_ERROR,
         );
       }
-      userWallet.heldAmount =
-        Number(userWallet.heldAmount || 0) - Number(reservation.totalAmount);
-      userWallet.balance =
-        Number(userWallet.balance || 0) + Number(reservation.totalAmount);
+      await this.walletsService.removeFromHeldAmount(
+        adminId,
+        reservation.calculateAdminAmount(),
+        queryRunner.manager,
+      );
 
-      // Update arena owner wallet held amount
-      const arenaOwnerWallet = reservation.arena.owner.wallet;
-      arenaOwnerWallet.heldAmount =
-        Number(arenaOwnerWallet.heldAmount || 0) -
-        Number(reservation.totalAmount);
-
-      await queryRunner.manager.save([
-        reservation,
-        ...reservation.slots,
-        refundTransaction,
-        userWallet,
-        arenaOwnerWallet,
-      ]);
+      await queryRunner.manager.save([reservation]);
       await queryRunner.commitTransaction();
       console.log('Reservation canceled successfully:', reservationId);
       return true;
