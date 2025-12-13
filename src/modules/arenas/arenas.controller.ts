@@ -52,8 +52,8 @@ export class ArenasController {
 
   @Serialize(ArenaDetailsDto)
   @Get('detailed')
-  findAllDetailed() {
-    return this.arenasService.findAllDetailed();
+  findAllDetailed(@Query('categoryId') categoryId: string) {
+    return this.arenasService.findAllDetailed(categoryId);
   }
 
   @Serialize(ArenaSummaryDto)

@@ -139,7 +139,15 @@ export class ArenasService {
       .where('arena.ownerId = :ownerId', { ownerId })
       .getRawMany();
   }
-  async findAllDetailed() {
+  async findAllDetailed(categoryId: string) {
+    const category = await this.categoriesService.findOne(categoryId);
+    if (!category) {
+      return ApiResponseUtil.throwError(
+        'Category not found',
+        'CATEGORY_NOT_FOUND',
+        HttpStatus.NOT_FOUND,
+      );
+    }
     return await this.arenaRepository.find({
       relations: [
         'location',
