@@ -139,6 +139,18 @@ export class ArenasService {
       .where('arena.ownerId = :ownerId', { ownerId })
       .getRawMany();
   }
+  async findAllDetailed() {
+    return await this.arenaRepository.find({
+      relations: [
+        'location',
+        'category',
+        'owner',
+        'reviews',
+        'images',
+        'extras',
+      ],
+    });
+  }
 
   async findOne(id: string, manager?: EntityManager) {
     // In case id is undefined or null without this it will return first value

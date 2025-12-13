@@ -50,6 +50,12 @@ export class ArenasController {
     return this.arenasService.create(createArenaDto, owner, files);
   }
 
+  @Serialize(ArenaDetailsDto)
+  @Get('detailed')
+  findAllDetailed() {
+    return this.arenasService.findAllDetailed();
+  }
+
   @Serialize(ArenaSummaryDto)
   @Get()
   findAll(
