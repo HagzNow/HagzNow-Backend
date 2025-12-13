@@ -149,6 +149,7 @@ export class ArenasService {
       );
     }
     return await this.arenaRepository.find({
+      where: { category: { id: categoryId } },
       relations: [
         'location',
         'category',

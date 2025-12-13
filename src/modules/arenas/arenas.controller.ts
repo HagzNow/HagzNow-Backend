@@ -52,7 +52,7 @@ export class ArenasController {
 
   @Serialize(ArenaDetailsDto)
   @Get('detailed')
-  findAllDetailed(@Query('categoryId') categoryId: string) {
+  findAllDetailed(@Body('categoryId') categoryId: string) {
     return this.arenasService.findAllDetailed(categoryId);
   }
 
