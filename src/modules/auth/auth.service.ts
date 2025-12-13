@@ -6,6 +6,8 @@ import { CreateUserDto } from '../users/dto/create-user.dto';
 import { UsersService } from '../users/users.service';
 import { UserStatus } from '../users/interfaces/userStatus.interface';
 import { User } from '../users/entities/user.entity';
+import { handleImageUpload } from 'src/common/utils/handle-image-upload.util';
+import { CreateOwnerDto } from '../users/dto/create-owner.dto';
 
 @Injectable()
 export class AuthService {
@@ -35,7 +37,14 @@ export class AuthService {
       token: await this.jwtService.signAsync(result),
     };
   }
-  async signUp(data: CreateUserDto): Promise<any> {
+  async signUp(
+    data: CreateUserDto | CreateOwnerDto,
+    files?: {
+      nationalIdFront?: Express.Multer.File[];
+      nationalIdBack?: Express.Multer.File[];
+      selfieWithId?: Express.Multer.File[];
+    },
+  ): Promise<any> {
     const checkUser = await this.usersService.findOne(data.email);
     if (checkUser)
       ApiResponseUtil.throwError(
@@ -43,6 +52,17 @@ export class AuthService {
         'EMAIL_IN_USE',
         HttpStatus.CONFLICT,
       );
+    if (files && data instanceof CreateOwnerDto) {
+      const { nationalIdFront, nationalIdBack, selfieWithId } =
+        await handleImageUpload({
+          nationalIdFront: files?.nationalIdFront,
+          nationalIdBack: files?.nationalIdBack,
+          selfieWithId: files?.selfieWithId,
+        });
+      data.nationalIdFront = nationalIdFront[0];
+      data.nationalIdBack = nationalIdBack[0];
+      data.selfieWithId = selfieWithId[0];
+    }
 
     const user = await this.usersService.create(data);
     const { password, ...result } = user;

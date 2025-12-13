@@ -67,6 +67,15 @@ export class User {
   @Column({ type: 'varchar', nullable: true })
   avatar: string;
 
+  @Column({ type: 'varchar', nullable: true })
+  nationalIdFront?: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  nationalIdBack?: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  selfieWithId?: string;
+
   @OneToMany(() => Arena, (arena) => arena.owner, {
     nullable: true,
   })

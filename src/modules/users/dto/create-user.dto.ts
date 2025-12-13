@@ -39,9 +39,4 @@ export class CreateUserDto {
   role: UserRole;
 
   avatar?: string;
-
-  @IsEnum(PayoutMethod, {
-    message: 'Payout method must be wallet, instapay',
-  })
-  payoutMethod?: PayoutMethod;
 }
