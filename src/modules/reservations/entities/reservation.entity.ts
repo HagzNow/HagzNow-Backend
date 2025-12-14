@@ -82,7 +82,7 @@ export class Reservation {
 
   calculateOwnerAmount(): number {
     const adminFeeRate = Number(process.env.ADMIN_FEE_RATE);
-    return this.totalAmount * (1 - adminFeeRate);
+    return Number(this.totalAmount) * (1 - adminFeeRate);
   }
   calculateAdminAmount(): number {
     const adminFeeRate = Number(process.env.ADMIN_FEE_RATE);

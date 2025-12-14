@@ -127,14 +127,10 @@ export class ReservationsService {
       );
       const totalAmount = playAmount + extrasAmount;
 
-      // Calculate amounts to credit for owner
-      const amountToCredit =
-        totalAmount * (1 - Number(process.env.ADMIN_FEE_RATE));
-
       // Check user balance
       const hasEnoughBalance = await this.walletsService.hasEnoughBalance(
         userId,
-        totalAmount,
+        Number(totalAmount),
         queryRunner.manager,
       );
       if (!hasEnoughBalance) {
@@ -158,6 +154,9 @@ export class ReservationsService {
       });
       await queryRunner.manager.save(reservation);
 
+      // Calculate amounts to credit for owner
+      const amountToCredit = reservation.calculateOwnerAmount();
+
       // Create arena slots linked to this reservation
       const addedSlots: ArenaSlot[] = await this.arenaSlotsService.createSlots(
         arena,
@@ -170,7 +169,7 @@ export class ReservationsService {
       // Create wallet HOLD transaction for user
       const walletTx = await this.walletTransactionService.create(
         {
-          amount: totalAmount,
+          amount: Number(totalAmount),
           stage: TransactionStage.HOLD,
           type: TransactionType.PAYMENT,
           referenceId: reservation.id,
@@ -181,14 +180,14 @@ export class ReservationsService {
       // Update user wallet held amount
       await this.walletsService.lockAmount(
         user.id,
-        totalAmount,
+        Number(totalAmount),
         queryRunner.manager,
       );
 
       // Update arena owner wallet held amount
       await this.walletsService.addToHeldAmount(
         arena.owner.id,
-        amountToCredit,
+        Number(amountToCredit),
         queryRunner.manager,
       );
 
@@ -203,7 +202,7 @@ export class ReservationsService {
       }
       await this.walletsService.addToHeldAmount(
         adminId,
-        totalAmount * Number(process.env.ADMIN_FEE_RATE),
+        reservation.calculateAdminAmount(),
         queryRunner.manager,
       );
 
@@ -380,7 +379,7 @@ export class ReservationsService {
       // Add transaction for settled
       const settledTransaction = await this.walletTransactionService.create(
         {
-          amount: reservation.totalAmount,
+          amount: Number(reservation.totalAmount),
           type: TransactionType.PAYMENT,
           referenceId: reservation.id,
           stage: TransactionStage.SETTLED,
@@ -391,7 +390,7 @@ export class ReservationsService {
       // Unlock user wallet held amount
       await this.walletsService.unlockAmount(
         user.id,
-        reservation.totalAmount,
+        Number(reservation.totalAmount),
         queryRunner.manager,
       );
 
@@ -401,14 +400,14 @@ export class ReservationsService {
       // Release held amount from arena owner wallet
       await this.walletsService.releaseHeldAmount(
         reservation.arena.owner.id,
-        amountToCredit,
+        Number(amountToCredit),
         queryRunner.manager,
       );
 
       // Create wallet transaction for arena owner
       const ownerWalletTx = await this.walletTransactionService.create(
         {
-          amount: amountToCredit,
+          amount: Number(amountToCredit),
           type: TransactionType.DEPOSIT,
           stage: TransactionStage.INSTANT,
           referenceId: reservation.id,
@@ -432,9 +431,7 @@ export class ReservationsService {
       // Add admin fee to admin wallet
       const adminFeeTx = await this.walletTransactionService.create(
         {
-          amount:
-            Number(reservation.totalAmount) *
-            Number(process.env.ADMIN_FEE_RATE),
+          amount: reservation.calculateAdminAmount(),
           type: TransactionType.DEPOSIT,
           stage: TransactionStage.INSTANT,
           referenceId: reservation.id,
@@ -531,7 +528,7 @@ export class ReservationsService {
       // Add transaction for refund
       const refundTransaction = await this.walletTransactionService.create(
         {
-          amount: reservation.totalAmount,
+          amount: Number(reservation.totalAmount),
           referenceId: reservation.id,
           stage: TransactionStage.REFUND,
           type: TransactionType.REFUND,
@@ -551,7 +548,7 @@ export class ReservationsService {
       // Remove held amount from arena owner wallet
       await this.walletsService.removeFromHeldAmount(
         reservation.arena.owner.id,
-        amountToCredit,
+        Number(amountToCredit),
         queryRunner.manager,
       );
 
