@@ -12,6 +12,9 @@ export class ArenaSummaryDto {
   pricePerHour: number;
 
   @Expose()
+  depositPercent: number;
+
+  @Expose()
   @Transform(({ obj }) => obj.category?.name ?? 'Uncategorized')
   categoryName: string;
 
