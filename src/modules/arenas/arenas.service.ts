@@ -210,6 +210,18 @@ export class ArenasService {
     return extras;
   }
 
+  async getDistinctGovernorate() {
+    const governorate = await this.arenaRepository
+      .createQueryBuilder('arena')
+      .leftJoin('arena.location', 'location')
+      .select('DISTINCT location.governorate', 'governorate')
+      .where('arena.status = :status', { status: 'active' })
+      .getRawMany();
+    return governorate
+      .map((c) => c.governorate)
+      .filter((governorate) => governorate !== null);
+  }
+
   async update(id: string, updateArenaDto: UpdateArenaDto, owner: User) {
     const arena = await this.arenaRepository.findOne({
       where: { id },
@@ -346,5 +358,6 @@ export class ArenasService {
     const alias = 'arenas';
     applyExactFilters(query, { categoryId: filters.categoryId }, alias);
     applyILikeFilters(query, { name: filters.name }, alias);
+    applyExactFilters(query, { governorate: filters.governorate }, 'location');
   }
 }

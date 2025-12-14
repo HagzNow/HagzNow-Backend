@@ -56,6 +56,11 @@ export class ArenasController {
     return this.arenasService.findAllDetailed(categoryId);
   }
 
+  @Get('governorate')
+  getDistinctGovernorate() {
+    return this.arenasService.getDistinctGovernorate();
+  }
+
   @Serialize(ArenaSummaryDto)
   @Get()
   findAll(

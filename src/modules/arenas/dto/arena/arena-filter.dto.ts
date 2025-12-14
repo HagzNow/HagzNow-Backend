@@ -8,4 +8,8 @@ export class ArenaFilterDto {
   @IsOptional()
   @IsUUID()
   categoryId: string;
+
+  @IsOptional()
+  @IsString()
+  governorate: string;
 }
