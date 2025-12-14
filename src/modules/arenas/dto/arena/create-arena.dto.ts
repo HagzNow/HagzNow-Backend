@@ -80,7 +80,7 @@ export class CreateArenaDto {
     maximum: 100,
   })
   @IsNumber()
-  @Min(0)
+  @Min(20)
   @Max(100)
   depositPercent: number;
 
