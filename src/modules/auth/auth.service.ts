@@ -27,10 +27,22 @@ export class AuthService {
         'INVALID_CREDENTIALS',
         HttpStatus.UNAUTHORIZED,
       );
-    if (user.status !== UserStatus.ACTIVE)
-      ApiResponseUtil.throwError(
-        'User account is not active',
-        'INACTIVE_ACCOUNT',
+    if (user.status === UserStatus.PENDING)
+      return ApiResponseUtil.throwError(
+        'User account is pending approval',
+        'PENDING_ACCOUNT',
+        HttpStatus.FORBIDDEN,
+      );
+    else if (user.status === UserStatus.REJECTED)
+      return ApiResponseUtil.throwError(
+        'User account has been rejected',
+        'REJECTED_ACCOUNT',
+        HttpStatus.FORBIDDEN,
+      );
+    else if (user.status !== UserStatus.ACTIVE)
+      return ApiResponseUtil.throwError(
+        'User account has been deactivated',
+        'DEACTIVATED_ACCOUNT',
         HttpStatus.FORBIDDEN,
       );
     const { password, ...result } = user;
@@ -95,25 +107,7 @@ export class AuthService {
     newPassword: string,
   ) {
     const user = await this.usersService.findOneById(currentUser.id);
-    if (!user)
-      ApiResponseUtil.throwError(
-        'User not found',
-        'USER_NOT_FOUND',
-        HttpStatus.NOT_FOUND,
-      );
-    if (user.status === UserStatus.PENDING)
-      return ApiResponseUtil.throwError(
-        'User account is pending approval',
-        'PENDING_ACCOUNT',
-        HttpStatus.FORBIDDEN,
-      );
-    else if (user.status === UserStatus.REJECTED)
-      return ApiResponseUtil.throwError(
-        'User account has been rejected',
-        'REJECTED_ACCOUNT',
-        HttpStatus.FORBIDDEN,
-      );
-    else if (user.status !== UserStatus.ACTIVE)
+    if (user.status !== UserStatus.ACTIVE)
       return ApiResponseUtil.throwError(
         'User account has been deactivated',
         'DEACTIVATED_ACCOUNT',
