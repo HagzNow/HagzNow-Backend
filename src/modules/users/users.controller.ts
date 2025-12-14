@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Param,
   Patch,
   UploadedFiles,
   UseGuards,
@@ -14,6 +15,9 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { UserDto } from './dto/user.dto';
 import { User } from './entities/user.entity';
 import { UsersService } from './users.service';
+import { Roles } from 'src/common/decorators/roles.decorator';
+import { UserRole } from './interfaces/userRole.interface';
+import { OwnerDto } from './dto/owner.dto';
 
 @Controller('users')
 export class UsersController {
@@ -39,6 +43,20 @@ export class UsersController {
     @CurrentUser() { id }: User,
   ) {
     return await this.usersService.update(id, userData, files);
+  }
+
+  @Serialize(OwnerDto)
+  @Roles(UserRole.ADMIN)
+  @Get('owner-requests')
+  async getOwnerRequests() {
+    return await this.usersService.findOwnerRequests();
+  }
+
+  @Serialize(OwnerDto)
+  @Roles(UserRole.ADMIN)
+  @Patch('owner-requests/:id/accept')
+  async acceptOwnerRequest(@Param('id') id: string) {
+    return await this.usersService.acceptOwnerRequest(id);
   }
 
   // @Patch(':id')

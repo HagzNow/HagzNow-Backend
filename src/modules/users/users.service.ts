@@ -11,6 +11,8 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserFilterDto } from './dto/user-filter.dto';
 import { User } from './entities/user.entity';
+import { UserStatus } from './interfaces/userStatus.interface';
+import { UserRole } from './interfaces/userRole.interface';
 
 @Injectable()
 export class UsersService {
@@ -45,7 +47,12 @@ export class UsersService {
       );
 
     const repo = manager ? manager.getRepository(User) : this.userRepository;
-    const user = await repo.findOneBy({ id });
+    const user = await repo.findOne({
+      where: {
+        id,
+        status: UserStatus.ACTIVE,
+      },
+    });
     if (!user) {
       return ApiResponseUtil.throwError(
         'User not found',
@@ -57,6 +64,31 @@ export class UsersService {
   }
   async findOne(email: string) {
     return await this.userRepository.findOneBy({ email });
+  }
+
+  async findOwnerRequests() {
+    return await this.userRepository.findBy({
+      role: UserRole.OWNER,
+      status: UserStatus.PENDING,
+    });
+  }
+
+  async acceptOwnerRequest(id: string) {
+    const user = await this.userRepository.findOneBy({ id });
+    if (!user) {
+      return ApiResponseUtil.throwError(
+        'User not found',
+        'USER_NOT_FOUND',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    if (user.status !== UserStatus.PENDING) {
+      return ApiResponseUtil.throwError(
+        'User is not pending owner',
+        'USER_NOT_PENDING',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
   }
 
   async update(
