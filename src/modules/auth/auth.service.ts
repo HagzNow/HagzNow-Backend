@@ -101,10 +101,22 @@ export class AuthService {
         'USER_NOT_FOUND',
         HttpStatus.NOT_FOUND,
       );
-    if (user.status !== UserStatus.ACTIVE)
-      ApiResponseUtil.throwError(
-        'User account is not active',
-        'INACTIVE_ACCOUNT',
+    if (user.status === UserStatus.PENDING)
+      return ApiResponseUtil.throwError(
+        'User account is pending approval',
+        'PENDING_ACCOUNT',
+        HttpStatus.FORBIDDEN,
+      );
+    else if (user.status === UserStatus.REJECTED)
+      return ApiResponseUtil.throwError(
+        'User account has been rejected',
+        'REJECTED_ACCOUNT',
+        HttpStatus.FORBIDDEN,
+      );
+    else if (user.status !== UserStatus.ACTIVE)
+      return ApiResponseUtil.throwError(
+        'User account has been deactivated',
+        'DEACTIVATED_ACCOUNT',
         HttpStatus.FORBIDDEN,
       );
 

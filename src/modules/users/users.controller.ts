@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   Patch,
+  Query,
   UploadedFiles,
   UseGuards,
 } from '@nestjs/common';
@@ -18,6 +19,7 @@ import { UsersService } from './users.service';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { UserRole } from './interfaces/userRole.interface';
 import { OwnerDto } from './dto/owner.dto';
+import { PaginationDto } from 'src/common/dtos/pagination.dto';
 
 @Controller('users')
 export class UsersController {
@@ -48,8 +50,8 @@ export class UsersController {
   @Serialize(OwnerDto)
   @Roles(UserRole.ADMIN)
   @Get('owner-requests')
-  async getOwnerRequests() {
-    return await this.usersService.findOwnerRequests();
+  async getOwnerRequests(@Query() PaginationDto: PaginationDto) {
+    return await this.usersService.findOwnerRequests(PaginationDto);
   }
 
   @Serialize(OwnerDto)
@@ -57,6 +59,13 @@ export class UsersController {
   @Patch('owner-requests/:id/accept')
   async acceptOwnerRequest(@Param('id') id: string) {
     return await this.usersService.acceptOwnerRequest(id);
+  }
+
+  @Serialize(OwnerDto)
+  @Roles(UserRole.ADMIN)
+  @Patch('owner-requests/:id/reject')
+  async rejectOwnerRequest(@Param('id') id: string) {
+    return await this.usersService.rejectOwnerRequest(id);
   }
 
   // @Patch(':id')

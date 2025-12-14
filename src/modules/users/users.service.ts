@@ -68,14 +68,14 @@ export class UsersService {
     return await this.userRepository.findOneBy({ email });
   }
 
-  async findOwnerRequests() {
-    return await this.userRepository.findBy({
-      role: UserRole.OWNER,
-      status: UserStatus.PENDING,
-    });
+  async findOwnerRequests(paginationDto: PaginationDto) {
+    const query = await this.userRepository.createQueryBuilder('users');
+    query.where('users.role = :role', { role: UserRole.OWNER });
+    query.andWhere('users.status = :status', { status: UserStatus.PENDING });
+    return await paginate(query, paginationDto);
   }
 
-  async acceptOwnerRequest(id: string) {
+  private async updateStatus(id: string, status: UserStatus) {
     const user = await this.userRepository.findOneBy({ id });
     if (!user) {
       return ApiResponseUtil.throwError(
@@ -84,15 +84,16 @@ export class UsersService {
         HttpStatus.NOT_FOUND,
       );
     }
-    if (user.status !== UserStatus.PENDING) {
-      return ApiResponseUtil.throwError(
-        'User is not pending owner',
-        'USER_NOT_PENDING',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-    user.status = UserStatus.ACTIVE;
+    user.status = status;
     return await this.userRepository.save(user);
+  }
+  async acceptOwnerRequest(id: string) {
+    await this.updateStatus(id, UserStatus.ACTIVE);
+    return { message: 'Owner request accepted successfully' };
+  }
+  async rejectOwnerRequest(id: string) {
+    await this.updateStatus(id, UserStatus.REJECTED);
+    return { message: 'Owner request rejected successfully' };
   }
 
   async update(
