@@ -20,8 +20,10 @@ export class UsersService {
     private readonly eventEmitter: EventEmitter2,
     @InjectRepository(User) protected userRepository: Repository<User>,
   ) {}
-  async create(createUserDto: CreateUserDto) {
-    const newUser = this.userRepository.create(createUserDto);
+  async create(user: CreateUserDto, role: UserRole, status: UserStatus) {
+    const newUser = this.userRepository.create(user);
+    newUser.role = role;
+    newUser.status = status;
     await this.userRepository.save(newUser);
     this.eventEmitter.emit('user.created', newUser);
     return newUser;
@@ -89,6 +91,8 @@ export class UsersService {
         HttpStatus.BAD_REQUEST,
       );
     }
+    user.status = UserStatus.ACTIVE;
+    return await this.userRepository.save(user);
   }
 
   async update(

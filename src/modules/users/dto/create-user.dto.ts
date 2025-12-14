@@ -33,10 +33,5 @@ export class CreateUserDto {
   })
   password: string;
 
-  @IsIn([UserRole.USER, UserRole.OWNER], {
-    message: 'Role must be user or owner',
-  })
-  role: UserRole;
-
   avatar?: string;
 }

@@ -32,7 +32,7 @@ export class AuthController {
   }
   @Post('register')
   signUp(@Body() signUpDto: CreateUserDto) {
-    return this.authService.signUp(signUpDto);
+    return this.authService.signUpUser(signUpDto);
   }
 
   @Post('register/owner')
@@ -62,7 +62,7 @@ export class AuthController {
         HttpStatus.BAD_REQUEST,
       );
     }
-    return this.authService.signUp(signUpDto, files);
+    return this.authService.signUpOwner(signUpDto, files);
   }
 
   @Serialize(UserDto)

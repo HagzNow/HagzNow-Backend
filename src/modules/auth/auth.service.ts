@@ -8,6 +8,7 @@ import { UserStatus } from '../users/interfaces/userStatus.interface';
 import { User } from '../users/entities/user.entity';
 import { handleImageUpload } from 'src/common/utils/handle-image-upload.util';
 import { CreateOwnerDto } from '../users/dto/create-owner.dto';
+import { UserRole } from '../users/interfaces/userRole.interface';
 
 @Injectable()
 export class AuthService {
@@ -37,8 +38,25 @@ export class AuthService {
       token: await this.jwtService.signAsync(result),
     };
   }
+
+  async signUpUser(data: CreateUserDto): Promise<any> {
+    return await this.signUp(data, UserRole.USER, UserStatus.ACTIVE);
+  }
+  async signUpOwner(
+    data: CreateOwnerDto,
+    files: {
+      nationalIdFront?: Express.Multer.File[];
+      nationalIdBack?: Express.Multer.File[];
+      selfieWithId?: Express.Multer.File[];
+    },
+  ): Promise<any> {
+    await this.signUp(data, UserRole.OWNER, UserStatus.PENDING, files);
+    return { message: 'Owner registration successful. Pending approval.' };
+  }
   async signUp(
     data: CreateUserDto | CreateOwnerDto,
+    role: UserRole = UserRole.USER,
+    status: UserStatus = UserStatus.ACTIVE,
     files?: {
       nationalIdFront?: Express.Multer.File[];
       nationalIdBack?: Express.Multer.File[];
@@ -64,7 +82,7 @@ export class AuthService {
       data.selfieWithId = selfieWithId[0];
     }
 
-    const user = await this.usersService.create(data);
+    const user = await this.usersService.create(data, role, status);
     const { password, ...result } = user;
     return {
       token: await this.jwtService.signAsync(result),

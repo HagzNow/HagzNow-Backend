@@ -16,6 +16,7 @@ import { UserFilterDto } from '../users/dto/user-filter.dto';
 import { UserDto } from '../users/dto/user.dto';
 import { UserRole } from '../users/interfaces/userRole.interface';
 import { AdminService } from './admin.service';
+import { UserStatus } from '../users/interfaces/userStatus.interface';
 
 @Controller('admin')
 @Roles(UserRole.ADMIN)
@@ -24,7 +25,11 @@ export class AdminController {
 
   @Post('users')
   create(@Body() createUserDto: CreateUserDto) {
-    return this.AdminService.create(createUserDto);
+    return this.AdminService.create(
+      createUserDto,
+      UserRole.USER,
+      UserStatus.ACTIVE,
+    );
   }
 
   @Serialize(UserDto)
