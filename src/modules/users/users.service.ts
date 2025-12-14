@@ -84,6 +84,13 @@ export class UsersService {
         HttpStatus.NOT_FOUND,
       );
     }
+    if (user.status != UserStatus.PENDING) {
+      return ApiResponseUtil.throwError(
+        'User is not pending owner request',
+        'OWNER_REQUEST_NOT_PENDING',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
     user.status = status;
     return await this.userRepository.save(user);
   }
