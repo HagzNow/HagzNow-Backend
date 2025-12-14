@@ -19,6 +19,7 @@ import { User } from '../users/entities/user.entity';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { CreateOwnerDto } from '../users/dto/create-owner.dto';
 import { UseImageUpload } from 'src/common/decorators/use-image-upload.decorator';
+import { ApiResponseUtil } from 'src/common/utils/api-response.util';
 
 @Controller('auth')
 export class AuthController {
@@ -49,6 +50,18 @@ export class AuthController {
       selfieWithId?: Express.Multer.File[];
     },
   ) {
+    if (
+      !files ||
+      !files.nationalIdFront ||
+      !files.nationalIdBack ||
+      !files.selfieWithId
+    ) {
+      return ApiResponseUtil.throwError(
+        'All identity verification images are required',
+        'MISSING_ID_IMAGES',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
     return this.authService.signUp(signUpDto, files);
   }
 
