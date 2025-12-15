@@ -28,8 +28,8 @@ async function bootstrap() {
   SwaggerModule.setup('swagger', app, documentFactory, {
     jsonDocumentUrl: 'swagger/json',
   });
-  // app.useGlobalInterceptors(new ResponseInterceptor());
-  // app.useGlobalFilters(new AllExceptionsFilter());
+  app.useGlobalInterceptors(new ResponseInterceptor());
+  app.useGlobalFilters(new AllExceptionsFilter());
   app.enableCors();
   app.useGlobalPipes(
     new ValidationPipe({
