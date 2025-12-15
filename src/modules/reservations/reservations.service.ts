@@ -120,11 +120,8 @@ export class ReservationsService {
       }
 
       // Calculate amounts
-      const playAmount = arena.getDepositAmount(dto.slots.length);
-      const extrasAmount = extras.reduce(
-        (sum, extra) => sum + Number(extra.price),
-        0,
-      );
+      const playAmount = arena.depositAmount(dto.slots.length);
+      const extrasAmount = arena.extrasAmount(extras);
       const totalAmount = playAmount + extrasAmount;
 
       // Check user balance
@@ -155,7 +152,7 @@ export class ReservationsService {
       await queryRunner.manager.save(reservation);
 
       // Calculate amounts to credit for owner
-      const amountToCredit = reservation.calculateOwnerAmount();
+      const amountToCredit = arena.ownerAmount(dto.slots.length, extras);
 
       // Create arena slots linked to this reservation
       const addedSlots: ArenaSlot[] = await this.arenaSlotsService.createSlots(
@@ -202,14 +199,14 @@ export class ReservationsService {
       }
       await this.walletsService.addToHeldAmount(
         adminId,
-        reservation.calculateAdminAmount(),
+        arena.adminAmount(dto.slots.length, extras),
         queryRunner.manager,
       );
 
       // Schedule reservation settlement
       const tz = 'Africa/Cairo';
       // const runAt = DateTime.fromISO(dto.date, { zone: tz }).startOf('day');
-      const runAt = DateTime.now().plus({ seconds: 1000 });
+      const runAt = DateTime.now().plus({ seconds: 100 });
       await this.producer.scheduleSettlement(
         reservation.id,
         runAt,
@@ -334,7 +331,7 @@ export class ReservationsService {
     try {
       const reservation = await queryRunner.manager.findOne(Reservation, {
         where: { id: reservationId },
-        relations: ['user', 'arena', 'arena.owner'],
+        relations: ['user', 'arena', 'arena.owner', 'extras', 'slots'],
       });
       if (!reservation) {
         console.log('Reservation not found:', reservationId);
@@ -352,6 +349,9 @@ export class ReservationsService {
           HttpStatus.BAD_REQUEST,
         );
       }
+      const arena = reservation.arena;
+      const extras = reservation.extras;
+      const slots = reservation.slots;
 
       const user = reservation.user;
 
@@ -395,7 +395,7 @@ export class ReservationsService {
       );
 
       // Calculate amounts to credit for owner
-      const amountToCredit = reservation.calculateOwnerAmount();
+      const amountToCredit = arena.ownerAmount(slots.length, extras);
 
       // Release held amount from arena owner wallet
       await this.walletsService.releaseHeldAmount(
@@ -431,7 +431,7 @@ export class ReservationsService {
       // Add admin fee to admin wallet
       const adminFeeTx = await this.walletTransactionService.create(
         {
-          amount: reservation.calculateAdminAmount(),
+          amount: arena.adminAmount(slots.length, extras),
           type: TransactionType.DEPOSIT,
           stage: TransactionStage.INSTANT,
           referenceId: reservation.id,
@@ -443,7 +443,7 @@ export class ReservationsService {
       // Release held amount from admin wallet
       await this.walletsService.releaseHeldAmount(
         admin.id,
-        Number(reservation.totalAmount) * Number(process.env.ADMIN_FEE_RATE),
+        arena.adminAmount(slots.length, extras),
         queryRunner.manager,
       );
 
@@ -477,16 +477,16 @@ export class ReservationsService {
       const removed = await this.producer.removeSettlement(reservationId);
       // In case of not removed from the queue, throw error (it means it was not found)
       if (!removed) {
-        return ApiResponseUtil.throwError(
-          'Reservation settlement job not found in queue',
-          'SETTLEMENT_JOB_NOT_FOUND',
-          HttpStatus.NOT_FOUND,
-        );
+        // return ApiResponseUtil.throwError(
+        //   'Reservation settlement job not found in queue',
+        //   'SETTLEMENT_JOB_NOT_FOUND',
+        //   HttpStatus.NOT_FOUND,
+        // );
       }
       // Load reservation & update its status
       const reservation = await queryRunner.manager.findOne(Reservation, {
         where: { id: reservationId },
-        relations: ['user', 'arena', 'arena.owner', 'slots'],
+        relations: ['user', 'arena', 'arena.owner', 'arena.extras', 'slots'],
       });
       if (!reservation) {
         return ApiResponseUtil.throwError(
@@ -509,6 +509,8 @@ export class ReservationsService {
           HttpStatus.NOT_FOUND,
         );
       }
+      const arena = reservation.arena;
+
       // Update transaction stage to processed
       await this.walletTransactionService.updateByReferenceId(
         reservation.id,
@@ -525,10 +527,15 @@ export class ReservationsService {
         queryRunner.manager,
       );
 
+      const playerTotalAmount = arena.playerTotalAmount(
+        reservation.slots.length,
+        reservation.extras,
+      );
+
       // Add transaction for refund
       const refundTransaction = await this.walletTransactionService.create(
         {
-          amount: Number(reservation.totalAmount),
+          amount: Number(playerTotalAmount),
           referenceId: reservation.id,
           stage: TransactionStage.REFUND,
           type: TransactionType.REFUND,
@@ -540,10 +547,13 @@ export class ReservationsService {
       // Refund user wallet
       await this.walletsService.releaseHeldAmount(
         reservation.user.id,
-        Number(reservation.totalAmount),
+        Number(playerTotalAmount),
         queryRunner.manager,
       );
-      const amountToCredit = reservation.calculateOwnerAmount();
+      const amountToCredit = arena.ownerAmount(
+        reservation.slots.length,
+        reservation.extras,
+      );
 
       // Remove held amount from arena owner wallet
       await this.walletsService.removeFromHeldAmount(
@@ -563,7 +573,7 @@ export class ReservationsService {
       }
       await this.walletsService.removeFromHeldAmount(
         adminId,
-        reservation.calculateAdminAmount(),
+        arena.adminAmount(reservation.slots.length, reservation.extras),
         queryRunner.manager,
       );
 

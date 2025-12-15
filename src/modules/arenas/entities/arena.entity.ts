@@ -97,11 +97,46 @@ export class Arena {
   })
   reviews: Review[];
 
-  getDepositAmount(totalHours: number): number {
-    const totalPrice = this.pricePerHour * totalHours;
-    return (totalPrice * this.depositPercent) / 100;
+  private get adminFeeRate(): number {
+    return Number(process.env.ADMIN_FEE_RATE) || 0;
   }
 
+  private normalizeExtras(extras?: ArenaExtra[]): ArenaExtra[] {
+    return extras ?? [];
+  }
+
+  playAmount(hours: number): number {
+    return Number(this.pricePerHour) * hours;
+  }
+
+  extrasAmount(extras?: ArenaExtra[]): number {
+    return this.normalizeExtras(extras).reduce(
+      (sum, extra) => sum + Number(extra.price),
+      0,
+    );
+  }
+
+  totalAmount(hours: number, extras?: ArenaExtra[]): number {
+    return this.playAmount(hours) + this.extrasAmount(extras);
+  }
+
+  ownerAmount(hours: number, extras?: ArenaExtra[]): number {
+    return (
+      this.playerTotalAmount(hours, extras) - this.adminAmount(hours, extras)
+    );
+  }
+
+  adminAmount(hours: number, extras?: ArenaExtra[]): number {
+    return this.totalAmount(hours, extras) * this.adminFeeRate;
+  }
+
+  depositAmount(hours: number): number {
+    return (this.playAmount(hours) * this.depositPercent) / 100;
+  }
+
+  playerTotalAmount(hours: number, extras?: ArenaExtra[]): number {
+    return this.depositAmount(Number(hours)) + this.extrasAmount(extras);
+  }
   totalAvailableHours(): number {
     return this.closingHour - this.openingHour;
   }
