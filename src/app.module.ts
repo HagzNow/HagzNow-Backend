@@ -33,7 +33,12 @@ import { WalletModule } from './modules/wallets/wallets.module';
 
 @Module({
   imports: [
-    BullModule.forRoot({ connection: { host: 'localhost', port: 6379 } }),
+    BullModule.forRoot({
+      connection: {
+        host: process.env.REDIS_HOST,
+        port: Number(process.env.REDIS_PORT),
+      },
+    }),
     EventEmitterModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRootAsync({
