@@ -1,0 +1,21 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches: [build]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: root
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd /var/www/project/HagzNow-Backend
+            git pull origin build
+            cd /var/www/project/HagzNow-Infra
+            docker compose build backend
+            docker compose up -d backend
