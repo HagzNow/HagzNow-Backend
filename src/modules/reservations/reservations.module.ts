@@ -10,6 +10,7 @@ import { ReservationsProducer } from './queue/reservations.producer';
 import { SettlementsProcessor } from './queue/settlements.processor';
 import { ReservationsController } from './reservations.controller';
 import { ReservationsService } from './reservations.service';
+import { CustomersModule } from '../customerProfiles/customers.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { ReservationsService } from './reservations.service';
     AuthModule,
     UsersModule,
     WalletModule,
+    CustomersModule,
   ],
   controllers: [ReservationsController],
   providers: [

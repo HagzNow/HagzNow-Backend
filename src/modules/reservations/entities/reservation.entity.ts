@@ -2,7 +2,7 @@ import { Expose } from 'class-transformer';
 import { ArenaExtra } from 'src/modules/arenas/entities/arena-extra.entity';
 import { ArenaSlot } from 'src/modules/arenas/entities/arena-slot.entity';
 import { Arena } from 'src/modules/arenas/entities/arena.entity';
-import { User } from 'src/modules/users/entities/user.entity';
+import { CustomerProfile } from 'src/modules/customerProfiles/entities/customer-profile.entity';
 import {
   Column,
   Entity,
@@ -74,9 +74,9 @@ export class Reservation {
   })
   extras: ArenaExtra[];
 
-  @ManyToOne(() => User, (user) => user.reservations, {
+  @ManyToOne(() => CustomerProfile, (customer) => customer.reservations, {
     onDelete: 'CASCADE',
     eager: true,
   })
-  user: User;
+  customer: CustomerProfile;
 }
