@@ -38,6 +38,7 @@ import { ReservationsProducer } from './queue/reservations.producer';
 import { CustomersService } from '../customerProfiles/customers.service';
 import { CreateManualReservationDto } from './dto/create-manual-reservation.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { CustomerProfile } from '../customerProfiles/entities/customer-profile.entity';
 
 @Injectable()
 export class ReservationsService {
@@ -57,6 +58,33 @@ export class ReservationsService {
     private readonly walletTransactionService: WalletTransactionService,
     private readonly customersService: CustomersService,
   ) {}
+
+  private validateIfDateIsInThePast(date: string, slots: number[]) {
+    const now = DateTime.now().setZone('Africa/Cairo');
+    const reservationDate = DateTime.fromISO(date, {
+      zone: 'Africa/Cairo',
+    });
+    if (reservationDate < now.startOf('day')) {
+      return ApiResponseUtil.throwError(
+        'Cannot make reservation for past dates',
+        'RESERVATION_DATE_IN_PAST',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    // validate it's not previous slot
+    let CurrentHour = now.hour;
+    if (
+      slots.some((h) => Number(h) <= CurrentHour) &&
+      reservationDate.hasSame(now, 'day')
+    ) {
+      return ApiResponseUtil.throwError(
+        'Cannot make reservation for past slots',
+        'RESERVATION_SLOT_IN_PAST',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
   async create(dto: CreateReservationDto, userId: string) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -64,29 +92,8 @@ export class ReservationsService {
 
     try {
       // Validate it's not previous time
-      const now = DateTime.now().setZone('Africa/Cairo');
-      const reservationDate = DateTime.fromISO(dto.date, {
-        zone: 'Africa/Cairo',
-      });
-      if (reservationDate < now.startOf('day')) {
-        return ApiResponseUtil.throwError(
-          'Cannot make reservation for past dates',
-          'RESERVATION_DATE_IN_PAST',
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-      // validate it's not previous slot
-      let CurrentHour = now.hour;
-      if (
-        dto.slots.some((h) => Number(h) <= CurrentHour) &&
-        reservationDate.hasSame(now, 'day')
-      ) {
-        return ApiResponseUtil.throwError(
-          'Cannot make reservation for past slots',
-          'RESERVATION_SLOT_IN_PAST',
-          HttpStatus.BAD_REQUEST,
-        );
-      }
+      this.validateIfDateIsInThePast(dto.date, dto.slots);
+
       // Load user
       const user = await this.usersService.findOneById(
         userId,
@@ -274,6 +281,8 @@ export class ReservationsService {
     await queryRunner.startTransaction();
 
     try {
+      // Validate it's not previous time
+      this.validateIfDateIsInThePast(dto.date, dto.slots);
       // Load arena
       const arena = await this.arenasService.findOne(
         dto.arenaId,
@@ -295,10 +304,14 @@ export class ReservationsService {
         );
       }
 
-      // Find or create customer profile
-      let customer = await this.customersService.findOneByPhoneNumberAndCreate(
-        dto.customerDto,
-      );
+      // Find customer profile if ID provided
+      let customer: CustomerProfile;
+      if (dto.customerId) {
+        customer = await this.customersService.findOneById(dto.customerId);
+      } else {
+        // it's not provided create new customer from the provided data
+        customer = await this.customersService.create(dto.customerDto);
+      }
 
       // Load extras
       const extras = await this.arenasService.findArenaExtrasByIds(

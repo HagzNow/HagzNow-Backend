@@ -5,7 +5,7 @@ import { CustomersService } from './customers.service';
 export class CustomersController {
   constructor(private readonly customersService: CustomersService) {}
 
-  @Get(':id')
+  @Get(':phone')
   findOne(@Param('phone') phone: string) {
     return this.customersService.findOneByPhoneNumber(phone);
   }

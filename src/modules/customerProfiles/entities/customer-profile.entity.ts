@@ -22,7 +22,7 @@ export class CustomerProfile {
   lName: string;
 
   @Column({ unique: true })
-  phoneNumber: string;
+  phone: string;
 
   @Column({ nullable: true })
   userId?: string; // optional link to User
