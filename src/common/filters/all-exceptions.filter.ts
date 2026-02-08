@@ -11,6 +11,7 @@ import { ApiResponseUtil } from '../utils/api-response.util';
 @Catch() // Catch all exceptions
 export class AllExceptionsFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
+    console.error('Exception caught by AllExceptionsFilter:', exception);
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
 
