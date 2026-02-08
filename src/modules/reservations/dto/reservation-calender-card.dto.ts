@@ -10,7 +10,10 @@ export class ReservationCalenderCardDto {
   totalAmount: number;
 
   @Expose()
-  @Transform(({ obj }) => obj.user.fName + ' ' + obj.user.lName)
+  @Transform(({ obj }) => {
+    const user = obj.customer;
+    return user ? user.fName + ' ' + user.lName : 'N/A';
+  })
   playerName: string;
 
   @Expose()
