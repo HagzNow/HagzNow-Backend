@@ -21,6 +21,7 @@ import { ReservationFilterDto } from './dto/reservation-filter.dto';
 import { ReservationSummaryDto } from './dto/reservation-summary.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
 import { ReservationsService } from './reservations.service';
+import { CreateManualReservationDto } from './dto/create-manual-reservation.dto';
 
 @Controller('reservations')
 export class ReservationsController {
@@ -39,11 +40,11 @@ export class ReservationsController {
   @Roles(UserRole.OWNER)
   @Post('owner/manual')
   createManualReservation(
-    @Body() createReservationDto: CreateReservationDto,
+    @Body() createManualReservationDto: CreateManualReservationDto,
     @CurrentUser() user: User,
   ) {
     return this.reservationsService.createManualReservation(
-      createReservationDto,
+      createManualReservationDto,
       user,
     );
   }
@@ -93,7 +94,6 @@ export class ReservationsController {
     @Query() filters: ReservationFilterDto,
     @CurrentUser() user: User,
   ) {
-    console.log('Received Dates:', startDate, endDate);
     return this.reservationsService.findReservationsByDateRange(
       arenaId,
       user,
@@ -119,8 +119,8 @@ export class ReservationsController {
 
   @Roles(UserRole.USER)
   @Patch('cancel/:id')
-  cancel(@Param('id') id: string) {
-    return this.reservationsService.cancelReservation(id);
+  cancel(@CurrentUser() user: User, @Param('id') id: string) {
+    return this.reservationsService.cancelReservation(id, user);
   }
   @Delete(':id')
   remove(@Param('id') id: string) {

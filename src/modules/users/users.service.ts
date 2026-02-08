@@ -13,6 +13,7 @@ import { UserFilterDto } from './dto/user-filter.dto';
 import { User } from './entities/user.entity';
 import { UserStatus } from './interfaces/userStatus.interface';
 import { UserRole } from './interfaces/userRole.interface';
+import { USER_CREATED } from 'src/common/event.constants';
 
 @Injectable()
 export class UsersService {
@@ -25,7 +26,7 @@ export class UsersService {
     newUser.role = role;
     newUser.status = status;
     await this.userRepository.save(newUser);
-    this.eventEmitter.emit('user.created', newUser);
+    this.eventEmitter.emit(USER_CREATED, newUser);
     return newUser;
   }
 
@@ -124,5 +125,40 @@ export class UsersService {
     if (avatar && avatar.length > 0) updateUserDto.avatar = avatar[0];
     Object.assign(user, updateUserDto);
     return await this.userRepository.save(user);
+  }
+  async updatePhone(id: string, newPhone: string) {
+    const user = await this.userRepository.findOneBy({ id });
+    if (!user) {
+      return ApiResponseUtil.throwError(
+        'User not found',
+        'USER_NOT_FOUND',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    // ensure different phone number
+    if (user.phone === newPhone) {
+      return ApiResponseUtil.throwError(
+        'New phone number must be different from the old one',
+        'SAME_PHONE_NUMBER',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    // ensure unique phone number
+    const existingUser = await this.userRepository.findOneBy({
+      phone: newPhone,
+    });
+    if (existingUser && existingUser.id !== id) {
+      return ApiResponseUtil.throwError(
+        'Phone number already in use',
+        'PHONE_NUMBER_IN_USE',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    this.eventEmitter.emit('phoneNumberUpdated', {
+      oldPhone: user.phone,
+      newPhone: newPhone,
+    });
+    user.phone = newPhone;
+    await this.userRepository.save(user);
   }
 }

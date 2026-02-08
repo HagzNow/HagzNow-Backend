@@ -35,6 +35,10 @@ import { Reservation } from './entities/reservation.entity';
 import { PaymentMethod } from './interfaces/payment-methods.interface';
 import { ReservationStatus } from './interfaces/reservation-status.interface';
 import { ReservationsProducer } from './queue/reservations.producer';
+import { CustomersService } from '../customerProfiles/customers.service';
+import { CreateManualReservationDto } from './dto/create-manual-reservation.dto';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { CustomerProfile } from '../customerProfiles/entities/customer-profile.entity';
 
 @Injectable()
 export class ReservationsService {
@@ -52,13 +56,44 @@ export class ReservationsService {
     private readonly usersService: UsersService,
     private readonly walletsService: WalletsService,
     private readonly walletTransactionService: WalletTransactionService,
+    private readonly customersService: CustomersService,
   ) {}
+
+  private validateIfDateIsInThePast(date: string, slots: number[]) {
+    const now = DateTime.now().setZone('Africa/Cairo');
+    const reservationDate = DateTime.fromISO(date, {
+      zone: 'Africa/Cairo',
+    });
+    if (reservationDate < now.startOf('day')) {
+      return ApiResponseUtil.throwError(
+        'Cannot make reservation for past dates',
+        'RESERVATION_DATE_IN_PAST',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    // validate it's not previous slot
+    let CurrentHour = now.hour;
+    if (
+      slots.some((h) => Number(h) <= CurrentHour) &&
+      reservationDate.hasSame(now, 'day')
+    ) {
+      return ApiResponseUtil.throwError(
+        'Cannot make reservation for past slots',
+        'RESERVATION_SLOT_IN_PAST',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
   async create(dto: CreateReservationDto, userId: string) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
+      // Validate it's not previous time
+      this.validateIfDateIsInThePast(dto.date, dto.slots);
+
       // Load user
       const user = await this.usersService.findOneById(
         userId,
@@ -71,6 +106,9 @@ export class ReservationsService {
           HttpStatus.NOT_FOUND,
         );
       }
+
+      // Find customer profile
+      let customer = await this.customersService.findOneById(userId);
 
       // Load arena
       const arena = await this.arenasService.findOne(
@@ -147,7 +185,7 @@ export class ReservationsService {
         extrasTotalAmount: extrasAmount,
         totalAmount: totalAmount,
         extras: dto.extras ? extras : [],
-        user,
+        customer,
       });
       await queryRunner.manager.save(reservation);
 
@@ -205,8 +243,14 @@ export class ReservationsService {
 
       // Schedule reservation settlement
       const tz = 'Africa/Cairo';
-      // const runAt = DateTime.fromISO(dto.date, { zone: tz }).startOf('day');
-      const runAt = DateTime.now().plus({ seconds: 250 });
+      const dt = DateTime.fromISO(dto.date, { zone: tz });
+
+      console.log(dt.toISO());
+      console.log(dt.zoneName);
+      const runAt = DateTime.fromISO(dto.date, { zone: tz })
+        .startOf('day')
+        .toUTC();
+      // const runAt = DateTime.now().plus({ seconds: 10 });
       await this.producer.scheduleSettlement(
         reservation.id,
         runAt,
@@ -230,13 +274,15 @@ export class ReservationsService {
     }
   }
 
-  async createManualReservation(dto: CreateReservationDto, user: User) {
+  async createManualReservation(dto: CreateManualReservationDto, user: User) {
     // Similar to create method but without wallet and transaction logic
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
+      // Validate it's not previous time
+      this.validateIfDateIsInThePast(dto.date, dto.slots);
       // Load arena
       const arena = await this.arenasService.findOne(
         dto.arenaId,
@@ -257,6 +303,16 @@ export class ReservationsService {
           HttpStatus.UNAUTHORIZED,
         );
       }
+
+      // Find customer profile if ID provided
+      let customer: CustomerProfile;
+      if (dto.customerId) {
+        customer = await this.customersService.findOneById(dto.customerId);
+      } else {
+        // it's not provided create new customer from the provided data
+        customer = await this.customersService.create(dto.customerDto);
+      }
+
       // Load extras
       const extras = await this.arenasService.findArenaExtrasByIds(
         dto.arenaId,
@@ -294,7 +350,7 @@ export class ReservationsService {
         extrasTotalAmount: 0,
         totalAmount: 0,
         extras: dto.extras ? extras : [],
-        user,
+        customer,
         paymentMethod: PaymentMethod.MANUAL,
       });
       await queryRunner.manager.save(reservation);
@@ -312,7 +368,7 @@ export class ReservationsService {
       return reservation;
     } catch (err) {
       await queryRunner.rollbackTransaction();
-      console.error('Error creating reservation:', err);
+      console.error('Error creating manual reservation:', err);
       throw err;
     } finally {
       await queryRunner.release();
@@ -331,7 +387,7 @@ export class ReservationsService {
     try {
       const reservation = await queryRunner.manager.findOne(Reservation, {
         where: { id: reservationId },
-        relations: ['user', 'arena', 'arena.owner', 'extras', 'slots'],
+        relations: ['customer', 'arena', 'arena.owner', 'extras', 'slots'],
       });
       if (!reservation) {
         console.log('Reservation not found:', reservationId);
@@ -353,7 +409,16 @@ export class ReservationsService {
       const extras = reservation.extras;
       const slots = reservation.slots;
 
-      const user = reservation.user;
+      const customer = reservation.customer;
+      const user = customer?.user;
+
+      if (!user) {
+        return ApiResponseUtil.throwError(
+          'Customer user not found',
+          'CUSTOMER_USER_NOT_FOUND',
+          HttpStatus.NOT_FOUND,
+        );
+      }
 
       const adminId = process.env.ADMIN_ID;
       if (!adminId) {
@@ -460,14 +525,14 @@ export class ReservationsService {
       console.log('Reservation settled successfully:', reservationId);
     } catch (err) {
       await queryRunner.rollbackTransaction();
-      console.error('Error creating reservation:', err);
+      console.error('Error settling reservation:', err);
       throw err;
     } finally {
       await queryRunner.release();
     }
   }
 
-  async cancelReservation(reservationId: string) {
+  async cancelReservation(reservationId: string, user: User) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -486,7 +551,13 @@ export class ReservationsService {
       // Load reservation & update its status
       const reservation = await queryRunner.manager.findOne(Reservation, {
         where: { id: reservationId },
-        relations: ['user', 'arena', 'arena.owner', 'arena.extras', 'slots'],
+        relations: [
+          'customer',
+          'arena',
+          'arena.owner',
+          'arena.extras',
+          'slots',
+        ],
       });
       if (!reservation) {
         return ApiResponseUtil.throwError(
@@ -540,13 +611,13 @@ export class ReservationsService {
           stage: TransactionStage.REFUND,
           type: TransactionType.REFUND,
         },
-        reservation.user,
+        user,
         queryRunner.manager,
       );
 
       // Refund user wallet
       await this.walletsService.releaseHeldAmount(
-        reservation.user.id,
+        user.id,
         Number(playerTotalAmount),
         queryRunner.manager,
       );
@@ -603,7 +674,8 @@ export class ReservationsService {
       .leftJoinAndSelect('reservation.arena', 'arena')
       .leftJoinAndSelect('arena.category', 'category')
       .leftJoinAndSelect('reservation.slots', 'slots')
-      .where('reservation.userId = :userId', { userId: user.id })
+      .leftJoinAndSelect('reservation.customer', 'customer')
+      .where('customer.userId = :userId', { userId: user.id })
       .andWhere(
         isPast
           ? 'reservation.dateOfReservation < :today'
@@ -702,7 +774,7 @@ export class ReservationsService {
     return await this.reservationRepository.exist({
       where: {
         arena: { id: arenaId },
-        user: { id: userId },
+        customer: { id: userId },
         status: ReservationStatus.CONFIRMED,
       },
     });

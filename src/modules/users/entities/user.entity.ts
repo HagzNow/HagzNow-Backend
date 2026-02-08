@@ -1,6 +1,5 @@
 import * as bcrypt from 'bcrypt';
 import { Arena } from 'src/modules/arenas/entities/arena.entity';
-import { Reservation } from 'src/modules/reservations/entities/reservation.entity';
 import { WalletTransaction } from 'src/modules/wallets/entities/wallet-transaction.entity';
 import { Wallet } from 'src/modules/wallets/entities/wallet.entity';
 import {
@@ -32,6 +31,8 @@ export class User {
 
   @Column({ unique: true })
   email: string;
+
+  @Column({ unique: true })
   @Column()
   phone: string;
 
@@ -60,9 +61,6 @@ export class User {
   @OneToOne(() => Wallet, (wallet) => wallet.user)
   @JoinColumn()
   wallet: Wallet;
-
-  @OneToMany(() => Reservation, (reservation) => reservation.user)
-  reservations: Reservation[];
 
   @Column({ type: 'varchar', nullable: true })
   avatar: string;

@@ -35,7 +35,6 @@ export class WalletsService {
 
     const wallet = await this.findOneByUserId(userId, repo.manager);
     if (!wallet) return false;
-    console.log('wallet.balance', wallet.balance, 'amount', amount);
     return wallet.balance >= amount;
   }
 
@@ -311,7 +310,6 @@ export class WalletsService {
         );
 
       if (existingSettledTx) {
-        console.log('existingSettledTx', existingSettledTx);
         return ApiResponseUtil.throwError(
           'A transaction with the same referenceId has already been settled',
           'DUPLICATE_SETTLED_TRANSACTION',

@@ -19,7 +19,7 @@ export class CreateReservationDto {
     description: 'The date for which the reservation is made (YYYY-MM-DD)',
     example: '2025-11-10',
   })
-  @IsDateString()
+  @IsDateString({ strict: true })
   date: string;
 
   @ApiProperty({

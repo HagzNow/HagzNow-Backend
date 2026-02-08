@@ -30,6 +30,7 @@ import { CurrentUserMiddleware } from './modules/users/middlewares/current-user.
 import { WalletTransaction } from './modules/wallets/entities/wallet-transaction.entity';
 import { Wallet } from './modules/wallets/entities/wallet.entity';
 import { WalletModule } from './modules/wallets/wallets.module';
+import { CustomerProfile } from './modules/customerProfiles/entities/customer-profile.entity';
 
 @Module({
   imports: [
@@ -67,6 +68,7 @@ import { WalletModule } from './modules/wallets/wallets.module';
           WalletTransaction,
           Reservation,
           Review,
+          CustomerProfile,
         ],
       }),
     }),

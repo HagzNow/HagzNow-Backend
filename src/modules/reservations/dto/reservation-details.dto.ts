@@ -41,6 +41,6 @@ export class ReservationDetailsDto {
   extras: ArenaExtraDto[];
 
   @Expose()
-  @Transform(({ obj }) => obj.user?.id ?? 'N/A') // ✅ lowercase 'id', not 'ID'
+  @Transform(({ obj }) => obj.customer?.id ?? 'N/A')
   userId: string;
 }
