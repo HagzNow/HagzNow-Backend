@@ -68,7 +68,7 @@ export class PaymobService {
 
     if (!hmacValid) {
       return ApiResponseUtil.throwError(
-        'Invalid HMAC signature',
+        'errors.paymob.payment_verification_failed',
         'INVALID_HMAC',
         400,
       );

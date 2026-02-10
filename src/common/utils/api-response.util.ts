@@ -14,7 +14,7 @@ export class ApiResponseUtil {
   static error<T>(
     message: string,
     code?: string,
-    details?: string,
+    details?: any,
   ): ApiResponse<T> {
     return {
       isSuccess: false,
@@ -28,7 +28,7 @@ export class ApiResponseUtil {
     message: string,
     code = 'INTERNAL_ERROR',
     status: HttpStatus = HttpStatus.INTERNAL_SERVER_ERROR,
-    details?: string,
+    details?: any,
   ): never {
     throw new HttpException(
       ApiResponseUtil.error(message, code, details),

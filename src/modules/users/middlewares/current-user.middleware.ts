@@ -30,7 +30,7 @@ export class CurrentUserMiddleware implements NestMiddleware {
       req['user'] = payload;
     } catch (err) {
       // you can choose to throw or ignore
-      throw new UnauthorizedException('Invalid or expired token');
+      throw new UnauthorizedException('errors.auth.invalid_token');
     }
 
     next();

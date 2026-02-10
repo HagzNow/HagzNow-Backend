@@ -31,6 +31,10 @@ import { WalletTransaction } from './modules/wallets/entities/wallet-transaction
 import { Wallet } from './modules/wallets/entities/wallet.entity';
 import { WalletModule } from './modules/wallets/wallets.module';
 import { CustomerProfile } from './modules/customerProfiles/entities/customer-profile.entity';
+import { HeaderResolver, I18nModule } from 'nestjs-i18n';
+import path from 'path';
+import { UserLanguageResolver } from './common/resolvers/user-language.resolver';
+import { Language } from './common/enums/language.enum';
 
 @Module({
   imports: [
@@ -42,6 +46,18 @@ import { CustomerProfile } from './modules/customerProfiles/entities/customer-pr
     }),
     EventEmitterModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true }),
+    I18nModule.forRoot({
+      fallbackLanguage: Language.ar,
+      loaderOptions: {
+        path: path.join(process.cwd(), 'dist', 'src', 'common', 'i18n'),
+        watch: true,
+      },
+      resolvers: [
+        UserLanguageResolver, // Priority 1: Stored preference
+        new HeaderResolver(['x-language']), // Priority 2: Header (for unauthenticated)
+      ],
+    }),
+
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
@@ -85,6 +101,7 @@ import { CustomerProfile } from './modules/customerProfiles/entities/customer-pr
   controllers: [AppController],
   providers: [
     AppService,
+    UserLanguageResolver,
     {
       provide: APP_GUARD,
       useClass: RolesGuard,

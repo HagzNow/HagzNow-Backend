@@ -44,7 +44,7 @@ export class UsersService {
     // In case id is undefined or null without this it will return first value
     if (!id)
       return ApiResponseUtil.throwError(
-        'User not found',
+        'errors.auth.user_not_found',
         'USER_NOT_FOUND',
         HttpStatus.NOT_FOUND,
       );
@@ -58,7 +58,7 @@ export class UsersService {
     });
     if (!user) {
       return ApiResponseUtil.throwError(
-        'User not found',
+        'errors.auth.user_not_found',
         'USER_NOT_FOUND',
         HttpStatus.NOT_FOUND,
       );
@@ -80,14 +80,14 @@ export class UsersService {
     const user = await this.userRepository.findOneBy({ id });
     if (!user) {
       return ApiResponseUtil.throwError(
-        'User not found',
+        'errors.auth.user_not_found',
         'USER_NOT_FOUND',
         HttpStatus.NOT_FOUND,
       );
     }
     if (user.status != UserStatus.PENDING) {
       return ApiResponseUtil.throwError(
-        'User is not pending owner request',
+        'errors.owner_request.not_pending',
         'OWNER_REQUEST_NOT_PENDING',
         HttpStatus.BAD_REQUEST,
       );
@@ -114,7 +114,7 @@ export class UsersService {
     const user = await this.userRepository.findOneBy({ id });
     if (!user) {
       return ApiResponseUtil.throwError(
-        'User not found',
+        'errors.auth.user_not_found',
         'USER_NOT_FOUND',
         HttpStatus.NOT_FOUND,
       );
@@ -130,7 +130,7 @@ export class UsersService {
     const user = await this.userRepository.findOneBy({ id });
     if (!user) {
       return ApiResponseUtil.throwError(
-        'User not found',
+        'errors.auth.user_not_found',
         'USER_NOT_FOUND',
         HttpStatus.NOT_FOUND,
       );
@@ -138,7 +138,7 @@ export class UsersService {
     // ensure different phone number
     if (user.phone === newPhone) {
       return ApiResponseUtil.throwError(
-        'New phone number must be different from the old one',
+        'errors.auth.same_phone_number',
         'SAME_PHONE_NUMBER',
         HttpStatus.BAD_REQUEST,
       );
@@ -149,7 +149,7 @@ export class UsersService {
     });
     if (existingUser && existingUser.id !== id) {
       return ApiResponseUtil.throwError(
-        'Phone number already in use',
+        'errors.auth.phone_already_exists',
         'PHONE_NUMBER_IN_USE',
         HttpStatus.BAD_REQUEST,
       );

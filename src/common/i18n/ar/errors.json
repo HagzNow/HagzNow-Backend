@@ -1,0 +1,102 @@
+{
+  "general": {
+    "bad_request": "الطلب مش صحيح",
+    "unauthorized": "مش مصرح ليك",
+    "forbidden": "ممنوع",
+    "not_found": "مش موجود",
+    "method_not_allowed": "الطريقة دي مش مسموحة",
+    "conflict": "في تعارض",
+    "unprocessable_entity": "مش قادرين نعالج الطلب ده",
+    "too_many_requests": "طلبات كتير أوي",
+    "internal_server_error": "في مشكلة في السيرفر",
+    "bad_gateway": "في مشكلة في الاتصال",
+    "service_unavailable": "الخدمة مش متاحة دلوقتي",
+    "gateway_timeout": "انتهى وقت الاتصال",
+    "error": "في خطأ حصل",
+    "unexpected_error": "حصل خطأ مش متوقع",
+    "admin_id_not_configured": "معرف الأدمن مش متظبط",
+    "admin_not_found": "الأدمن مش موجود",
+    "file_upload_failed": "رفع الملف فشل. حاول تاني بعدين"
+  },
+  "validation": {
+    "invalid_input": "البيانات اللي دخلتها مش صحيحة",
+    "invalid_date": "صيغة التاريخ غلط. استخدم YYYY-MM-DD",
+    "invalid_uuid": "المعرف مش صحيح",
+    "required_field": "الحقل ده مطلوب",
+    "array_not_empty": "الحقل ده لازم يكون فيه قيم"
+  },
+  "auth": {
+    "passwords_do_not_match": "الباسوردات مش متطابقة",
+    "password_too_weak": "الباسورد لازم يكون ٨ أحرف على الأقل وفيه حروف كبيرة وصغيرة ورقم وعلامات خاصة",
+    "email_already_exists": "الإيميل ده موجود قبل كده",
+    "username_already_exists": "اسم المستخدم ده موجود قبل كده",
+    "phone_already_exists": "رقم الموبايل ده موجود قبل كده",
+    "invalid_credentials": "الإيميل أو الباسورد غلط",
+    "invalid_or_expired_token": "الكود غلط أو منتهي",
+    "user_not_found": "المستخدم مش موجود",
+    "email_send_failed": "فشل إرسال الإيميل. حاول تاني بعدين",
+    "invalid_role_assignment": "الدور المحدد مش صحيح",
+    "user_restricted": "حسابك متقيد بسبب {reasonForRestriction}",
+    "user_deleted": "الحساب اتمسح",
+    "account_inactive": "الحساب مش نشط",
+    "missing_id_images": "لازم ترفع كل صور إثبات الشخصية",
+    "pending_account": "حسابك لسه مستني الموافقة",
+    "rejected_account": "طلبك اترفض",
+    "invalid_old_password": "الباسورد القديم غلط",
+    "same_phone_number": "رقم الموبايل الجديد لازم يكون مختلف عن القديم",
+    "token_not_found": "التوكن مش موجود",
+    "invalid_token": "التوكن غلط أو منتهي"
+  },
+  "reservation": {
+    "not_found": "الحجز مش موجود",
+    "past_time": "مينفعش تحجز وقت فات",
+    "slots_already_booked": " الاوقات دي محجوزة خلاص في الملعب ده ({bookedHours})",
+    "not_in_hold": "الحجز مش في حالة الانتظار"
+  },
+  "arena": {
+    "not_found": "الملعب مش موجود",
+    "slot_not_found": "الوقت مش موجود",
+    "already_booked": "الوقت ده محجوز خلاص",
+    "invalid_time": "الوقت ده مش متاح للحجز",
+    "unauthorized_update": "مش مسموح ليك تعدل الملعب ده",
+    "invalid_arena_status": "حالة الملعب مش صحيحة",
+    "not_active": "الملعب مش متاح للحجز دلوقتي"
+  },
+  "arena_extra": {
+    "not_found": "الإضافة مش موجودة"
+  },
+  "category": {
+    "not_found": "الفئة مش موجودة",
+    "delete_conflict": "مينفعش تمسح الفئة دي لإن فيه ملاعب مربوطة بيها"
+  },
+  "customer": {
+    "not_found": "العميل مش موجود",
+    "phone_already_exists": "رقم الموبايل ده موجود عند عميل تاني",
+    "user_not_found": "حساب العميل مش موجود"
+  },
+  "review": {
+    "not_found": "التقييم مش موجود",
+    "cannot_review_unreserved_arena": "تقدر تقيم الملاعب اللي حجزتها بس"
+  },
+  "owner_request": {
+    "not_pending": "الطلب مش قيد الانتظار"
+  },
+  "paymob": {
+    "payment_failed": "الدفع فشل",
+    "payment_verification_failed": "فشل التحقق من الدفع"
+  },
+  "wallet": {
+    "not_found": "المحفظة مش موجودة",
+    "insufficient_funds": "الرصيد مش كافي",
+    "insufficient_held_amount": "المبلغ المحجوز مش كافي",
+    "invalid_amount": "المبلغ لازم يكون أكبر من صفر",
+    "invalid_user_role": "الملاك بس هم اللي يقدروا يعملوا كده"
+  },
+  "wallet_transaction": {
+    "not_found": "العملية مش موجودة",
+    "invalid_stage": "العملية مش في حالة الانتظار",
+    "missing_reference_id": "رقم المرجع مش موجود",
+    "duplicate_settled_transaction": "في عملية بنفس رقم المرجع اتنفذت قبل كده",
+    "invalid_stage_or_type": "حالة العملية أو النوع مش صحيح"
+  }
+}

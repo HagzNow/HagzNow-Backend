@@ -38,7 +38,7 @@ export class CategoriesService {
 
     if (!category) {
       return ApiResponseUtil.throwError(
-        'Category not found',
+        'errors.category.not_found',
         'CATEGORY_NOT_FOUND',
         HttpStatus.NOT_FOUND,
       );
@@ -46,7 +46,7 @@ export class CategoriesService {
 
     if (category.arenas.length) {
       return ApiResponseUtil.throwError(
-        'Cannot delete category with associated arenas',
+        'errors.category.delete_conflict',
         'CATEGORY_DELETE_CONFLICT',
         HttpStatus.CONFLICT,
       );

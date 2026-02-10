@@ -1,0 +1,16 @@
+{
+  "general": {
+    "health_check": "Health check successful",
+    "api_running": "API is running",
+    "data_retrieved": "Data retrieved successfully",
+    "files_uploaded": "Files uploaded successfully",
+    "resource_created": "Resource created successfully",
+    "resource_updated": "Resource updated successfully",
+    "resource_deleted": "Resource deleted successfully",
+    "operation_completed": "Operation completed successfully"
+  },
+  "auth": {
+    "password_reset_email_sent": "If the email exists, a reset link has been sent",
+    "password_reset_success": "Password has been reset successfully"
+  }
+}

@@ -57,7 +57,7 @@ export class AuthController {
       !files.selfieWithId
     ) {
       return ApiResponseUtil.throwError(
-        'All identity verification images are required',
+        'errors.auth.missing_id_images',
         'MISSING_ID_IMAGES',
         HttpStatus.BAD_REQUEST,
       );

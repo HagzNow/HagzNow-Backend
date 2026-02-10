@@ -24,7 +24,7 @@ export class ReviewsService {
     const arena = await this.arenasService.findOne(dto.arenaId);
     if (!arena)
       return ApiResponseUtil.throwError(
-        'Arena not found',
+        'errors.arena.not_found',
         'ARENA_NOT_FOUND',
         HttpStatus.NOT_FOUND,
       );
@@ -36,7 +36,7 @@ export class ReviewsService {
       );
     if (!hasReservedThisArenaBefore) {
       return ApiResponseUtil.throwError(
-        'You can only review arenas you have reserved',
+        'errors.review.cannot_review_unreserved_arena',
         'CANNOT_REVIEW_UNRESERVED_ARENA',
         HttpStatus.FORBIDDEN,
       );
