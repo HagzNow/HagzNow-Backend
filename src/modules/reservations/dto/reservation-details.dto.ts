@@ -1,7 +1,9 @@
 import { Expose, Transform, Type } from 'class-transformer';
+import { validate, ValidateNested } from 'class-validator';
 import { ArenaExtraDto } from 'src/modules/arenas/dto/arena-extra/arena-extra.dto';
 import { ArenaSlotDto } from 'src/modules/arenas/dto/arena-slot/arena-slot.dto';
 import { ArenaSummaryDto } from 'src/modules/arenas/dto/arena/arena-summary.dto';
+import { CustomerResponseDto } from 'src/modules/customerProfiles/dto/customer-reponse.dto';
 
 export class ReservationDetailsDto {
   @Expose()
@@ -41,6 +43,6 @@ export class ReservationDetailsDto {
   extras: ArenaExtraDto[];
 
   @Expose()
-  @Transform(({ obj }) => obj.customer?.id ?? 'N/A')
-  userId: string;
+  @Type(() => CustomerResponseDto)
+  customer: CustomerResponseDto;
 }
