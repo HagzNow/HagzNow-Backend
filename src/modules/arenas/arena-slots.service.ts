@@ -78,7 +78,13 @@ export class ArenaSlotsService {
     }
 
     // Step 4: filter available ones
-    const availableHours = allHours.filter((h) => !bookedHours.includes(h));
+    let availableHours = allHours.filter((h) => !bookedHours.includes(h));
+
+    // Step 5: filter out past hours if date is today
+    if (formattedDate === date) {
+      const currentHour = new Date().getHours();
+      availableHours = availableHours.filter((h) => h >= currentHour);
+    }
 
     return {
       arenaId,

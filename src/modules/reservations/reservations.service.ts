@@ -74,7 +74,7 @@ export class ReservationsService {
     // validate it's not previous slot
     let CurrentHour = now.hour;
     if (
-      slots.some((h) => Number(h) <= CurrentHour) &&
+      slots.some((h) => Number(h) < CurrentHour) &&
       reservationDate.hasSame(now, 'day')
     ) {
       return ApiResponseUtil.throwError(
