@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { forwardRef, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { ApiResponseUtil } from 'src/common/utils/api-response.util';
@@ -19,6 +19,7 @@ export class WalletTransactionService {
     private readonly dataSource: DataSource,
     @InjectRepository(WalletTransaction)
     private walletTransactionRepository: Repository<WalletTransaction>,
+    @Inject(forwardRef(() => WalletsService))
     private walletService: WalletsService,
   ) {}
   async create(

@@ -51,7 +51,9 @@
     "not_found": "Reservation not found",
     "past_time": "You cannot book a time in the past",
     "slots_already_booked": "Some slots are already booked for this arena {bookedHours}",
-    "not_in_hold": "Reservation is not in HOLD status"
+    "not_in_hold": "Reservation is not in HOLD status",
+    "id_required": "Reservation ID is required",
+    "already_canceled": "This reservation has already been canceled"
   },
   "arena": {
     "not_found": "Arena not found",
