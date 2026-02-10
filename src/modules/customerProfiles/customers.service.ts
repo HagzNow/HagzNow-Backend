@@ -25,7 +25,7 @@ export class CustomersService {
     });
     if (duplicatePhoneCustomer) {
       return ApiResponseUtil.throwError(
-        'Customer with this phone number already exists',
+        'errors.customer.phone_already_exists',
         'DUPLICATE_PHONE_NUMBER',
         400,
       );
@@ -43,7 +43,7 @@ export class CustomersService {
     });
     if (!customer) {
       return ApiResponseUtil.throwError(
-        'Customer not found',
+        'errors.customer.not_found',
         'CUSTOMER_NOT_FOUND',
         404,
       );

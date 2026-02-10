@@ -48,7 +48,7 @@ export class ArenaSlotsService {
 
     if (formattedDate > date) {
       return ApiResponseUtil.throwError(
-        'You cannot check available slots for past dates',
+        'errors.reservation.past_time',
         'INVALID_DATE',
         HttpStatus.BAD_REQUEST,
       );
@@ -58,7 +58,7 @@ export class ArenaSlotsService {
     //WORK
     if (!arena)
       return ApiResponseUtil.throwError(
-        'Arena not found',
+        'errors.arena.not_found',
         'Arena_NOT_FOUND',
         HttpStatus.NOT_FOUND,
       );

@@ -26,9 +26,7 @@ export async function handleImageUpload(
       '❌ Upload to Sersawy failed:',
       err.response?.data || err.message,
     );
-    throw new BadRequestException(
-      'File upload failed. Please try again later.',
-    );
+    throw new BadRequestException('errors.general.file_upload_failed');
   }
 
   return uploadedResults;

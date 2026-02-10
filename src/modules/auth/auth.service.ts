@@ -23,25 +23,25 @@ export class AuthService {
     if (user) isMatch = await bcrypt.compare(pass, user.password);
     if (!user || !isMatch)
       ApiResponseUtil.throwError(
-        'Email or password is incorrect',
+        'errors.auth.invalid_credentials',
         'INVALID_CREDENTIALS',
         HttpStatus.UNAUTHORIZED,
       );
     if (user.status === UserStatus.PENDING)
       return ApiResponseUtil.throwError(
-        'User account is pending approval',
+        'errors.auth.pending_account',
         'PENDING_ACCOUNT',
         HttpStatus.FORBIDDEN,
       );
     else if (user.status === UserStatus.REJECTED)
       return ApiResponseUtil.throwError(
-        'User account has been rejected',
+        'errors.auth.rejected_account',
         'REJECTED_ACCOUNT',
         HttpStatus.FORBIDDEN,
       );
     else if (user.status !== UserStatus.ACTIVE)
       return ApiResponseUtil.throwError(
-        'User account has been deactivated',
+        'errors.auth.account_inactive',
         'DEACTIVATED_ACCOUNT',
         HttpStatus.FORBIDDEN,
       );
@@ -78,7 +78,7 @@ export class AuthService {
     const checkUser = await this.usersService.findOne(data.email);
     if (checkUser)
       ApiResponseUtil.throwError(
-        'Email already in use',
+        'errors.auth.email_already_exists',
         'EMAIL_IN_USE',
         HttpStatus.CONFLICT,
       );
@@ -109,7 +109,7 @@ export class AuthService {
     const user = await this.usersService.findOneById(currentUser.id);
     if (user.status !== UserStatus.ACTIVE)
       return ApiResponseUtil.throwError(
-        'User account has been deactivated',
+        'errors.auth.account_inactive',
         'DEACTIVATED_ACCOUNT',
         HttpStatus.FORBIDDEN,
       );
@@ -118,7 +118,7 @@ export class AuthService {
     if (user) isMatch = await bcrypt.compare(oldPassword, user.password);
     if (!isMatch)
       ApiResponseUtil.throwError(
-        'Old password is incorrect',
+        'errors.auth.invalid_old_password',
         'INVALID_OLD_PASSWORD',
         HttpStatus.UNAUTHORIZED,
       );

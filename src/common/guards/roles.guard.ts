@@ -24,7 +24,7 @@ export class RolesGuard implements CanActivate {
 
     if (!user || !user.role)
       return ApiResponseUtil.throwError(
-        'You do not have permission',
+        'errors.general.forbidden',
         'NOT_ALLOWED',
         HttpStatus.FORBIDDEN,
       );
@@ -32,7 +32,7 @@ export class RolesGuard implements CanActivate {
     const hasRole = requiredRoles.includes(user.role);
     if (!hasRole)
       return ApiResponseUtil.throwError(
-        'You do not have permission',
+        'errors.general.forbidden',
         'NOT_ALLOWED',
         HttpStatus.FORBIDDEN,
       );
