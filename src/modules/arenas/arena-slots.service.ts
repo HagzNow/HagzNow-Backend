@@ -112,6 +112,27 @@ export class ArenaSlotsService {
 
     return bookedHours;
   }
+  async validateSlotsAreAvailable(
+    arenaId: string,
+    date: string,
+    hours: number[],
+    manager?: EntityManager,
+  ) {
+    const bookedHours = await this.getBookedHours(
+      arenaId,
+      date,
+      hours,
+      manager,
+    );
+    if (bookedHours.length > 0) {
+      return ApiResponseUtil.throwError(
+        'errors.reservation.slots_already_booked',
+        'SLOTS_ALREADY_BOOKED',
+        HttpStatus.BAD_REQUEST,
+        { bookedHours },
+      );
+    }
+  }
 
   async cancelSlots(slots: ArenaSlot[], manager?: EntityManager) {
     const repo = manager ? manager.getRepository(ArenaSlot) : this.slotRepo;

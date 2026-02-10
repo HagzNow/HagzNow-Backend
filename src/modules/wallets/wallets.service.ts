@@ -38,6 +38,21 @@ export class WalletsService {
     return wallet.balance >= amount;
   }
 
+  async validateSufficientBalance(
+    userId: string,
+    amount: number,
+    manager?: EntityManager,
+  ) {
+    const hasEnough = await this.hasEnoughBalance(userId, amount, manager);
+    if (!hasEnough) {
+      return ApiResponseUtil.throwError(
+        'errors.wallet.insufficient_funds',
+        'INSUFFICIENT_FUNDS',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
   async addToHeldAmount(
     userId: string,
     amount: number,

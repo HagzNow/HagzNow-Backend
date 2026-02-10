@@ -9,8 +9,11 @@ import { Reservation } from './entities/reservation.entity';
 import { ReservationsProducer } from './queue/reservations.producer';
 import { SettlementsProcessor } from './queue/settlements.processor';
 import { ReservationsController } from './reservations.controller';
-import { ReservationsService } from './reservations.service';
+import { ReservationsService } from './services/reservations.service';
 import { CustomersModule } from '../customerProfiles/customers.module';
+import { ReservationPolicy } from './services/reservation-policy.service';
+import { ReservationPaymentService } from './services/reservation-payment.service';
+import { AdminModule } from '../admin/admin.module';
 
 @Module({
   imports: [
@@ -21,13 +24,16 @@ import { CustomersModule } from '../customerProfiles/customers.module';
     UsersModule,
     WalletModule,
     CustomersModule,
+    AdminModule,
   ],
   controllers: [ReservationsController],
   providers: [
     ReservationsService,
-    ReservationsProducer, // <-- add
+    ReservationPolicy,
+    ReservationPaymentService,
+    ReservationsProducer,
     SettlementsProcessor,
-  ], // <-- add (so the processor is discovered)],
+  ],
   exports: [ReservationsService],
 })
 export class ReservationsModule {}

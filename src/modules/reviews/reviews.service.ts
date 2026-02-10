@@ -5,7 +5,7 @@ import { ApiResponseUtil } from 'src/common/utils/api-response.util';
 import { paginate } from 'src/common/utils/paginate';
 import { Repository } from 'typeorm';
 import { ArenasService } from '../arenas/arenas.service';
-import { ReservationsService } from '../reservations/reservations.service';
+import { ReservationsService } from '../reservations/services/reservations.service';
 import { User } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
 import { CreateReviewDto } from './dto/create-review.dto';
