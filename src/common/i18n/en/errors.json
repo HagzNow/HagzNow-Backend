@@ -1,0 +1,102 @@
+{
+  "general": {
+    "bad_request": "Bad Request",
+    "unauthorized": "Unauthorized",
+    "forbidden": "Forbidden",
+    "not_found": "Not Found",
+    "method_not_allowed": "Method Not Allowed",
+    "conflict": "Conflict",
+    "unprocessable_entity": "Unprocessable Entity",
+    "too_many_requests": "Too Many Requests",
+    "internal_server_error": "Internal Server Error",
+    "bad_gateway": "Bad Gateway",
+    "service_unavailable": "Service Unavailable",
+    "gateway_timeout": "Gateway Timeout",
+    "error": "Error",
+    "unexpected_error": "An unexpected error occurred",
+    "admin_id_not_configured": "Admin ID not configured",
+    "admin_not_found": "Admin user not found",
+    "file_upload_failed": "File upload failed. Please try again later"
+  },
+  "validation": {
+    "invalid_input": "Invalid input data provided",
+    "invalid_date": "Invalid date format. Please use YYYY-MM-DD",
+    "invalid_uuid": "Invalid ID format",
+    "required_field": "This field is required",
+    "array_not_empty": "This field must not be empty"
+  },
+  "auth": {
+    "passwords_do_not_match": "Passwords do not match",
+    "password_too_weak": "Password must be at least 8 characters with uppercase, lowercase, number, and special character",
+    "email_already_exists": "Email already exists",
+    "username_already_exists": "Username already exists",
+    "phone_already_exists": "Phone number already exists",
+    "invalid_credentials": "Invalid email or password",
+    "invalid_or_expired_token": "Invalid or expired reset token",
+    "user_not_found": "User not found",
+    "email_send_failed": "Failed to send reset email. Please try again later",
+    "invalid_role_assignment": "Invalid role assignment",
+    "user_restricted": "User account is restricted because of {reasonForRestriction}",
+    "user_deleted": "User account has been deleted",
+    "account_inactive": "User account is inactive",
+    "missing_id_images": "All identity verification images are required",
+    "pending_account": "User account is pending approval",
+    "rejected_account": "User request has been rejected",
+    "invalid_old_password": "Old password is incorrect",
+    "same_phone_number": "New phone number must be different from the old one",
+    "token_not_found": "Authentication token not found",
+    "invalid_token": "Invalid or expired token"
+  },
+  "reservation": {
+    "not_found": "Reservation not found",
+    "past_time": "You cannot book a time in the past",
+    "slots_already_booked": "Some slots are already booked for this arena {bookedHours}",
+    "not_in_hold": "Reservation is not in HOLD status"
+  },
+  "arena": {
+    "not_found": "Arena not found",
+    "slot_not_found": "Arena slot not found",
+    "already_booked": "This slot is already booked",
+    "invalid_time": "Invalid time for booking",
+    "unauthorized_update": "You are not authorized to update this arena",
+    "invalid_arena_status": "Invalid arena status",
+    "not_active": "Arena is not active"
+  },
+  "arena_extra": {
+    "not_found": "Arena extra not found"
+  },
+  "category": {
+    "not_found": "Category not found",
+    "delete_conflict": "Cannot delete category with associated arenas"
+  },
+  "customer": {
+    "not_found": "Customer not found",
+    "phone_already_exists": "Customer  with this phone number already exists",
+    "user_not_found": "Customer user not found"
+  },
+  "review": {
+    "not_found": "Review not found",
+    "cannot_review_unreserved_arena": "You can only review arenas you have reserved"
+  },
+  "owner_request": {
+    "not_pending": "User is not pending owner request"
+  },
+  "paymob": {
+    "payment_failed": "Payment failed",
+    "payment_verification_failed": "Payment verification failed"
+  },
+  "wallet": {
+    "not_found": "Wallet not found",
+    "insufficient_funds": "Insufficient funds in wallet",
+    "insufficient_held_amount": "Insufficient held amount in wallet",
+    "invalid_amount": "Amount must be greater than zero",
+    "invalid_user_role": "Only owners can perform this action"
+  },
+  "wallet_transaction": {
+    "not_found": "Wallet transaction not found",
+    "invalid_stage": "Transaction is not in PENDING stage",
+    "missing_reference_id": "Transaction referenceId is missing",
+    "duplicate_settled_transaction": "A transaction with the same referenceId has already been settled",
+    "invalid_stage_or_type": "Invalid transaction stage or type"
+  }
+}

@@ -32,7 +32,7 @@ export class WalletTransactionService {
     const wallet = await this.walletService.findOneByUserId(user.id, manager);
     if (!wallet) {
       return ApiResponseUtil.throwError(
-        'Wallet not found for this user',
+        'errors.wallet.not_found',
         'WALLET_NOT_FOUND',
         400,
       );
@@ -63,7 +63,7 @@ export class WalletTransactionService {
     const transaction = await repo.findOne({ where: { id } });
     if (!transaction) {
       return ApiResponseUtil.throwError(
-        'Associated wallet transaction not found',
+        'errors.wallet_transaction.not_found',
         'WALLET_TRANSACTION_NOT_FOUND',
         HttpStatus.NOT_FOUND,
       );
@@ -80,7 +80,7 @@ export class WalletTransactionService {
     });
     if (!transaction) {
       return ApiResponseUtil.throwError(
-        'Associated wallet transaction not found',
+        'errors.wallet_transaction.not_found',
         'WALLET_TRANSACTION_NOT_FOUND',
         HttpStatus.NOT_FOUND,
       );
@@ -120,8 +120,8 @@ export class WalletTransactionService {
 
     if (!transaction) {
       return ApiResponseUtil.throwError(
-        'Transaction not found',
-        'TRANSACTION_NOT_FOUND',
+        'errors.wallet_transaction.not_found',
+        'WALLET_TRANSACTION_NOT_FOUND',
         HttpStatus.NOT_FOUND,
       );
     }
@@ -140,15 +140,15 @@ export class WalletTransactionService {
 
       if (!transaction) {
         return ApiResponseUtil.throwError(
-          'Transaction not found',
-          'TRANSACTION_NOT_FOUND',
+          'errors.wallet_transaction.not_found',
+          'WALLET_TRANSACTION_NOT_FOUND',
           HttpStatus.NOT_FOUND,
         );
       }
 
       if (transaction.stage !== TransactionStage.PENDING) {
         return ApiResponseUtil.throwError(
-          'Transaction is not in PENDING stage',
+          'errors.wallet_transaction.invalid_stage',
           'INVALID_TRANSACTION_STAGE',
           HttpStatus.CONFLICT,
         );
@@ -165,7 +165,7 @@ export class WalletTransactionService {
 
       if (!wallet) {
         return ApiResponseUtil.throwError(
-          'Wallet not found',
+          'errors.wallet.not_found',
           'WALLET_NOT_FOUND',
           HttpStatus.NOT_FOUND,
         );

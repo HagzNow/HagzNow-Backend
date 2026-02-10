@@ -65,7 +65,11 @@ export class ArenasService {
     if (categoryId) {
       const category = await this.categoriesService.findOne(categoryId);
       if (!category)
-        throw new NotFoundException(`Category ${categoryId} not found`);
+        return ApiResponseUtil.throwError(
+          'errors.category.not_found',
+          'CATEGORY_NOT_FOUND',
+          HttpStatus.NOT_FOUND,
+        );
       arena.category = category;
     }
 
@@ -143,7 +147,7 @@ export class ArenasService {
     const category = await this.categoriesService.findOne(categoryId);
     if (!category) {
       return ApiResponseUtil.throwError(
-        'Category not found',
+        'errors.category.not_found',
         'CATEGORY_NOT_FOUND',
         HttpStatus.NOT_FOUND,
       );
@@ -165,7 +169,7 @@ export class ArenasService {
     // In case id is undefined or null without this it will return first value
     if (!id)
       return ApiResponseUtil.throwError(
-        'Arena not found',
+        'errors.arena.not_found',
         'ARENA_NOT_FOUND',
         HttpStatus.NOT_FOUND,
       );
@@ -174,7 +178,7 @@ export class ArenasService {
     const arena = await repo.findOneBy({ id });
     if (!arena) {
       return ApiResponseUtil.throwError(
-        'Arena not found',
+        'errors.arena.not_found',
         'ARENA_NOT_FOUND',
         HttpStatus.NOT_FOUND,
       );
@@ -202,7 +206,7 @@ export class ArenasService {
     });
     if (extras.length !== (extraIds || []).length) {
       return ApiResponseUtil.throwError(
-        'Some extras not found for this arena',
+        'errors.arena_extra.not_found',
         'ARENA_EXTRAS_NOT_FOUND',
         HttpStatus.BAD_REQUEST,
       );
@@ -230,14 +234,14 @@ export class ArenasService {
 
     if (!arena) {
       return ApiResponseUtil.throwError(
-        'Arena not found',
+        'errors.arena.not_found',
         'ARENA_NOT_FOUND',
         HttpStatus.NOT_FOUND,
       );
     }
     if (arena.owner.id !== owner.id) {
       return ApiResponseUtil.throwError(
-        'You are not authorized to update this arena',
+        'errors.arena.unauthorized_update',
         'UNAUTHORIZED',
         HttpStatus.UNAUTHORIZED,
       );
@@ -252,16 +256,16 @@ export class ArenasService {
     const arena = await this.arenaRepository.findOneBy({ id });
     if (!arena) {
       return ApiResponseUtil.throwError(
+        'errors.arena.not_found',
         'ARENA_NOT_FOUND',
-        'Arena not found',
         HttpStatus.NOT_FOUND,
       );
     }
 
     if (arena.status !== ArenaStatus.PENDING) {
       return ApiResponseUtil.throwError(
+        'errors.arena.invalid_arena_status',
         'INVALID_ARENA_STATUS',
-        'Only pending arenas can be approved',
         HttpStatus.BAD_REQUEST,
       );
     }

@@ -65,7 +65,7 @@ export class WalletsService {
     if (!wallet) return false;
     if (Number(wallet.heldAmount) < amount) {
       return ApiResponseUtil.throwError(
-        'Insufficient held amount',
+        'errors.wallet.insufficient_held_amount',
         'INSUFFICIENT_HELD_AMOUNT',
         HttpStatus.BAD_REQUEST,
       );
@@ -83,15 +83,15 @@ export class WalletsService {
     const wallet = await this.findOneByUserIdForUpdate(userId, repo.manager);
     if (!wallet)
       return ApiResponseUtil.throwError(
-        'Wallet not found for this user',
+        'errors.wallet.not_found',
         'WALLET_NOT_FOUND',
         HttpStatus.BAD_REQUEST,
       );
 
     if (Number(wallet.balance) < amount) {
       return ApiResponseUtil.throwError(
-        'Insufficient balance',
-        'INSUFFICIENT_BALANCE',
+        'errors.wallet.insufficient_funds',
+        'INSUFFICIENT_FUNDS',
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -108,13 +108,13 @@ export class WalletsService {
     const wallet = await this.findOneByUserIdForUpdate(userId, repo.manager);
     if (!wallet)
       return ApiResponseUtil.throwError(
-        'Wallet not found for this user',
+        'errors.wallet.not_found',
         'WALLET_NOT_FOUND',
         HttpStatus.BAD_REQUEST,
       );
     if (Number(wallet.heldAmount) < amount) {
       return ApiResponseUtil.throwError(
-        'Insufficient held amount',
+        'errors.wallet.insufficient_held_amount',
         'INSUFFICIENT_HELD_AMOUNT',
         HttpStatus.BAD_REQUEST,
       );
@@ -135,13 +135,13 @@ export class WalletsService {
     const wallet = await this.findOneByUserIdForUpdate(userId, repo.manager);
     if (!wallet)
       return ApiResponseUtil.throwError(
-        'Wallet not found for this user',
+        'errors.wallet.not_found',
         'WALLET_NOT_FOUND',
         HttpStatus.BAD_REQUEST,
       );
     if (Number(wallet.heldAmount) < amount) {
       return ApiResponseUtil.throwError(
-        'Insufficient held amount',
+        'errors.wallet.insufficient_held_amount',
         'INSUFFICIENT_HELD_AMOUNT',
         HttpStatus.BAD_REQUEST,
       );
@@ -190,15 +190,15 @@ export class WalletsService {
     const wallet = await this.findOneByUserId(user.id, manager);
     if (!wallet) {
       return ApiResponseUtil.throwError(
-        'Wallet not found for this user',
+        'errors.wallet.not_found',
         'WALLET_NOT_FOUND',
         HttpStatus.BAD_REQUEST,
       );
     }
     if (wallet.balance < amount) {
       return ApiResponseUtil.throwError(
-        'Insufficient balance',
-        'INSUFFICIENT_BALANCE',
+        'errors.wallet.insufficient_funds',
+        'INSUFFICIENT_FUNDS',
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -216,7 +216,7 @@ export class WalletsService {
       // 1. Validate amount
       if (!amount || amount <= 0) {
         throw ApiResponseUtil.throwError(
-          'Amount must be greater than zero',
+          'errors.wallet.invalid_amount',
           'INVALID_AMOUNT',
           HttpStatus.BAD_REQUEST,
         );
@@ -226,8 +226,8 @@ export class WalletsService {
       const hasEnough = await this.hasEnoughBalance(user.id, amount);
       if (!hasEnough) {
         throw ApiResponseUtil.throwError(
-          'Insufficient balance',
-          'INSUFFICIENT_BALANCE',
+          'errors.wallet.insufficient_funds',
+          'INSUFFICIENT_FUNDS',
           HttpStatus.BAD_REQUEST,
         );
       }
@@ -272,8 +272,8 @@ export class WalletsService {
         await this.walletTransactionService.findOne(transactionId);
       if (!transaction) {
         return ApiResponseUtil.throwError(
-          'Transaction not found',
-          'TRANSACTION_NOT_FOUND',
+          'errors.wallet_transaction.not_found',
+          'WALLET_TRANSACTION_NOT_FOUND',
           HttpStatus.NOT_FOUND,
         );
       }
@@ -282,7 +282,7 @@ export class WalletsService {
         transaction.type !== TransactionType.WITHDRAWAL
       ) {
         return ApiResponseUtil.throwError(
-          'Only pending withdrawal transactions can be accepted',
+          'errors.wallet_transaction.invalid_stage_or_type',
           'INVALID_TRANSACTION_STAGE',
           HttpStatus.BAD_REQUEST,
         );
@@ -290,14 +290,14 @@ export class WalletsService {
 
       if (transaction.user.role !== UserRole.OWNER) {
         return ApiResponseUtil.throwError(
-          'Only owners can request withdrawals',
+          'errors.wallet.invalid_user_role',
           'INVALID_USER_ROLE',
           HttpStatus.BAD_REQUEST,
         );
       }
       if (!transaction.referenceId) {
         return ApiResponseUtil.throwError(
-          'Transaction referenceId is missing',
+          'errors.wallet_transaction.missing_reference_id',
           'MISSING_REFERENCE_ID',
           HttpStatus.BAD_REQUEST,
         );
@@ -311,7 +311,7 @@ export class WalletsService {
 
       if (existingSettledTx) {
         return ApiResponseUtil.throwError(
-          'A transaction with the same referenceId has already been settled',
+          'errors.wallet_transaction.duplicate_settled_transaction',
           'DUPLICATE_SETTLED_TRANSACTION',
           HttpStatus.CONFLICT,
         );
@@ -357,8 +357,8 @@ export class WalletsService {
         await this.walletTransactionService.findOne(transactionId);
       if (!transaction) {
         return ApiResponseUtil.throwError(
-          'Transaction not found',
-          'TRANSACTION_NOT_FOUND',
+          'errors.wallet_transaction.not_found',
+          'WALLET_TRANSACTION_NOT_FOUND',
           HttpStatus.NOT_FOUND,
         );
       }
@@ -367,7 +367,7 @@ export class WalletsService {
         transaction.type !== TransactionType.WITHDRAWAL
       ) {
         return ApiResponseUtil.throwError(
-          'Invalid transaction stage or type',
+          'errors.wallet_transaction.invalid_stage_or_type',
           'INVALID_TRANSACTION_STAGE',
           HttpStatus.BAD_REQUEST,
         );

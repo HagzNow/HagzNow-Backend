@@ -1,0 +1,16 @@
+{
+  "general": {
+    "health_check": "تم التحقق من الحالة بنجاح",
+    "api_running": "واجهة برمجة التطبيقات تعمل",
+    "data_retrieved": "تم استرجاع البيانات بنجاح",
+    "files_uploaded": "تم رفع الملفات بنجاح",
+    "resource_created": "تم إنشاء المورد بنجاح",
+    "resource_updated": "تم تحديث المورد بنجاح",
+    "resource_deleted": "تم حذف المورد بنجاح",
+    "operation_completed": "تمت العملية بنجاح"
+  },
+  "auth": {
+    "password_reset_email_sent": "إذا كان البريد الإلكتروني موجودًا، فقد تم إرسال رابط إعادة التعيين",
+    "password_reset_success": "تم إعادة تعيين كلمة المرور بنجاح"
+  }
+}

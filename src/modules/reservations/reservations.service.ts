@@ -66,7 +66,7 @@ export class ReservationsService {
     });
     if (reservationDate < now.startOf('day')) {
       return ApiResponseUtil.throwError(
-        'Cannot make reservation for past dates',
+        'errors.reservation.past_time',
         'RESERVATION_DATE_IN_PAST',
         HttpStatus.BAD_REQUEST,
       );
@@ -78,7 +78,7 @@ export class ReservationsService {
       reservationDate.hasSame(now, 'day')
     ) {
       return ApiResponseUtil.throwError(
-        'Cannot make reservation for past slots',
+        'errors.reservation.past_time',
         'RESERVATION_SLOT_IN_PAST',
         HttpStatus.BAD_REQUEST,
       );
@@ -101,7 +101,7 @@ export class ReservationsService {
       );
       if (!user) {
         return ApiResponseUtil.throwError(
-          'User not found',
+          'errors.auth.user_not_found',
           'USER_NOT_FOUND',
           HttpStatus.NOT_FOUND,
         );
@@ -119,7 +119,7 @@ export class ReservationsService {
       // Make sure arena is active
       if (arena.status !== ArenaStatus.ACTIVE) {
         return ApiResponseUtil.throwError(
-          'Arena is not active',
+          'errors.arena.not_active',
           'ARENA_NOT_ACTIVE',
           HttpStatus.BAD_REQUEST,
         );
@@ -134,7 +134,7 @@ export class ReservationsService {
       // validate all extras found
       if (extras.length !== (dto.extras || []).length) {
         return ApiResponseUtil.throwError(
-          'One or more extras not found',
+          'errors.arena_extra.not_found',
           'EXTRAS_NOT_FOUND',
           HttpStatus.NOT_FOUND,
         );
@@ -149,11 +149,10 @@ export class ReservationsService {
       );
       if (bookedHours.length > 0) {
         return ApiResponseUtil.throwError(
-          `Some slots are already booked for this arena: ${bookedHours.join(
-            ', ',
-          )}`,
+          'errors.reservation.slots_already_booked',
           'SLOTS_ALREADY_BOOKED',
           HttpStatus.BAD_REQUEST,
+          { bookedHours },
         );
       }
 
@@ -170,7 +169,7 @@ export class ReservationsService {
       );
       if (!hasEnoughBalance) {
         return ApiResponseUtil.throwError(
-          'Insufficient wallet balance',
+          'errors.wallet.insufficient_funds',
           'INSUFFICIENT_BALANCE',
           HttpStatus.BAD_REQUEST,
         );
@@ -230,7 +229,7 @@ export class ReservationsService {
       const adminId = process.env.ADMIN_ID;
       if (!adminId) {
         return ApiResponseUtil.throwError(
-          'Admin ID not configured',
+          'errors.general.admin_id_not_configured',
           'ADMIN_ID_NOT_CONFIGURED',
           HttpStatus.INTERNAL_SERVER_ERROR,
         );
@@ -290,7 +289,7 @@ export class ReservationsService {
       );
       if (arena.status !== ArenaStatus.ACTIVE) {
         return ApiResponseUtil.throwError(
-          'Arena is not active',
+          'errors.arena.not_active',
           'ARENA_NOT_ACTIVE',
           HttpStatus.BAD_REQUEST,
         );
@@ -298,7 +297,7 @@ export class ReservationsService {
       // Check arena ownership
       if (arena.owner.id !== user.id) {
         return ApiResponseUtil.throwError(
-          'Unauthorized access to arena reservations',
+          'errors.arena.unauthorized_update',
           'UNAUTHORIZED_ACCESS',
           HttpStatus.UNAUTHORIZED,
         );
@@ -322,7 +321,7 @@ export class ReservationsService {
       // validate all extras found
       if (extras.length !== (dto.extras || []).length) {
         return ApiResponseUtil.throwError(
-          'One or more extras not found',
+          'errors.arena_extra.not_found',
           'EXTRAS_NOT_FOUND',
           HttpStatus.NOT_FOUND,
         );
@@ -336,9 +335,10 @@ export class ReservationsService {
       );
       if (bookedHours.length > 0) {
         return ApiResponseUtil.throwError(
-          'One or more slots are already booked',
+          'errors.reservation.slots_already_booked',
           'SLOTS_ALREADY_BOOKED',
           HttpStatus.CONFLICT,
+          { bookedHours },
         );
       }
 
@@ -392,7 +392,7 @@ export class ReservationsService {
       if (!reservation) {
         console.log('Reservation not found:', reservationId);
         return ApiResponseUtil.throwError(
-          'Reservation not found',
+          'errors.reservation.not_found',
           'RESERVATION_NOT_FOUND',
           HttpStatus.NOT_FOUND,
         );
@@ -400,7 +400,7 @@ export class ReservationsService {
       if (reservation.status !== ReservationStatus.HOLD) {
         console.log('Reservation not in HOLD status:', reservationId);
         return ApiResponseUtil.throwError(
-          'Reservation is not in HOLD status',
+          'errors.reservation.not_in_hold',
           'RESERVATION_NOT_IN_HOLD',
           HttpStatus.BAD_REQUEST,
         );
@@ -414,7 +414,7 @@ export class ReservationsService {
 
       if (!user) {
         return ApiResponseUtil.throwError(
-          'Customer user not found',
+          'errors.customer.user_not_found',
           'CUSTOMER_USER_NOT_FOUND',
           HttpStatus.NOT_FOUND,
         );
@@ -424,7 +424,7 @@ export class ReservationsService {
       if (!adminId) {
         console.log('Admin ID not configured');
         return ApiResponseUtil.throwError(
-          'Admin ID not configured',
+          'errors.general.admin_id_not_configured',
           'ADMIN_ID_NOT_CONFIGURED',
           HttpStatus.INTERNAL_SERVER_ERROR,
         );
@@ -488,7 +488,7 @@ export class ReservationsService {
       if (!admin) {
         console.log('Admin user not found');
         return ApiResponseUtil.throwError(
-          'Admin user not found',
+          'errors.general.admin_not_found',
           'ADMIN_USER_NOT_FOUND',
           HttpStatus.NOT_FOUND,
         );
@@ -561,7 +561,7 @@ export class ReservationsService {
       });
       if (!reservation) {
         return ApiResponseUtil.throwError(
-          'Reservation not found',
+          'errors.reservation.not_found',
           'RESERVATION_NOT_FOUND',
           HttpStatus.NOT_FOUND,
         );
@@ -575,7 +575,7 @@ export class ReservationsService {
 
       if (!transaction || transaction.stage !== TransactionStage.HOLD) {
         return ApiResponseUtil.throwError(
-          'Associated wallet transaction not found or not in HOLD stage',
+          'errors.reservation.not_in_hold',
           'WALLET_TRANSACTION_NOT_FOUND_OR_INVALID_STAGE',
           HttpStatus.NOT_FOUND,
         );
@@ -637,7 +637,7 @@ export class ReservationsService {
       const adminId = process.env.ADMIN_ID;
       if (!adminId) {
         return ApiResponseUtil.throwError(
-          'Admin ID not configured',
+          'errors.general.admin_id_not_configured',
           'ADMIN_ID_NOT_CONFIGURED',
           HttpStatus.INTERNAL_SERVER_ERROR,
         );
@@ -742,14 +742,14 @@ export class ReservationsService {
     const arena = await this.arenasService.findOne(arenaId);
     if (!arena) {
       return ApiResponseUtil.throwError(
-        'Arena not found',
+        'errors.arena.not_found',
         'ARENA_NOT_FOUND',
         HttpStatus.NOT_FOUND,
       );
     }
     if (arena.owner.id !== user.id && user.role !== UserRole.ADMIN) {
       return ApiResponseUtil.throwError(
-        'Unauthorized access to arena reservations',
+        'errors.general.unauthorized',
         'UNAUTHORIZED_ACCESS',
         HttpStatus.UNAUTHORIZED,
       );

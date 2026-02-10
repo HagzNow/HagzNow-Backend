@@ -17,6 +17,7 @@ import { Review } from '../../reviews/entities/review.entity';
 import { PayoutMethod } from '../interfaces/payout-method.interface';
 import { UserRole } from '../interfaces/userRole.interface';
 import { UserStatus } from '../interfaces/userStatus.interface';
+import { Language } from 'src/common/enums/language.enum';
 
 @Entity('users')
 export class User {
@@ -52,8 +53,16 @@ export class User {
     default: UserStatus.ACTIVE,
   })
   status: UserStatus;
+
   @Column()
   password: string;
+
+  @Column({
+    type: 'enum',
+    enum: Language,
+    default: Language.ar,
+  })
+  Language: Language;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
