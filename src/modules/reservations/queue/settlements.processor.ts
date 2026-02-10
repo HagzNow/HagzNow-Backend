@@ -1,7 +1,7 @@
 // reservations/queue/settlements.processor.ts
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Injectable } from '@nestjs/common';
-import { ReservationsService } from '../reservations.service';
+import { ReservationsService } from '../services/reservations.service';
 
 @Injectable()
 @Processor('settlements', { concurrency: 5 })

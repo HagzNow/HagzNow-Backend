@@ -51,7 +51,9 @@
     "not_found": "الحجز مش موجود",
     "past_time": "مينفعش تحجز وقت فات",
     "slots_already_booked": " الاوقات دي محجوزة خلاص في الملعب ده ({bookedHours})",
-    "not_in_hold": "الحجز مش في حالة الانتظار"
+    "not_in_hold": "الحجز مش في حالة الانتظار",
+    "id_required": "رقم الحجز مطلوب",
+    "already_canceled": "الحجز ده اتلغى قبل كده"
   },
   "arena": {
     "not_found": "الملعب مش موجود",

@@ -1,0 +1,534 @@
+import { HttpStatus, Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { InjectRepository } from '@nestjs/typeorm';
+import { ApiResponseUtil } from 'src/common/utils/api-response.util';
+import { DateTime } from 'luxon';
+import {
+  applyExactFilters,
+  applyILikeFilters,
+} from 'src/common/utils/filter.utils';
+import { paginate } from 'src/common/utils/paginate';
+import {
+  Between,
+  DataSource,
+  EntityManager,
+  In,
+  ObjectLiteral,
+  Repository,
+  SelectQueryBuilder,
+} from 'typeorm';
+import { PaginationDto } from '../../../common/dtos/pagination.dto';
+import { ArenaSlotsService } from '../../arenas/arena-slots.service';
+import { ArenasService } from '../../arenas/arenas.service';
+import { ArenaSlot } from '../../arenas/entities/arena-slot.entity';
+import { User } from '../../users/entities/user.entity';
+import { UserRole } from '../../users/interfaces/userRole.interface';
+import { WalletsService } from '../../wallets/wallets.service';
+import { CreateReservationDto } from '../dto/create-reservation.dto';
+import { ReservationFilterDto } from '../dto/reservation-filter.dto';
+import { UpdateReservationDto } from '../dto/update-reservation.dto';
+import { Reservation } from '../entities/reservation.entity';
+import { PaymentMethod } from '../interfaces/payment-methods.interface';
+import { ReservationStatus } from '../interfaces/reservation-status.interface';
+import { ReservationsProducer } from '../queue/reservations.producer';
+import { CustomersService } from '../../customerProfiles/customers.service';
+import { CreateManualReservationDto } from '../dto/create-manual-reservation.dto';
+import { CustomerProfile } from '../../customerProfiles/entities/customer-profile.entity';
+import { ReservationPolicy } from './reservation-policy.service';
+import { ReservationPaymentService } from './reservation-payment.service';
+import { AdminConfig } from 'src/modules/admin/admin.config';
+import { Arena } from 'src/modules/arenas/entities/arena.entity';
+import { ArenaExtra } from 'src/modules/arenas/entities/arena-extra.entity';
+
+@Injectable()
+export class ReservationsService {
+  /**
+   *
+   */
+  constructor(
+    private readonly producer: ReservationsProducer,
+    private readonly dataSource: DataSource,
+    @InjectRepository(Reservation)
+    private reservationRepository: Repository<Reservation>,
+    private readonly eventEmitter: EventEmitter2,
+    private readonly arenasService: ArenasService,
+    private readonly arenaSlotsService: ArenaSlotsService,
+    private readonly walletsService: WalletsService,
+    private readonly customersService: CustomersService,
+    private readonly reservationPolicy: ReservationPolicy,
+    private readonly reservationPaymentService: ReservationPaymentService,
+    private readonly adminConfig: AdminConfig,
+  ) {}
+
+  private async scheduleSettlementJob(reservation: Reservation) {
+    // Schedule reservation settlement
+    const tz = 'Africa/Cairo';
+    const dt = DateTime.fromISO(reservation.dateOfReservation, { zone: tz });
+
+    const runAt = DateTime.fromISO(reservation.dateOfReservation, { zone: tz })
+      .startOf('day')
+      .toUTC();
+
+    // run after 1 minute for testing
+    // const runAt = DateTime.now().plus({ minutes: 1 }).toUTC();
+    await this.producer.scheduleSettlement(
+      reservation.id,
+      runAt,
+      reservation.totalAmount,
+    );
+  }
+
+  async loadAndValidateHeldReservation(
+    reservationId: string,
+    manager: EntityManager,
+  ): Promise<Reservation> {
+    const reservation = await this.findOne(reservationId, manager);
+
+    if (reservation.status !== ReservationStatus.HOLD) {
+      ApiResponseUtil.throwError(
+        'errors.reservation.not_in_hold',
+        'RESERVATION_NOT_IN_HOLD',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    return reservation;
+  }
+  private async createReservation(
+    dto: CreateReservationDto,
+    arena: Arena,
+    extras: ArenaExtra[],
+    customer: CustomerProfile,
+    manager: EntityManager,
+    status: ReservationStatus = ReservationStatus.HOLD,
+    paymentMethod: PaymentMethod = PaymentMethod.WALLET,
+  ): Promise<Reservation> {
+    const playAmount = arena.depositAmount(dto.slots.length);
+    const extrasAmount = arena.extrasAmount(extras);
+    const totalAmount = playAmount + extrasAmount;
+
+    const reservation = manager.create(Reservation, {
+      dateOfReservation: dto.date,
+      arena,
+      status,
+      paymentMethod,
+      playTotalAmount: playAmount,
+      extrasTotalAmount: extrasAmount,
+      totalAmount,
+      extras: dto.extras ? extras : [],
+      customer,
+    });
+
+    return manager.save(reservation);
+  }
+
+  async create(dto: CreateReservationDto, user: User) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      this.reservationPolicy.validateDateAndSlots(dto.date, dto.slots);
+
+      const { arena, extras } =
+        await this.reservationPolicy.extractArenaAndExtras(dto, queryRunner);
+
+      const customer = await this.customersService.findOneById(user.id);
+
+      await this.arenaSlotsService.validateSlotsAreAvailable(
+        dto.arenaId,
+        dto.date,
+        dto.slots,
+        queryRunner.manager,
+      );
+
+      await this.walletsService.validateSufficientBalance(
+        user.id,
+        arena.depositAmount(dto.slots.length) + arena.extrasAmount(extras),
+        queryRunner.manager,
+      );
+
+      const reservation = await this.createReservation(
+        dto,
+        arena,
+        extras,
+        customer,
+        queryRunner.manager,
+      );
+
+      reservation.slots = await this.arenaSlotsService.createSlots(
+        arena,
+        reservation,
+        dto.date,
+        dto.slots.map(Number),
+        queryRunner.manager,
+      );
+
+      const paymentContext = this.reservationPolicy.buildPaymentContext(
+        reservation,
+        user,
+      );
+
+      await this.reservationPaymentService.hold(
+        paymentContext,
+        queryRunner.manager,
+      );
+
+      await this.scheduleSettlementJob(reservation);
+
+      await queryRunner.commitTransaction();
+
+      this.eventEmitter.emit('reservation.created', reservation);
+
+      return reservation;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async createManualReservation(dto: CreateManualReservationDto, user: User) {
+    // Similar to create method but without wallet and transaction logic
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // Validate it's not previous time
+      this.reservationPolicy.validateDateAndSlots(dto.date, dto.slots);
+
+      // Load arena & extras
+      const { arena, extras } =
+        await this.reservationPolicy.extractArenaAndExtras(dto, queryRunner);
+
+      // Check arena ownership
+      this.reservationPolicy.ensureOwner(arena, user);
+
+      // Find customer profile if ID provided
+      let customer = await this.reservationPolicy.resolveCustomer(dto);
+
+      // Validate slots are not already booked
+      await this.arenaSlotsService.validateSlotsAreAvailable(
+        dto.arenaId,
+        dto.date,
+        dto.slots,
+        queryRunner.manager,
+      );
+
+      // Create reservation
+      const reservation = await this.createReservation(
+        dto,
+        arena,
+        extras,
+        customer,
+        queryRunner.manager,
+        ReservationStatus.CONFIRMED,
+        PaymentMethod.MANUAL,
+      );
+
+      // Create slots for the reservation
+      const addedSlots: ArenaSlot[] = await this.arenaSlotsService.createSlots(
+        arena,
+        reservation,
+        dto.date,
+        dto.slots.map((h) => Number(h)),
+        queryRunner.manager,
+      );
+      reservation.slots = addedSlots;
+
+      //Commit DB transaction
+      await queryRunner.commitTransaction();
+      return reservation;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      console.error('Error creating manual reservation:', err);
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async settleReservation(reservationId: string) {
+    console.log('Settling reservation:', reservationId);
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const reservation = await this.loadAndValidateHeldReservation(
+        reservationId,
+        queryRunner.manager,
+      );
+      const user = this.reservationPolicy.validateExistingUser(reservation);
+
+      // Update reservation status to CONFIRMED
+      reservation.status = ReservationStatus.CONFIRMED;
+
+      const paymentContext = this.reservationPolicy.buildPaymentContext(
+        reservation,
+        user,
+      );
+      await this.reservationPaymentService.settle(
+        paymentContext,
+        queryRunner.manager,
+      );
+
+      await queryRunner.manager.save([reservation]);
+
+      await queryRunner.commitTransaction();
+
+      console.log('Reservation settled successfully:', reservationId);
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      console.error('Error settling reservation:', err);
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async cancelReservation(reservationId: string, user: User) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    // Remove from the settlement queue
+    try {
+      const removed = await this.producer.removeSettlement(reservationId);
+      // In case of not removed from the queue, throw error (it means it was not found)
+      if (!removed) {
+        // return ApiResponseUtil.throwError(
+        //   'Reservation settlement job not found in queue',
+        //   'SETTLEMENT_JOB_NOT_FOUND',
+        //   HttpStatus.NOT_FOUND,
+        // );
+      }
+      // Load reservation & update its status
+      const reservation = await this.findOne(
+        reservationId,
+        queryRunner.manager,
+      );
+
+      // Validate status and ownership for cancellation
+      await this.reservationPolicy.validateStatusAndOwnershipForCancellation(
+        reservation,
+        user,
+      );
+
+      // Update reservation status to CANCELED
+      reservation.status = ReservationStatus.CANCELED;
+
+      // Validate the transaction is in HOLD stage and belongs to this reservation
+      await this.reservationPolicy.validateHeldTransaction(
+        reservation,
+        queryRunner.manager,
+      );
+
+      // Mark all slots as canceled
+      await this.arenaSlotsService.cancelSlots(
+        reservation.slots,
+        queryRunner.manager,
+      );
+
+      // build payment context
+      const paymentContext = this.reservationPolicy.buildPaymentContext(
+        reservation,
+        user,
+      );
+
+      // Process payment refund
+      await this.reservationPaymentService.refund(
+        paymentContext,
+        queryRunner.manager,
+      );
+
+      await queryRunner.manager.save([reservation]);
+      await queryRunner.commitTransaction();
+      console.log('Reservation canceled successfully:', reservationId);
+      return true;
+    } catch (err) {
+      console.error('Error cancelling reservation:', err);
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  // 🔒 Private reusable query builder
+  private async findReservationsByDateRelation(
+    user: User,
+    paginationDto: PaginationDto,
+    filters: ReservationFilterDto,
+    isPast: boolean,
+  ) {
+    const today = new Date();
+
+    const query = this.reservationRepository
+      .createQueryBuilder('reservation')
+      .leftJoinAndSelect('reservation.arena', 'arena')
+      .leftJoinAndSelect('arena.category', 'category')
+      .leftJoinAndSelect('reservation.slots', 'slots')
+      .leftJoinAndSelect('reservation.customer', 'customer')
+      .where('customer.userId = :userId', { userId: user.id })
+      .andWhere(
+        isPast
+          ? 'reservation.dateOfReservation < :today'
+          : 'reservation.dateOfReservation >= :today',
+        { today },
+      )
+      .orderBy('reservation.dateOfReservation', isPast ? 'DESC' : 'ASC');
+
+    // Apply filters
+    this.applyFilters(query, filters);
+
+    return await paginate(query, paginationDto);
+  }
+
+  private applyFilters<T extends ObjectLiteral>(
+    query: SelectQueryBuilder<T>,
+    filters: ReservationFilterDto,
+  ) {
+    const alias = '';
+    applyExactFilters(
+      query,
+      { 'arena.categoryId': filters.arenaCategoryId },
+      alias,
+    );
+    applyExactFilters(query, { 'reservation.status': filters.status }, alias);
+    applyILikeFilters(query, { 'arena.name': filters.arenaName }, alias);
+  }
+
+  // 🌅 Upcoming reservations (today or future)
+  async findUpcomingReservations(
+    paginationDto: PaginationDto,
+    filters: ReservationFilterDto,
+    user: User,
+  ) {
+    return this.findReservationsByDateRelation(
+      user,
+      paginationDto,
+      filters,
+      false,
+    );
+  }
+
+  // 🌇 Past reservations (before today)
+  async findPastReservations(
+    paginationDto: PaginationDto,
+    filters: ReservationFilterDto,
+    user: User,
+  ) {
+    return this.findReservationsByDateRelation(
+      user,
+      paginationDto,
+      filters,
+      true,
+    );
+  }
+
+  async findReservationsByDateRange(
+    arenaId: string,
+    user: User,
+    startDate: Date,
+    endDate: Date,
+    filters: ReservationFilterDto,
+  ) {
+    const arena = await this.arenasService.findOne(arenaId);
+    if (arena.owner.id !== user.id && user.role !== UserRole.ADMIN) {
+      return ApiResponseUtil.throwError(
+        'errors.general.unauthorized',
+        'UNAUTHORIZED_ACCESS',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+    const reservations = await this.reservationRepository.find({
+      where: {
+        arena: { id: arenaId },
+        dateOfReservation: Between(startDate, endDate),
+        status: In([ReservationStatus.HOLD, ReservationStatus.CONFIRMED]),
+      },
+    });
+
+    return reservations;
+  }
+
+  async findOne(id: string, manager?: EntityManager) {
+    const repo = manager
+      ? manager.getRepository(Reservation)
+      : this.reservationRepository;
+
+    if (!id) {
+      return ApiResponseUtil.throwError(
+        'errors.reservation.id_required',
+        'RESERVATION_ID_REQUIRED',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    const reservation = await repo.findOneBy({ id });
+    if (!reservation) {
+      return ApiResponseUtil.throwError(
+        'errors.reservation.not_found',
+        'RESERVATION_NOT_FOUND',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    return reservation;
+  }
+
+  async hasUserReservedThisArenaBefore(arenaId: string, userId: string) {
+    return await this.reservationRepository.exist({
+      where: {
+        arena: { id: arenaId },
+        customer: { id: userId },
+        status: ReservationStatus.CONFIRMED,
+      },
+    });
+  }
+
+  update(id: string, updateReservationDto: UpdateReservationDto) {
+    return `This action updates a #${id} reservation`;
+  }
+
+  remove(id: string) {
+    return `This action removes a #${id} reservation`;
+  }
+
+  async getNumberOfReservationsByOwner(
+    ownerId: string,
+    startDate?: Date,
+    endDate?: Date,
+  ) {
+    const today = new Date();
+    // Set default date range to last month to today if not provided
+    if (!startDate) {
+      startDate = new Date(
+        today.getFullYear(),
+        today.getMonth() - 1,
+        today.getDate() + 1, // ✔ correct
+      );
+    }
+    if (!endDate) {
+      endDate = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate() + 1,
+      );
+    }
+    // Get count of reservations for arenas owned by the owner in the date range
+    const count = await this.reservationRepository
+      .createQueryBuilder('reservation')
+      .leftJoin('reservation.arena', 'arena')
+      .where('reservation.dateOfReservation BETWEEN :startDate AND :endDate', {
+        startDate,
+        endDate,
+      })
+      .andWhere('arena.ownerId = :ownerId', { ownerId })
+      .andWhere('reservation.status != :status', {
+        status: ReservationStatus.CANCELED,
+      })
+      .getCount();
+
+    return count;
+  }
+}
