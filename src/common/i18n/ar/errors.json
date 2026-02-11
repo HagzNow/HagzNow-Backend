@@ -23,7 +23,11 @@
     "invalid_date": "صيغة التاريخ غلط. استخدم YYYY-MM-DD",
     "invalid_uuid": "المعرف مش صحيح",
     "required_field": "الحقل ده مطلوب",
-    "array_not_empty": "الحقل ده لازم يكون فيه قيم"
+    "array_not_empty": "الحقل ده لازم يكون فيه قيم",
+    "invalid_slots": "مصفوفة الأوقات مش صحيحة. الساعات لازم تكون بين 0 و 23",
+    "name_too_short": "الاسم لازم يكون على الأقل 2 حرف",
+    "name_too_long": "الاسم لازم يكون أقل من 50 حرف",
+    "price_must_be_positive": "السعر لازم يكون رقم موجب"
   },
   "auth": {
     "passwords_do_not_match": "الباسوردات مش متطابقة",
@@ -101,6 +105,7 @@
     "invalid_stage": "العملية مش في حالة الانتظار",
     "missing_reference_id": "رقم المرجع مش موجود",
     "duplicate_settled_transaction": "في عملية بنفس رقم المرجع اتنفذت قبل كده",
-    "invalid_stage_or_type": "حالة العملية أو النوع مش صحيح"
+    "invalid_stage_or_type": "حالة العملية أو النوع مش صحيح",
+    "amount_too_low": "المبلغ لازم يكون أكبر من 20 جنيه"
   }
 }

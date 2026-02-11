@@ -1,4 +1,5 @@
 import {
+  HttpStatus,
   Injectable,
   NestMiddleware,
   UnauthorizedException,
@@ -6,6 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { NextFunction, Request, Response } from 'express';
+import { ApiResponseUtil } from 'src/common/utils/api-response.util';
 
 @Injectable()
 export class CurrentUserMiddleware implements NestMiddleware {
@@ -30,7 +32,11 @@ export class CurrentUserMiddleware implements NestMiddleware {
       req['user'] = payload;
     } catch (err) {
       // you can choose to throw or ignore
-      throw new UnauthorizedException('errors.auth.invalid_token');
+      throw ApiResponseUtil.throwError(
+        'errors.auth.invalid_token',
+        'INVALID_TOKEN',
+        HttpStatus.UNAUTHORIZED,
+      );
     }
 
     next();

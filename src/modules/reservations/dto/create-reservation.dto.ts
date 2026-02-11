@@ -1,10 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
+  ArrayMinSize,
   ArrayNotEmpty,
   IsArray,
   IsDateString,
+  IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsUUID,
+  Max,
+  Min,
+  Validate,
 } from 'class-validator';
 
 export class CreateReservationDto {
@@ -20,6 +26,7 @@ export class CreateReservationDto {
     example: '2025-11-10',
   })
   @IsDateString({ strict: true }, { message: 'errors.validation.invalid_date' })
+  @IsNotEmpty({ message: 'errors.validation.required_field' })
   date: string;
 
   @ApiProperty({
@@ -29,7 +36,10 @@ export class CreateReservationDto {
     type: [Number],
   })
   @IsArray()
-  @ArrayNotEmpty()
+  @ArrayMinSize(1, { message: 'errors.validation.array_not_empty' })
+  @IsNumber({}, { each: true })
+  @Min(0, { each: true })
+  @Max(23, { each: true })
   slots: number[];
 
   @ApiProperty({
@@ -40,5 +50,6 @@ export class CreateReservationDto {
   })
   @IsOptional()
   @IsArray()
+  @IsUUID('4', { each: true })
   extras?: string[];
 }

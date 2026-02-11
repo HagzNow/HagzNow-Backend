@@ -28,7 +28,7 @@ export class ReservationPolicy {
   ) {}
 
   // VALIDATION METHODS
-  validateDateAndSlots(date: string, slots: number[]) {
+  validateDateAndSlots(date: string, slots: number[]): void | never {
     const now = DateTime.now().setZone('Africa/Cairo');
     const reservationDate = DateTime.fromISO(date, {
       zone: 'Africa/Cairo',
@@ -54,7 +54,7 @@ export class ReservationPolicy {
     }
   }
 
-  validateExistingUser(reservation: Reservation) {
+  validateExistingUser(reservation: Reservation): User | never {
     const user = reservation.customer?.user;
     if (!user) {
       ApiResponseUtil.throwError(
@@ -69,7 +69,7 @@ export class ReservationPolicy {
   async validateHeldTransaction(
     reservation: Reservation,
     manager: EntityManager,
-  ) {
+  ): Promise<void | never> {
     const transaction =
       await this.walletTransactionService.findOneByReferenceId(
         reservation.id,
@@ -88,7 +88,7 @@ export class ReservationPolicy {
   async validateStatusAndOwnershipForCancellation(
     reservation: Reservation,
     user: User,
-  ) {
+  ): Promise<void | never> {
     if (reservation.status === ReservationStatus.CANCELED) {
       return ApiResponseUtil.throwError(
         'errors.reservation.already_canceled',
@@ -105,7 +105,7 @@ export class ReservationPolicy {
     }
   }
 
-  ensureArenaIsActive(arena: Arena) {
+  ensureArenaIsActive(arena: Arena): void | never {
     if (arena.status !== ArenaStatus.ACTIVE) {
       return ApiResponseUtil.throwError(
         'errors.arena.not_active',
@@ -115,7 +115,7 @@ export class ReservationPolicy {
     }
   }
 
-  ensureOwner(arena: Arena, user: User) {
+  ensureOwner(arena: Arena, user: User): void | never {
     if (arena.owner.id !== user.id) {
       return ApiResponseUtil.throwError(
         'errors.arena.unauthorized_update',
@@ -161,10 +161,12 @@ export class ReservationPolicy {
         player: reservation.totalAmount,
         owner: reservation.arena.ownerAmount(
           reservation.slots.length,
+          this.adminConfig.adminFeeRate,
           reservation.extras,
         ),
         admin: reservation.arena.adminAmount(
           reservation.slots.length,
+          this.adminConfig.adminFeeRate,
           reservation.extras,
         ),
       },

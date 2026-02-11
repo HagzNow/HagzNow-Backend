@@ -34,7 +34,6 @@ export class User {
   email: string;
 
   @Column({ unique: true })
-  @Column()
   phone: string;
 
   @Column({ default: PayoutMethod.WALLET })

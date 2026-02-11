@@ -40,7 +40,7 @@ export class UsersService {
     return await paginate(query, paginationDto);
   }
 
-  async findOneById(id: string, manager?: EntityManager) {
+  async findOneById(id: string, manager?: EntityManager): Promise<User | never> {
     // In case id is undefined or null without this it will return first value
     if (!id)
       return ApiResponseUtil.throwError(
@@ -80,7 +80,7 @@ export class UsersService {
     return await paginate(query, paginationDto);
   }
 
-  private async updateStatus(id: string, status: UserStatus) {
+  private async updateStatus(id: string, status: UserStatus): Promise<User | never> {
     const user = await this.userRepository.findOneBy({ id });
     if (!user) {
       return ApiResponseUtil.throwError(
@@ -101,11 +101,11 @@ export class UsersService {
   }
   async acceptOwnerRequest(id: string) {
     await this.updateStatus(id, UserStatus.ACTIVE);
-    return { message: 'Owner request accepted successfully' };
+    return { message: 'messages.auth.owner_request.accepted' };
   }
   async rejectOwnerRequest(id: string) {
     await this.updateStatus(id, UserStatus.REJECTED);
-    return { message: 'Owner request rejected successfully' };
+    return { message: 'messages.auth.owner_request.rejected' };
   }
 
   async update(
@@ -114,7 +114,7 @@ export class UsersService {
     files?: {
       avatar?: Express.Multer.File[];
     },
-  ) {
+  ): Promise<User | never> {
     const user = await this.userRepository.findOneBy({ id });
     if (!user) {
       return ApiResponseUtil.throwError(
@@ -130,7 +130,7 @@ export class UsersService {
     Object.assign(user, updateUserDto);
     return await this.userRepository.save(user);
   }
-  async updatePhone(id: string, newPhone: string) {
+  async updatePhone(id: string, newPhone: string): Promise<void | never> {
     const user = await this.userRepository.findOneBy({ id });
     if (!user) {
       return ApiResponseUtil.throwError(

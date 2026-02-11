@@ -81,13 +81,8 @@ export class ReservationsController {
     );
   }
 
-  // @Get()
-  // findAll() {
-  //   return this.reservationsService.findAll();
-  // }
-
   @Serialize(ReservationCalenderCardDto)
-  @Roles(UserRole.OWNER || UserRole.ADMIN)
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
   @Get()
   async getReservationsByFilters(
     @Query('arenaId', new ParseUUIDPipe({ version: '4' })) arenaId: string,

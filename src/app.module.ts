@@ -1,14 +1,12 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-// import { DatabaseModule } from './database/database.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
-// import { databaseProviders } from './database/database.providers';
 import { BullModule } from '@nestjs/bullmq';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { RolesGuard } from './common/guards/roles.guard';
 import { AdminModule } from './modules/admin/admin.module';
@@ -35,6 +33,7 @@ import { HeaderResolver, I18nModule } from 'nestjs-i18n';
 import path from 'path';
 import { UserLanguageResolver } from './common/resolvers/user-language.resolver';
 import { Language } from './common/enums/language.enum';
+import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 
 @Module({
   imports: [
@@ -67,7 +66,6 @@ import { Language } from './common/enums/language.enum';
         username: process.env.DB_USERNAME,
         password: process.env.DB_PASSWORD,
         database: process.env.DB_NAME,
-        // entities: [__dirname + '/../**/*.entity{.ts,.js}'],
 
         // Setting synchronize: true shouldn't be used in production - otherwise you can lose production data.
 
@@ -105,6 +103,10 @@ import { Language } from './common/enums/language.enum';
     {
       provide: APP_GUARD,
       useClass: RolesGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ResponseInterceptor,
     },
   ],
 })

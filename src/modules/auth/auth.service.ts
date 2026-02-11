@@ -17,7 +17,7 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async signIn(email: string, pass: string): Promise<any> {
+  async signIn(email: string, pass: string): Promise<{ token: string } | never> {
     const user = await this.usersService.findOneByEmail(email);
     let isMatch = false;
     if (user) isMatch = await bcrypt.compare(pass, user.password);
@@ -51,7 +51,7 @@ export class AuthService {
     };
   }
 
-  async signUpUser(data: CreateUserDto): Promise<any> {
+  async signUpUser(data: CreateUserDto): Promise<{ token: string }> {
     return await this.signUp(data, UserRole.USER, UserStatus.ACTIVE);
   }
   async signUpOwner(
@@ -61,9 +61,9 @@ export class AuthService {
       nationalIdBack?: Express.Multer.File[];
       selfieWithId?: Express.Multer.File[];
     },
-  ): Promise<any> {
+  ): Promise<{ message: string }> {
     await this.signUp(data, UserRole.OWNER, UserStatus.PENDING, files);
-    return { message: 'Owner registration successful. Pending approval.' };
+    return { message: 'messages.auth.owner_registration_pending' };
   }
   async signUp(
     data: CreateUserDto | CreateOwnerDto,
@@ -74,7 +74,7 @@ export class AuthService {
       nationalIdBack?: Express.Multer.File[];
       selfieWithId?: Express.Multer.File[];
     },
-  ): Promise<any> {
+  ): Promise<{ token: string } | never> {
     const duplicateEmail = await this.usersService.findOneByEmail(data.email);
     if (duplicateEmail)
       ApiResponseUtil.throwError(
@@ -112,7 +112,7 @@ export class AuthService {
     currentUser: User,
     oldPassword: string,
     newPassword: string,
-  ) {
+  ): Promise<User | never> {
     const user = await this.usersService.findOneById(currentUser.id);
     if (user.status !== UserStatus.ACTIVE)
       return ApiResponseUtil.throwError(

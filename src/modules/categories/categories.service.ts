@@ -1,7 +1,7 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ApiResponseUtil } from 'src/common/utils/api-response.util';
-import { Repository } from 'typeorm';
+import { DeleteResult, Repository } from 'typeorm';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { Category } from './entities/category.entity';
@@ -30,7 +30,7 @@ export class CategoriesService {
     return await this.categoryRepository.update(id, updateCategoryDto);
   }
 
-  async remove(id: string) {
+  async remove(id: string): Promise<DeleteResult | never> {
     const category = await this.categoryRepository.findOne({
       where: { id },
       relations: ['arenas'],

@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { SortDto } from 'src/common/dtos/sort.dto';
@@ -45,7 +45,7 @@ export class ArenasService {
       thumbnail?: Express.Multer.File[];
       images?: Express.Multer.File[];
     },
-  ) {
+  ): Promise<Arena | never> {
     const { categoryId, ...arenaData } = createArenaDto;
 
     const { thumbnail, images } = await handleImageUpload({
@@ -143,7 +143,7 @@ export class ArenasService {
       .where('arena.ownerId = :ownerId', { ownerId })
       .getRawMany();
   }
-  async findAllDetailed(categoryId: string) {
+  async findAllDetailed(categoryId: string): Promise<Arena[] | never> {
     const category = await this.categoriesService.findOne(categoryId);
     if (!category) {
       return ApiResponseUtil.throwError(
@@ -165,7 +165,7 @@ export class ArenasService {
     });
   }
 
-  async findOne(id: string, manager?: EntityManager) {
+  async findOne(id: string, manager?: EntityManager): Promise<Arena | never> {
     // In case id is undefined or null without this it will return first value
     if (!id)
       return ApiResponseUtil.throwError(
@@ -226,7 +226,7 @@ export class ArenasService {
       .filter((governorate) => governorate !== null);
   }
 
-  async update(id: string, updateArenaDto: UpdateArenaDto, owner: User) {
+  async update(id: string, updateArenaDto: UpdateArenaDto, owner: User): Promise<Arena | never> {
     const arena = await this.arenaRepository.findOne({
       where: { id },
       relations: ['images', 'location'], // Load relations if needed

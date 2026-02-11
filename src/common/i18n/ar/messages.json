@@ -11,6 +11,15 @@
   },
   "auth": {
     "password_reset_email_sent": "إذا كان البريد الإلكتروني موجودًا، فقد تم إرسال رابط إعادة التعيين",
-    "password_reset_success": "تم إعادة تعيين كلمة المرور بنجاح"
+    "password_reset_success": "تم إعادة تعيين كلمة المرور بنجاح",
+    "owner_registration_pending": "تم تسجيل المالك بنجاح. في انتظار الموافقة.",
+    "owner_request": {
+      "accepted": "تم قبول طلب المالك بنجاح",
+      "rejected": "تم رفض طلب المالك بنجاح"
+    }
+  },
+  "wallet_transaction": {
+    "withdrawal_request_accepted": "تم قبول طلب السحب بنجاح",
+    "withdrawal_request_rejected": "تم رفض طلب السحب بنجاح"
   }
 }

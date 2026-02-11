@@ -1,14 +1,20 @@
-import { IsEmail, IsString, Length, Matches } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsString,
+  Length,
+  Matches,
+} from 'class-validator';
 
 export class LoginDto {
   @IsEmail()
+  @IsNotEmpty({ message: 'errors.validation.required_field' })
   email: string;
 
   @IsString()
-  @Length(8, 20, { message: 'Password must be between 8 and 20 characters' })
+  @Length(8, 20, { message: 'errors.auth.password_length' })
   @Matches(/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).*$/, {
-    message:
-      'Password must contain at least one uppercase letter, one lowercase letter, and one number',
+    message: 'errors.auth.password_too_weak',
   })
   password: string;
 }

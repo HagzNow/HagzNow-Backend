@@ -5,7 +5,7 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
-import { raw, Response } from 'express';
+import { Response } from 'express';
 import { ApiResponseUtil } from '../utils/api-response.util';
 import { I18nContext } from 'nestjs-i18n';
 import { Language } from '../enums/language.enum';

@@ -23,7 +23,11 @@
     "invalid_date": "Invalid date format. Please use YYYY-MM-DD",
     "invalid_uuid": "Invalid ID format",
     "required_field": "This field is required",
-    "array_not_empty": "This field must not be empty"
+    "array_not_empty": "This field must not be empty",
+    "invalid_slots": "Invalid slots array. Hours must be between 0 and 23",
+    "name_too_short": "Name must be at least 2 characters long",
+    "name_too_long": "Name must be less than 50 characters long",
+    "price_must_be_positive": "Price must be a positive number"
   },
   "auth": {
     "passwords_do_not_match": "Passwords do not match",
@@ -101,6 +105,7 @@
     "invalid_stage": "Transaction is not in PENDING stage",
     "missing_reference_id": "Transaction referenceId is missing",
     "duplicate_settled_transaction": "A transaction with the same referenceId has already been settled",
-    "invalid_stage_or_type": "Invalid transaction stage or type"
+    "invalid_stage_or_type": "Invalid transaction stage or type",
+    "amount_too_low": "Amount must be greater than 20 EGP"
   }
 }

@@ -41,7 +41,7 @@ export class ArenaSlotsService {
     return await repo.save(slots);
   }
 
-  async getAvailableSlots(arenaId: string, date: string) {
+  async getAvailableSlots(arenaId: string, date: string): Promise<{ arenaId: string; date: string; availableHours: number[] } | never> {
     // Step 0: validate date
     const today = new Date();
     const formattedDate = today.toISOString().split('T')[0]; // 'YYYY-MM-DD'
@@ -117,7 +117,7 @@ export class ArenaSlotsService {
     date: string,
     hours: number[],
     manager?: EntityManager,
-  ) {
+  ): Promise<void | never> {
     const bookedHours = await this.getBookedHours(
       arenaId,
       date,
