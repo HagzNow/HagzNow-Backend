@@ -28,9 +28,11 @@
   "auth": {
     "passwords_do_not_match": "الباسوردات مش متطابقة",
     "password_too_weak": "الباسورد لازم يكون ٨ أحرف على الأقل وفيه حروف كبيرة وصغيرة ورقم وعلامات خاصة",
+    "password_length": "يجب أن تكون كلمة المرور بين 8 و 20 حرفًا",
     "email_already_exists": "الإيميل ده موجود قبل كده",
     "username_already_exists": "اسم المستخدم ده موجود قبل كده",
     "phone_already_exists": "رقم الموبايل ده موجود قبل كده",
+    "invalid_phone_number": "رقم الموبايل مش صحيح (يجب أن يكون رقم مصري)",
     "invalid_credentials": "الإيميل أو الباسورد غلط",
     "invalid_or_expired_token": "الكود غلط أو منتهي",
     "user_not_found": "المستخدم مش موجود",

@@ -65,8 +65,12 @@ export class UsersService {
     }
     return user;
   }
-  async findOne(email: string) {
+  async findOneByEmail(email: string) {
     return await this.userRepository.findOneBy({ email });
+  }
+
+  async findOneByPhone(phone: string) {
+    return await this.userRepository.findOneBy({ phone });
   }
 
   async findOwnerRequests(paginationDto: PaginationDto) {

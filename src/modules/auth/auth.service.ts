@@ -18,7 +18,7 @@ export class AuthService {
   ) {}
 
   async signIn(email: string, pass: string): Promise<any> {
-    const user = await this.usersService.findOne(email);
+    const user = await this.usersService.findOneByEmail(email);
     let isMatch = false;
     if (user) isMatch = await bcrypt.compare(pass, user.password);
     if (!user || !isMatch)
@@ -75,11 +75,18 @@ export class AuthService {
       selfieWithId?: Express.Multer.File[];
     },
   ): Promise<any> {
-    const checkUser = await this.usersService.findOne(data.email);
-    if (checkUser)
+    const duplicateEmail = await this.usersService.findOneByEmail(data.email);
+    if (duplicateEmail)
       ApiResponseUtil.throwError(
         'errors.auth.email_already_exists',
         'EMAIL_IN_USE',
+        HttpStatus.CONFLICT,
+      );
+    const duplicatePhone = await this.usersService.findOneByPhone(data.phone);
+    if (duplicatePhone)
+      ApiResponseUtil.throwError(
+        'errors.auth.phone_already_exists',
+        'PHONE_IN_USE',
         HttpStatus.CONFLICT,
       );
     if (files && data instanceof CreateOwnerDto) {

@@ -28,9 +28,11 @@
   "auth": {
     "passwords_do_not_match": "Passwords do not match",
     "password_too_weak": "Password must be at least 8 characters with uppercase, lowercase, number, and special character",
+    "password_length": "Password must be between 8 and 20 characters",
     "email_already_exists": "Email already exists",
     "username_already_exists": "Username already exists",
     "phone_already_exists": "Phone number already exists",
+    "invalid_phone_number": "Invalid phone number (must be an Egyptian number)",
     "invalid_credentials": "Invalid email or password",
     "invalid_or_expired_token": "Invalid or expired reset token",
     "user_not_found": "User not found",

@@ -13,6 +13,7 @@ import { Language } from '../enums/language.enum';
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
+    console.error('Unhandled Exception:', exception); // Log the full exception for debugging
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
 
@@ -40,7 +41,6 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     const rawMessage =
       i18n?.translate(messageKey, { lang, args: details }) || messageKey;
-    console.error('Error occurred:', rawMessage, 'Details:', details);
 
     // const rawMessage =
     //   i18n?.translate(messageKey, { lang, args: details }) ?? messageKey;

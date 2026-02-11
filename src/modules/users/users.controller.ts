@@ -20,6 +20,8 @@ import { Roles } from 'src/common/decorators/roles.decorator';
 import { UserRole } from './interfaces/userRole.interface';
 import { OwnerDto } from './dto/owner.dto';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
+import { IsPhoneNumber } from 'class-validator';
+import { UpdatePhoneDto } from './dto/update-phone.dto';
 
 @Controller('users')
 export class UsersController {
@@ -45,6 +47,16 @@ export class UsersController {
     @CurrentUser() { id }: User,
   ) {
     return await this.usersService.update(id, userData, files);
+  }
+
+  @Serialize(UserDto)
+  @UseGuards(AuthGuard)
+  @Patch('profile/phone')
+  async updatePhone(
+    @Body() updatePhoneDto: UpdatePhoneDto,
+    @CurrentUser() { id }: User,
+  ) {
+    return await this.usersService.updatePhone(id, updatePhoneDto.phone);
   }
 
   @Serialize(OwnerDto)
