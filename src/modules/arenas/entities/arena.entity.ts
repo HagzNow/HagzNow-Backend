@@ -16,6 +16,8 @@ import { ArenaExtra } from './arena-extra.entity';
 import { ArenaImage } from './arena-image.entity';
 import { ArenaLocation } from './arena-location.entity';
 import { ArenaSlot } from './arena-slot.entity';
+import { AdminConfig } from 'src/modules/admin/admin.config';
+import { ReservationExtra } from 'src/modules/reservations/entities/reservation-extra.entity';
 
 @Entity('arenas')
 export class Arena {
@@ -97,46 +99,6 @@ export class Arena {
   })
   reviews: Review[];
 
-  private get adminFeeRate(): number {
-    return Number(process.env.ADMIN_FEE_RATE) || 0;
-  }
-
-  private normalizeExtras(extras?: ArenaExtra[]): ArenaExtra[] {
-    return extras ?? [];
-  }
-
-  playAmount(hours: number): number {
-    return Number(this.pricePerHour) * hours;
-  }
-
-  extrasAmount(extras?: ArenaExtra[]): number {
-    return this.normalizeExtras(extras).reduce(
-      (sum, extra) => sum + Number(extra.price),
-      0,
-    );
-  }
-
-  totalAmount(hours: number, extras?: ArenaExtra[]): number {
-    return this.playAmount(hours) + this.extrasAmount(extras);
-  }
-
-  ownerAmount(hours: number, extras?: ArenaExtra[]): number {
-    return (
-      this.playerTotalAmount(hours, extras) - this.adminAmount(hours, extras)
-    );
-  }
-
-  adminAmount(hours: number, extras?: ArenaExtra[]): number {
-    return this.totalAmount(hours, extras) * this.adminFeeRate;
-  }
-
-  depositAmount(hours: number): number {
-    return (this.playAmount(hours) * this.depositPercent) / 100;
-  }
-
-  playerTotalAmount(hours: number, extras?: ArenaExtra[]): number {
-    return this.depositAmount(Number(hours)) + this.extrasAmount(extras);
-  }
   totalAvailableHours(): number {
     return this.closingHour - this.openingHour;
   }

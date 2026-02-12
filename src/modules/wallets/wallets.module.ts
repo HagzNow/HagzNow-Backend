@@ -12,11 +12,7 @@ import { WalletsListener } from './wallets.listener';
 import { WalletsService } from './wallets.service';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Wallet, WalletTransaction]),
-    AuthModule,
-    forwardRef(() => WalletModule),
-  ],
+  imports: [TypeOrmModule.forFeature([Wallet, WalletTransaction]), AuthModule],
 
   controllers: [
     WalletController,

@@ -50,18 +50,18 @@ export class AuthController {
       selfieWithId?: Express.Multer.File[];
     },
   ) {
-    if (
-      !files ||
-      !files.nationalIdFront ||
-      !files.nationalIdBack ||
-      !files.selfieWithId
-    ) {
-      return ApiResponseUtil.throwError(
-        'errors.auth.missing_id_images',
-        'MISSING_ID_IMAGES',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
+    // if (
+    //   !files ||
+    //   !files.nationalIdFront ||
+    //   !files.nationalIdBack ||
+    //   !files.selfieWithId
+    // ) {
+    //   return ApiResponseUtil.throwError(
+    //     'errors.auth.missing_id_images',
+    //     'MISSING_ID_IMAGES',
+    //     HttpStatus.BAD_REQUEST,
+    //   );
+    // }
     return this.authService.signUpOwner(signUpDto, files);
   }
 

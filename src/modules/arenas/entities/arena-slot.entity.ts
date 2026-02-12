@@ -10,8 +10,8 @@ import { Arena } from './arena.entity';
 
 @Entity('arena_slots')
 @Index(
-  'unique_arena_date_hour_reservation_isCanceled',
-  ['arena', 'date', 'hour', 'reservation', 'isCanceled'],
+  'unique_arena_date_hour_reservation_cancelledAt',
+  ['arena', 'date', 'hour', 'reservation', 'cancelledAt'],
   {
     unique: true,
   },
@@ -26,8 +26,8 @@ export class ArenaSlot {
   @Column({ type: 'int', unsigned: true })
   hour: number;
 
-  @Column({ default: false })
-  isCanceled: boolean;
+  @Column({ type: 'timestamp', nullable: true })
+  cancelledAt: Date | null;
 
   @ManyToOne(() => Arena, (arena) => arena.slots, { onDelete: 'CASCADE' })
   arena: Arena;

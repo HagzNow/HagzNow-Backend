@@ -20,7 +20,7 @@ export class ReviewsService {
     private readonly reservationsService: ReservationsService,
   ) {}
 
-  async create(dto: CreateReviewDto, currentUser: User) {
+  async create(dto: CreateReviewDto, currentUser: User): Promise<Review | never> {
     const arena = await this.arenasService.findOne(dto.arenaId);
     if (!arena)
       return ApiResponseUtil.throwError(

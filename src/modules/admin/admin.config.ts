@@ -22,6 +22,17 @@ export class AdminConfig {
     }
     return id;
   }
+  get adminFeeRate(): number {
+    let rate = Number(this.config.get('ADMIN_FEE_RATE'));
+    if (isNaN(rate) || rate < 0 || rate > 1) {
+      return ApiResponseUtil.throwError(
+        'errors.general.invalid_admin_fee_rate',
+        'INVALID_ADMIN_FEE_RATE',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+    return rate;
+  }
   async getAdminUser(): Promise<User> {
     const id = this.adminId;
     const admin = await this.usersService.findOneById(id);

@@ -1,11 +1,19 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
+  ArrayMinSize,
   ArrayNotEmpty,
   IsArray,
   IsDateString,
+  IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsUUID,
+  Max,
+  Min,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
+import { ReservationExtraItemDto } from '../../reservation-extras/dto/reservation-extra-item.dto';
 
 export class CreateReservationDto {
   @ApiProperty({
@@ -20,6 +28,7 @@ export class CreateReservationDto {
     example: '2025-11-10',
   })
   @IsDateString({ strict: true }, { message: 'errors.validation.invalid_date' })
+  @IsNotEmpty({ message: 'errors.validation.required_field' })
   date: string;
 
   @ApiProperty({
@@ -29,16 +38,24 @@ export class CreateReservationDto {
     type: [Number],
   })
   @IsArray()
-  @ArrayNotEmpty()
+  @ArrayMinSize(1, { message: 'errors.validation.array_not_empty' })
+  @IsNumber({}, { each: true })
+  @Min(0, { each: true })
+  @Max(23, { each: true })
   slots: number[];
 
   @ApiProperty({
     description:
-      'Optional list of extra service IDs chosen for this reservation',
-    type: [String],
+      'Optional list of extra services with quantities for this reservation',
+    type: [ReservationExtraItemDto],
     required: false,
   })
   @IsOptional()
   @IsArray()
-  extras?: string[];
+  @ValidateNested({
+    each: true,
+    message: 'errors.validation.invalid_extras_format',
+  })
+  @Type(() => ReservationExtraItemDto)
+  extras?: ReservationExtraItemDto[];
 }

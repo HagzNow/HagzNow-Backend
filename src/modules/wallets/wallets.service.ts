@@ -42,7 +42,7 @@ export class WalletsService {
     userId: string,
     amount: number,
     manager?: EntityManager,
-  ) {
+  ): Promise<void | never> {
     const hasEnough = await this.hasEnoughBalance(userId, amount, manager);
     if (!hasEnough) {
       return ApiResponseUtil.throwError(
@@ -72,7 +72,7 @@ export class WalletsService {
     userId: string,
     amount: number,
     manager?: EntityManager,
-  ) {
+  ): Promise<boolean | never> {
     const repo = manager
       ? manager.getRepository(Wallet)
       : this.walletRepository;
@@ -90,7 +90,7 @@ export class WalletsService {
     return true;
   }
 
-  async lockAmount(userId: string, amount: number, manager?: EntityManager) {
+  async lockAmount(userId: string, amount: number, manager?: EntityManager): Promise<boolean | never> {
     const repo = manager
       ? manager.getRepository(Wallet)
       : this.walletRepository;
@@ -198,7 +198,7 @@ export class WalletsService {
     });
   }
 
-  async deduceAmount(amount: number, user: User, manager?: EntityManager) {
+  async deduceAmount(amount: number, user: User, manager?: EntityManager): Promise<{ message: string; balance: number } | never> {
     const repo = manager
       ? manager.getRepository(Wallet)
       : this.walletRepository;
@@ -354,7 +354,9 @@ export class WalletsService {
       );
       await queryRunner.manager.save(transaction);
       await queryRunner.commitTransaction();
-      return { message: 'Withdrawal request accepted successfully' };
+      return {
+        message: 'messages.wallet_transaction.withdrawal_request_accepted',
+      };
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw error;
@@ -409,7 +411,9 @@ export class WalletsService {
       );
       await queryRunner.manager.save(transaction);
       await queryRunner.commitTransaction();
-      return { message: 'Withdrawal request rejected successfully' };
+      return {
+        message: 'messages.wallet_transaction.withdrawal_request_rejected',
+      };
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw error;

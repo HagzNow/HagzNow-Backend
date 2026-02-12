@@ -11,6 +11,15 @@
   },
   "auth": {
     "password_reset_email_sent": "If the email exists, a reset link has been sent",
-    "password_reset_success": "Password has been reset successfully"
+    "password_reset_success": "Password has been reset successfully",
+    "owner_registration_pending": "Owner registration successful. Pending approval.",
+    "owner_request": {
+      "accepted": "Owner request accepted successfully",
+      "rejected": "Owner request rejected successfully"
+    }
+  },
+  "wallet_transaction": {
+    "withdrawal_request_accepted": "Withdrawal request accepted successfully",
+    "withdrawal_request_rejected": "Withdrawal request rejected successfully"
   }
 }

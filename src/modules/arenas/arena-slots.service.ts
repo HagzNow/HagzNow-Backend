@@ -3,7 +3,7 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ApiResponseUtil } from 'src/common/utils/api-response.util';
-import { EntityManager, In, Repository } from 'typeorm';
+import { EntityManager, In, IsNull, Repository } from 'typeorm';
 import { Reservation } from '../reservations/entities/reservation.entity';
 import { ArenasService } from './arenas.service';
 import { ArenaSlot } from './entities/arena-slot.entity';
@@ -35,13 +35,18 @@ export class ArenaSlotsService {
         reservation,
         date,
         hour,
-        isCanceled: false,
+        cancelledAt: null,
       }),
     );
     return await repo.save(slots);
   }
 
-  async getAvailableSlots(arenaId: string, date: string) {
+  async getAvailableSlots(
+    arenaId: string,
+    date: string,
+  ): Promise<
+    { arenaId: string; date: string; availableHours: number[] } | never
+  > {
     // Step 0: validate date
     const today = new Date();
     const formattedDate = today.toISOString().split('T')[0]; // 'YYYY-MM-DD'
@@ -105,7 +110,7 @@ export class ArenaSlotsService {
         arena: { id: arenaId },
         date,
         hour: In(hours),
-        isCanceled: false,
+        cancelledAt: IsNull(), // Only consider slots that are not cancelled
       },
     });
     const bookedHours = bookedSlots.map((s) => s.hour);
@@ -117,7 +122,7 @@ export class ArenaSlotsService {
     date: string,
     hours: number[],
     manager?: EntityManager,
-  ) {
+  ): Promise<void | never> {
     const bookedHours = await this.getBookedHours(
       arenaId,
       date,
@@ -137,7 +142,7 @@ export class ArenaSlotsService {
   async cancelSlots(slots: ArenaSlot[], manager?: EntityManager) {
     const repo = manager ? manager.getRepository(ArenaSlot) : this.slotRepo;
     for (const slot of slots) {
-      slot.isCanceled = true;
+      slot.cancelledAt = new Date();
     }
     return await repo.save(slots);
   }
@@ -165,7 +170,7 @@ export class ArenaSlotsService {
       .createQueryBuilder('slot')
       .innerJoin('slot.arena', 'arena')
       .where('arena.ownerId = :ownerId', { ownerId })
-      .andWhere('slot.isCanceled = :isCanceled', { isCanceled: false })
+      .andWhere('slot.cancelledAt IS NULL')
       .andWhere('slot.date BETWEEN :startDate AND :endDate', {
         startDate,
         endDate,
@@ -207,7 +212,7 @@ export class ArenaSlotsService {
       .createQueryBuilder('slot')
       .innerJoin('slot.arena', 'arena')
       .where('arena.ownerId = :ownerId', { ownerId })
-      .andWhere('slot.isCanceled = :isCanceled', { isCanceled: false })
+      .andWhere('slot.cancelledAt IS NULL')
       .andWhere('slot.date BETWEEN :startDate AND :endDate', {
         startDate,
         endDate,

@@ -17,7 +17,7 @@ export class CustomersService {
     protected customersRepository: Repository<CustomerProfile>,
   ) {}
 
-  async create(customerDto: CreateCustomerDto) {
+  async create(customerDto: CreateCustomerDto): Promise<CustomerProfile | never> {
     const duplicatePhoneCustomer = await this.customersRepository.findOne({
       where: {
         phone: customerDto.phone,
@@ -35,7 +35,7 @@ export class CustomersService {
     return newCustomer;
   }
 
-  async findOneById(id: string) {
+  async findOneById(id: string): Promise<CustomerProfile | never> {
     const customer = await this.customersRepository.findOne({
       where: {
         id,
@@ -61,18 +61,6 @@ export class CustomersService {
       excludeExtraneousValues: true,
     });
   }
-  async findOneByPhoneNumberAndCreate(customerDto: CreateCustomerDto) {
-    let customer = await this.customersRepository.findOne({
-      where: {
-        phone: customerDto.phone,
-      },
-    });
-    if (!customer) {
-      const newCustomer = this.customersRepository.create(customerDto);
-      customer = await this.customersRepository.save(newCustomer);
-    }
-    return customer;
-  }
 
   async update(
     id: string,
@@ -90,11 +78,11 @@ export class CustomersService {
     return updatedCustomer;
   }
 
-  async updatePhone(id: string, phone: string) {
+  async updatePhone(id: string, newPhone: string) {
     const customer = await this.findOneById(id);
     const updatedCustomer = this.customersRepository.update(customer.id, {
       ...customer,
-      phone,
+      phone: newPhone,
     });
     return updatedCustomer;
   }

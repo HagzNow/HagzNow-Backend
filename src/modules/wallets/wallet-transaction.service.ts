@@ -26,7 +26,7 @@ export class WalletTransactionService {
     createWalletTransactionDto: CreateWalletTransactionDto,
     user: User,
     manager?: EntityManager,
-  ) {
+  ): Promise<WalletTransaction | never> {
     const repo = manager
       ? manager.getRepository(WalletTransaction)
       : this.walletTransactionRepository;
@@ -57,7 +57,7 @@ export class WalletTransactionService {
     return await paginate(query, paginationDto);
   }
 
-  async findOne(id: string, manager?: EntityManager) {
+  async findOne(id: string, manager?: EntityManager): Promise<WalletTransaction | never> {
     const repo = manager
       ? manager.getRepository(WalletTransaction)
       : this.walletTransactionRepository;
@@ -72,7 +72,7 @@ export class WalletTransactionService {
     return transaction;
   }
 
-  async findOneByReferenceId(referenceId: string, manager?: EntityManager) {
+  async findOneByReferenceId(referenceId: string, manager?: EntityManager): Promise<WalletTransaction | never> {
     const repo = manager
       ? manager.getRepository(WalletTransaction)
       : this.walletTransactionRepository;

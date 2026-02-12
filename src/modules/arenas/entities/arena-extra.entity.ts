@@ -4,9 +4,11 @@ import {
   Entity,
   ManyToMany,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Arena } from './arena.entity';
+import { ReservationExtra } from 'src/modules/reservations/entities/reservation-extra.entity';
 
 @Entity('arenas_extras')
 export class ArenaExtra {
@@ -19,16 +21,17 @@ export class ArenaExtra {
   @Column({ type: 'decimal' })
   price: number;
 
-  @Column({ type: 'boolean', default: true })
-  isActive: boolean;
-
   @ManyToOne(() => Arena, (arena) => arena.extras, {
     onDelete: 'CASCADE',
   })
   arena: Arena;
 
-  @ManyToMany(() => Reservation, (reservation) => reservation.extras, {
-    onDelete: 'SET NULL',
-  })
-  reservations: Reservation[];
+  @Column({ type: 'timestamp', nullable: true })
+  cancelledAt: Date | null;
+
+  @OneToMany(
+    () => ReservationExtra,
+    (reservationExtra) => reservationExtra.extra,
+  )
+  reservationExtras: ReservationExtra[];
 }

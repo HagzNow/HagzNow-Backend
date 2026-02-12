@@ -34,7 +34,7 @@ export class AdminService extends UsersService {
     };
   }
 
-  async toggle(id: string) {
+  async toggle(id: string): Promise<User | never> {
     const user = await this.userRepository.findOneBy({ id });
     if (!user) {
       return ApiResponseUtil.throwError(

@@ -23,14 +23,23 @@
     "invalid_date": "صيغة التاريخ غلط. استخدم YYYY-MM-DD",
     "invalid_uuid": "المعرف مش صحيح",
     "required_field": "الحقل ده مطلوب",
-    "array_not_empty": "الحقل ده لازم يكون فيه قيم"
+    "array_not_empty": "الحقل ده لازم يكون فيه قيم",
+    "invalid_slots": "مصفوفة الأوقات مش صحيحة. الساعات لازم تكون بين 0 و 23",
+    "name_too_short": "الاسم لازم يكون على الأقل 2 حرف",
+    "name_too_long": "الاسم لازم يكون أقل من 50 حرف",
+    "price_must_be_positive": "السعر لازم يكون رقم موجب",
+    "quantity_minimum": "الكمية لازم تكون على الأقل 1",
+    "quantity_maximum": "الكمية لازم تكون أقل من 100",
+    "errors.validation.invalid_extras_format": "مصفوفة الإضافات مش صحيحة. لازم تكون مصفوفة من الكائنات اللي فيها id و quantity"
   },
   "auth": {
     "passwords_do_not_match": "الباسوردات مش متطابقة",
     "password_too_weak": "الباسورد لازم يكون ٨ أحرف على الأقل وفيه حروف كبيرة وصغيرة ورقم وعلامات خاصة",
+    "password_length": "يجب أن تكون كلمة المرور بين 8 و 20 حرفًا",
     "email_already_exists": "الإيميل ده موجود قبل كده",
     "username_already_exists": "اسم المستخدم ده موجود قبل كده",
     "phone_already_exists": "رقم الموبايل ده موجود قبل كده",
+    "invalid_phone_number": "رقم الموبايل مش صحيح (يجب أن يكون رقم مصري)",
     "invalid_credentials": "الإيميل أو الباسورد غلط",
     "invalid_or_expired_token": "الكود غلط أو منتهي",
     "user_not_found": "المستخدم مش موجود",
@@ -62,7 +71,9 @@
     "invalid_time": "الوقت ده مش متاح للحجز",
     "unauthorized_update": "مش مسموح ليك تعدل الملعب ده",
     "invalid_arena_status": "حالة الملعب مش صحيحة",
-    "not_active": "الملعب مش متاح للحجز دلوقتي"
+    "not_active": "الملعب مش متاح للحجز دلوقتي",
+    "extra_not_found": "الإضافة مش موجودة أو تم حذفها",
+    "extras_not_found": "بعض الإضافات مش موجودة أو تم حذفها"
   },
   "arena_extra": {
     "not_found": "الإضافة مش موجودة"
@@ -99,6 +110,7 @@
     "invalid_stage": "العملية مش في حالة الانتظار",
     "missing_reference_id": "رقم المرجع مش موجود",
     "duplicate_settled_transaction": "في عملية بنفس رقم المرجع اتنفذت قبل كده",
-    "invalid_stage_or_type": "حالة العملية أو النوع مش صحيح"
+    "invalid_stage_or_type": "حالة العملية أو النوع مش صحيح",
+    "amount_too_low": "المبلغ لازم يكون أكبر من 20 جنيه"
   }
 }

@@ -9,9 +9,6 @@ import {
   ValidatorConstraintInterface,
 } from 'class-validator';
 
-/**
- * ✅ Custom Validator — ensures newPassword ≠ oldPassword
- */
 @ValidatorConstraint({ name: 'PasswordsNotSame', async: false })
 export class PasswordsNotSameConstraint
   implements ValidatorConstraintInterface
@@ -22,7 +19,7 @@ export class PasswordsNotSameConstraint
   }
 
   defaultMessage(args: ValidationArguments) {
-    return 'New password must not be the same as the old password';
+    return 'errors.auth.passwords_do_not_match';
   }
 }
 

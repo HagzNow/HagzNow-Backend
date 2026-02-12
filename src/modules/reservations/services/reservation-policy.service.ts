@@ -3,7 +3,6 @@ import { Arena } from 'src/modules/arenas/entities/arena.entity';
 import { User } from 'src/modules/users/entities/user.entity';
 import { DateTime } from 'luxon';
 import { ApiResponseUtil } from 'src/common/utils/api-response.util';
-import { ArenaExtra } from 'src/modules/arenas/entities/arena-extra.entity';
 import { ArenaStatus } from 'src/modules/arenas/interfaces/arena-status.interface';
 import { EntityManager, QueryRunner } from 'typeorm';
 import { CreateManualReservationDto } from '../dto/create-manual-reservation.dto';
@@ -17,6 +16,8 @@ import { CustomerProfile } from 'src/modules/customerProfiles/entities/customer-
 import { ReservationPaymentContext } from '../interfaces/reservation-payment.context';
 import { CustomersService } from 'src/modules/customerProfiles/customers.service';
 import { AdminConfig } from 'src/modules/admin/admin.config';
+import { ReservationPricingService } from './reservation-pricing.service';
+import { ArenaExtraWithQuantity } from 'src/modules/arenas/types/arena-extra-with-quantity.type';
 
 @Injectable()
 export class ReservationPolicy {
@@ -25,10 +26,11 @@ export class ReservationPolicy {
     private readonly walletTransactionService: WalletTransactionService,
     private readonly customersService: CustomersService,
     private readonly adminConfig: AdminConfig,
+    private readonly reservationPricingService: ReservationPricingService,
   ) {}
 
   // VALIDATION METHODS
-  validateDateAndSlots(date: string, slots: number[]) {
+  validateDateAndSlots(date: string, slots: number[]): void | never {
     const now = DateTime.now().setZone('Africa/Cairo');
     const reservationDate = DateTime.fromISO(date, {
       zone: 'Africa/Cairo',
@@ -54,7 +56,7 @@ export class ReservationPolicy {
     }
   }
 
-  validateExistingUser(reservation: Reservation) {
+  validateExistingUser(reservation: Reservation): User | never {
     const user = reservation.customer?.user;
     if (!user) {
       ApiResponseUtil.throwError(
@@ -69,7 +71,7 @@ export class ReservationPolicy {
   async validateHeldTransaction(
     reservation: Reservation,
     manager: EntityManager,
-  ) {
+  ): Promise<void | never> {
     const transaction =
       await this.walletTransactionService.findOneByReferenceId(
         reservation.id,
@@ -88,7 +90,7 @@ export class ReservationPolicy {
   async validateStatusAndOwnershipForCancellation(
     reservation: Reservation,
     user: User,
-  ) {
+  ): Promise<void | never> {
     if (reservation.status === ReservationStatus.CANCELED) {
       return ApiResponseUtil.throwError(
         'errors.reservation.already_canceled',
@@ -105,7 +107,7 @@ export class ReservationPolicy {
     }
   }
 
-  ensureArenaIsActive(arena: Arena) {
+  ensureArenaIsActive(arena: Arena): void | never {
     if (arena.status !== ArenaStatus.ACTIVE) {
       return ApiResponseUtil.throwError(
         'errors.arena.not_active',
@@ -115,7 +117,7 @@ export class ReservationPolicy {
     }
   }
 
-  ensureOwner(arena: Arena, user: User) {
+  ensureOwner(arena: Arena, user: User): void | never {
     if (arena.owner.id !== user.id) {
       return ApiResponseUtil.throwError(
         'errors.arena.unauthorized_update',
@@ -131,7 +133,7 @@ export class ReservationPolicy {
     queryRunner: QueryRunner,
   ): Promise<{
     arena: Arena;
-    extras: ArenaExtra[];
+    extras: ArenaExtraWithQuantity[];
   }> {
     const arena = await this.arenasService.findOne(
       dto.arenaId,
@@ -139,34 +141,48 @@ export class ReservationPolicy {
     );
     // Make sure arena is active
     this.ensureArenaIsActive(arena);
-    // Load extras
-    const extras = await this.arenasService.findArenaExtrasByIds(
+
+    // Load extras with quantity mapping
+    if (!dto.extras || dto.extras.length === 0) {
+      return { arena, extras: [] };
+    }
+
+    const extraIds = dto.extras.map((e) =>
+      typeof e === 'string' ? e : e.extraId,
+    );
+
+    const arenaExtras = await this.arenasService.findArenaExtrasByIds(
       dto.arenaId,
-      dto.extras || [],
+      extraIds,
       queryRunner.manager,
     );
-    return { arena, extras };
+
+    // Map extras with their quantities
+    const extrasWithQuantity = arenaExtras.map((extra) => {
+      const extraItem = (dto.extras || []).find((e) =>
+        typeof e === 'string' ? e === extra.id : e.extraId === extra.id,
+      );
+      const quantity =
+        typeof extraItem === 'object' && extraItem ? extraItem.quantity : 1;
+      return { ...extra, quantity };
+    });
+
+    return { arena, extras: extrasWithQuantity };
   }
 
-  buildPaymentContext(
-    reservation: Reservation,
-    user: User,
-  ): ReservationPaymentContext {
+  buildPaymentContext(reservation: Reservation): ReservationPaymentContext {
+    const revenueAmounts = this.reservationPricingService.calculateRevenueSplit(
+      reservation.totalAmount,
+    );
     return {
-      userId: user.id,
+      userId: reservation.customer.id,
       ownerId: reservation.arena.owner.id,
       adminId: this.adminConfig.adminId,
       referenceId: reservation.id,
       amounts: {
-        player: reservation.totalAmount,
-        owner: reservation.arena.ownerAmount(
-          reservation.slots.length,
-          reservation.extras,
-        ),
-        admin: reservation.arena.adminAmount(
-          reservation.slots.length,
-          reservation.extras,
-        ),
+        player: revenueAmounts.playerAmount,
+        owner: revenueAmounts.ownerAmount,
+        admin: revenueAmounts.adminAmount,
       },
     };
   }
