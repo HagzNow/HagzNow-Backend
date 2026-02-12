@@ -34,6 +34,8 @@ import path from 'path';
 import { UserLanguageResolver } from './common/resolvers/user-language.resolver';
 import { Language } from './common/enums/language.enum';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
+import { ReservationExtra } from './modules/reservations/entities/reservation-extra.entity';
+import { ReservationExtrasModule } from './modules/reservation-extras/reservation-extras.module';
 
 @Module({
   imports: [
@@ -81,6 +83,7 @@ import { ResponseInterceptor } from './common/interceptors/response.interceptor'
           Wallet,
           WalletTransaction,
           Reservation,
+          ReservationExtra,
           Review,
           CustomerProfile,
         ],
@@ -94,6 +97,7 @@ import { ResponseInterceptor } from './common/interceptors/response.interceptor'
     CategoriesModule,
     WalletModule,
     ReservationsModule,
+    ReservationExtrasModule,
     ReviewsModule,
   ],
   controllers: [AppController],

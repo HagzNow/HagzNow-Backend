@@ -14,6 +14,7 @@ import {
   DeepPartial,
   EntityManager,
   In,
+  IsNull,
   ObjectLiteral,
   Repository,
   SelectQueryBuilder,
@@ -188,7 +189,7 @@ export class ArenasService {
 
   async getActiveExtras(arenaId: string) {
     return this.extraRepository.find({
-      where: { arena: { id: arenaId }, isActive: true },
+      where: { arena: { id: arenaId }, cancelledAt: IsNull() },
     });
   }
 
@@ -203,10 +204,11 @@ export class ArenasService {
     const extras = await repo.findBy({
       arena: { id: arenaId },
       id: In(extraIds || []),
+      cancelledAt: IsNull(),
     });
     if (extras.length !== (extraIds || []).length) {
       return ApiResponseUtil.throwError(
-        'errors.arena_extra.not_found',
+        'errors.arena.extra.not_found',
         'ARENA_EXTRAS_NOT_FOUND',
         HttpStatus.BAD_REQUEST,
       );
@@ -226,7 +228,11 @@ export class ArenasService {
       .filter((governorate) => governorate !== null);
   }
 
-  async update(id: string, updateArenaDto: UpdateArenaDto, owner: User): Promise<Arena | never> {
+  async update(
+    id: string,
+    updateArenaDto: UpdateArenaDto,
+    owner: User,
+  ): Promise<Arena | never> {
     const arena = await this.arenaRepository.findOne({
       where: { id },
       relations: ['images', 'location'], // Load relations if needed

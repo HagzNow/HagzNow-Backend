@@ -27,7 +27,10 @@
     "invalid_slots": "مصفوفة الأوقات مش صحيحة. الساعات لازم تكون بين 0 و 23",
     "name_too_short": "الاسم لازم يكون على الأقل 2 حرف",
     "name_too_long": "الاسم لازم يكون أقل من 50 حرف",
-    "price_must_be_positive": "السعر لازم يكون رقم موجب"
+    "price_must_be_positive": "السعر لازم يكون رقم موجب",
+    "quantity_minimum": "الكمية لازم تكون على الأقل 1",
+    "quantity_maximum": "الكمية لازم تكون أقل من 100",
+    "errors.validation.invalid_extras_format": "مصفوفة الإضافات مش صحيحة. لازم تكون مصفوفة من الكائنات اللي فيها id و quantity"
   },
   "auth": {
     "passwords_do_not_match": "الباسوردات مش متطابقة",
@@ -68,7 +71,9 @@
     "invalid_time": "الوقت ده مش متاح للحجز",
     "unauthorized_update": "مش مسموح ليك تعدل الملعب ده",
     "invalid_arena_status": "حالة الملعب مش صحيحة",
-    "not_active": "الملعب مش متاح للحجز دلوقتي"
+    "not_active": "الملعب مش متاح للحجز دلوقتي",
+    "extra_not_found": "الإضافة مش موجودة أو تم حذفها",
+    "extras_not_found": "بعض الإضافات مش موجودة أو تم حذفها"
   },
   "arena_extra": {
     "not_found": "الإضافة مش موجودة"

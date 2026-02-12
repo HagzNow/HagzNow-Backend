@@ -10,8 +10,10 @@ import {
   IsUUID,
   Max,
   Min,
-  Validate,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
+import { ReservationExtraItemDto } from '../../reservation-extras/dto/reservation-extra-item.dto';
 
 export class CreateReservationDto {
   @ApiProperty({
@@ -44,12 +46,16 @@ export class CreateReservationDto {
 
   @ApiProperty({
     description:
-      'Optional list of extra service IDs chosen for this reservation',
-    type: [String],
+      'Optional list of extra services with quantities for this reservation',
+    type: [ReservationExtraItemDto],
     required: false,
   })
   @IsOptional()
   @IsArray()
-  @IsUUID('4', { each: true })
-  extras?: string[];
+  @ValidateNested({
+    each: true,
+    message: 'errors.validation.invalid_extras_format',
+  })
+  @Type(() => ReservationExtraItemDto)
+  extras?: ReservationExtraItemDto[];
 }

@@ -27,7 +27,10 @@
     "invalid_slots": "Invalid slots array. Hours must be between 0 and 23",
     "name_too_short": "Name must be at least 2 characters long",
     "name_too_long": "Name must be less than 50 characters long",
-    "price_must_be_positive": "Price must be a positive number"
+    "price_must_be_positive": "Price must be a positive number",
+    "quantity_minimum": "Quantity must be at least 1",
+    "quantity_maximum": "Quantity must be less than 100",
+    "errors.validation.invalid_extras_format": "Invalid extras array format. Must be an array of objects with id and quantity"
   },
   "auth": {
     "passwords_do_not_match": "Passwords do not match",
@@ -68,7 +71,9 @@
     "invalid_time": "Invalid time for booking",
     "unauthorized_update": "You are not authorized to update this arena",
     "invalid_arena_status": "Invalid arena status",
-    "not_active": "Arena is not active"
+    "not_active": "Arena is not active",
+    "extra_not_found": "Arena extra not found or has been deleted",
+    "extras_not_found": "One or more arena extras not found"
   },
   "arena_extra": {
     "not_found": "Arena extra not found"

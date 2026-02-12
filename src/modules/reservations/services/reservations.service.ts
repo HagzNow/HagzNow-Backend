@@ -20,7 +20,6 @@ import {
 import { PaginationDto } from '../../../common/dtos/pagination.dto';
 import { ArenaSlotsService } from '../../arenas/arena-slots.service';
 import { ArenasService } from '../../arenas/arenas.service';
-import { ArenaSlot } from '../../arenas/entities/arena-slot.entity';
 import { User } from '../../users/entities/user.entity';
 import { UserRole } from '../../users/interfaces/userRole.interface';
 import { WalletsService } from '../../wallets/wallets.service';
@@ -36,9 +35,9 @@ import { CreateManualReservationDto } from '../dto/create-manual-reservation.dto
 import { CustomerProfile } from '../../customerProfiles/entities/customer-profile.entity';
 import { ReservationPolicy } from './reservation-policy.service';
 import { ReservationPaymentService } from './reservation-payment.service';
-import { AdminConfig } from 'src/modules/admin/admin.config';
+import { ReservationExtrasService } from '../../reservation-extras/reservation-extras.service';
 import { Arena } from 'src/modules/arenas/entities/arena.entity';
-import { ArenaExtra } from 'src/modules/arenas/entities/arena-extra.entity';
+import { ReservationPricingService } from './reservation-pricing.service';
 
 @Injectable()
 export class ReservationsService {
@@ -57,7 +56,8 @@ export class ReservationsService {
     private readonly customersService: CustomersService,
     private readonly reservationPolicy: ReservationPolicy,
     private readonly reservationPaymentService: ReservationPaymentService,
-    private readonly adminConfig: AdminConfig,
+    private readonly reservationExtrasService: ReservationExtrasService,
+    private readonly reservationPricingService: ReservationPricingService,
   ) {}
 
   private async scheduleSettlementJob(reservation: Reservation) {
@@ -94,28 +94,24 @@ export class ReservationsService {
 
     return reservation;
   }
+
   private async createReservation(
     dto: CreateReservationDto,
     arena: Arena,
-    extras: ArenaExtra[],
+    amounts: { playAmount: number; extrasAmount: number; totalAmount: number },
     customer: CustomerProfile,
     manager: EntityManager,
     status: ReservationStatus = ReservationStatus.HOLD,
     paymentMethod: PaymentMethod = PaymentMethod.WALLET,
   ): Promise<Reservation> {
-    const playAmount = arena.depositAmount(dto.slots.length);
-    const extrasAmount = arena.extrasAmount(extras);
-    const totalAmount = playAmount + extrasAmount;
-
     const reservation = manager.create(Reservation, {
       dateOfReservation: dto.date,
       arena,
       status,
       paymentMethod,
-      playTotalAmount: playAmount,
-      extrasTotalAmount: extrasAmount,
-      totalAmount,
-      extras: dto.extras ? extras : [],
+      playTotalAmount: amounts.playAmount,
+      extrasTotalAmount: amounts.extrasAmount,
+      totalAmount: amounts.totalAmount,
       customer,
     });
 
@@ -130,7 +126,7 @@ export class ReservationsService {
     try {
       this.reservationPolicy.validateDateAndSlots(dto.date, dto.slots);
 
-      const { arena, extras } =
+      const { arena, extras: arenaExtras } =
         await this.reservationPolicy.extractArenaAndExtras(dto, queryRunner);
 
       const customer = await this.customersService.findOneById(user.id);
@@ -141,18 +137,30 @@ export class ReservationsService {
         dto.slots,
         queryRunner.manager,
       );
-
+      const amounts =
+        this.reservationPricingService.calculateReservationAmounts(
+          arena,
+          dto.slots.map(Number),
+          arenaExtras,
+        );
+      console.log('Calculated amounts:', amounts);
       await this.walletsService.validateSufficientBalance(
         user.id,
-        arena.depositAmount(dto.slots.length) + arena.extrasAmount(extras),
+        amounts.totalAmount,
         queryRunner.manager,
       );
 
       const reservation = await this.createReservation(
         dto,
         arena,
-        extras,
+        amounts,
         customer,
+        queryRunner.manager,
+      );
+      // Convert ArenaExtra[] to ReservationExtra[]
+      reservation.extras = await this.reservationExtrasService.createExtras(
+        reservation,
+        arenaExtras,
         queryRunner.manager,
       );
 
@@ -164,10 +172,8 @@ export class ReservationsService {
         queryRunner.manager,
       );
 
-      const paymentContext = this.reservationPolicy.buildPaymentContext(
-        reservation,
-        user,
-      );
+      const paymentContext =
+        this.reservationPolicy.buildPaymentContext(reservation);
 
       await this.reservationPaymentService.hold(
         paymentContext,
@@ -200,7 +206,7 @@ export class ReservationsService {
       this.reservationPolicy.validateDateAndSlots(dto.date, dto.slots);
 
       // Load arena & extras
-      const { arena, extras } =
+      const { arena, extras: arenaExtras } =
         await this.reservationPolicy.extractArenaAndExtras(dto, queryRunner);
 
       // Check arena ownership
@@ -217,26 +223,39 @@ export class ReservationsService {
         queryRunner.manager,
       );
 
+      // calculate amounts
+      const amounts =
+        this.reservationPricingService.calculateReservationAmounts(
+          arena,
+          dto.slots.map(Number),
+          arenaExtras,
+        );
       // Create reservation
       const reservation = await this.createReservation(
         dto,
         arena,
-        extras,
+        amounts,
         customer,
         queryRunner.manager,
         ReservationStatus.CONFIRMED,
         PaymentMethod.MANUAL,
       );
 
+      // Convert ArenaExtra[] to ReservationExtra[]
+      reservation.extras = await this.reservationExtrasService.createExtras(
+        reservation,
+        arenaExtras,
+        queryRunner.manager,
+      );
+
       // Create slots for the reservation
-      const addedSlots: ArenaSlot[] = await this.arenaSlotsService.createSlots(
+      reservation.slots = await this.arenaSlotsService.createSlots(
         arena,
         reservation,
         dto.date,
         dto.slots.map((h) => Number(h)),
         queryRunner.manager,
       );
-      reservation.slots = addedSlots;
 
       //Commit DB transaction
       await queryRunner.commitTransaction();
@@ -265,10 +284,8 @@ export class ReservationsService {
       // Update reservation status to CONFIRMED
       reservation.status = ReservationStatus.CONFIRMED;
 
-      const paymentContext = this.reservationPolicy.buildPaymentContext(
-        reservation,
-        user,
-      );
+      const paymentContext =
+        this.reservationPolicy.buildPaymentContext(reservation);
       await this.reservationPaymentService.settle(
         paymentContext,
         queryRunner.manager,
@@ -331,11 +348,15 @@ export class ReservationsService {
         queryRunner.manager,
       );
 
-      // build payment context
-      const paymentContext = this.reservationPolicy.buildPaymentContext(
-        reservation,
-        user,
+      // Mark all extras as canceled
+      await this.reservationExtrasService.cancelAllExtras(
+        reservation.id,
+        queryRunner.manager,
       );
+
+      // build payment context
+      const paymentContext =
+        this.reservationPolicy.buildPaymentContext(reservation);
 
       // Process payment refund
       await this.reservationPaymentService.refund(

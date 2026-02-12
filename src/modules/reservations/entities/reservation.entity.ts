@@ -14,6 +14,7 @@ import {
 } from 'typeorm';
 import { PaymentMethod } from '../interfaces/payment-methods.interface';
 import { ReservationStatus } from '../interfaces/reservation-status.interface';
+import { ReservationExtra } from './reservation-extra.entity';
 
 @Entity('reservations')
 export class Reservation {
@@ -63,16 +64,15 @@ export class Reservation {
   })
   slots: ArenaSlot[];
 
-  @ManyToMany(() => ArenaExtra, (extra) => extra.reservations, {
-    onDelete: 'SET NULL',
-    eager: true,
-  })
-  @JoinTable({
-    name: 'reservation_extras',
-    joinColumn: { name: 'reservation_id', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'extra_id', referencedColumnName: 'id' },
-  })
-  extras: ArenaExtra[];
+  @OneToMany(
+    () => ReservationExtra,
+    (reservationExtra) => reservationExtra.reservation,
+    {
+      cascade: true,
+      eager: true,
+    },
+  )
+  extras: ReservationExtra[];
 
   @ManyToOne(() => CustomerProfile, (customer) => customer.reservations, {
     onDelete: 'CASCADE',
