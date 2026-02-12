@@ -36,6 +36,7 @@ import { Language } from './common/enums/language.enum';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { ReservationExtra } from './modules/reservations/entities/reservation-extra.entity';
 import { ReservationExtrasModule } from './modules/reservation-extras/reservation-extras.module';
+import { HealthModule } from './modules/health/health.module';
 
 @Module({
   imports: [
@@ -99,6 +100,7 @@ import { ReservationExtrasModule } from './modules/reservation-extras/reservatio
     ReservationsModule,
     ReservationExtrasModule,
     ReviewsModule,
+    HealthModule,
   ],
   controllers: [AppController],
   providers: [
