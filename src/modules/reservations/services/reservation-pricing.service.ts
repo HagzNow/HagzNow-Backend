@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { Arena } from 'src/modules/arenas/entities/arena.entity';
 import { ReservationExtra } from '../entities/reservation-extra.entity';
 import { AdminConfig } from 'src/modules/admin/admin.config';
-import { ArenaExtra } from 'src/modules/arenas/entities/arena-extra.entity';
 import { ArenaExtraWithQuantity } from 'src/modules/arenas/types/arena-extra-with-quantity.type';
 
 @Injectable()

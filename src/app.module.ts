@@ -11,7 +11,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { RolesGuard } from './common/guards/roles.guard';
 import { AdminModule } from './modules/admin/admin.module';
 import { ArenasModule } from './modules/arenas/arenas.module';
-import { ArenaExtra } from './modules/arenas/entities/arena-extra.entity';
+import { ArenaExtra } from './modules/arena-extras/entities/arena-extra.entity';
 import { ArenaImage } from './modules/arenas/entities/arena-image.entity';
 import { ArenaLocation } from './modules/arenas/entities/arena-location.entity';
 import { ArenaSlot } from './modules/arenas/entities/arena-slot.entity';
@@ -37,6 +37,7 @@ import { ResponseInterceptor } from './common/interceptors/response.interceptor'
 import { ReservationExtra } from './modules/reservations/entities/reservation-extra.entity';
 import { ReservationExtrasModule } from './modules/reservation-extras/reservation-extras.module';
 import { HealthModule } from './modules/health/health.module';
+import { ArenaExtrasModule } from './modules/arena-extras/arena-extras.module';
 
 @Module({
   imports: [
@@ -95,6 +96,7 @@ import { HealthModule } from './modules/health/health.module';
     OwnersModule,
     AdminModule,
     ArenasModule,
+    ArenaExtrasModule,
     CategoriesModule,
     WalletModule,
     ReservationsModule,

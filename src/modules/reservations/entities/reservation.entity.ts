@@ -1,5 +1,4 @@
 import { Expose } from 'class-transformer';
-import { ArenaExtra } from 'src/modules/arenas/entities/arena-extra.entity';
 import { ArenaSlot } from 'src/modules/arenas/entities/arena-slot.entity';
 import { Arena } from 'src/modules/arenas/entities/arena.entity';
 import { CustomerProfile } from 'src/modules/customerProfiles/entities/customer-profile.entity';

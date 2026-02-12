@@ -19,7 +19,7 @@ import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { User } from '../users/entities/user.entity';
 import { UserRole } from '../users/interfaces/userRole.interface';
 import { ArenasService } from './arenas.service';
-import { ArenaExtraDto } from './dto/arena-extra/arena-extra.dto';
+import { ArenaExtraDto } from '../arena-extras/dto/arena-extra.dto';
 import { ArenaDetailsDto } from './dto/arena/arena-details.dto';
 import { ArenaFilterDto } from './dto/arena/arena-filter.dto';
 import { ArenaSummaryDto } from './dto/arena/arena-summary.dto';
@@ -104,12 +104,6 @@ export class ArenasController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.arenasService.findOne(id);
-  }
-
-  @Serialize(ArenaExtraDto)
-  @Get(':id/extras')
-  getActiveExtras(@Param('id') id: string) {
-    return this.arenasService.getActiveExtras(id);
   }
 
   @Patch(':id')

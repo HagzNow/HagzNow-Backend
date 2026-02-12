@@ -2,7 +2,7 @@ import { Expose, Type } from 'class-transformer';
 import { CategoryDto } from 'src/modules/categories/dto/category.dto';
 import { UserDto } from 'src/modules/users/dto/user.dto';
 import { ArenaStatus } from '../../interfaces/arena-status.interface';
-import { ArenaExtraDto } from '../arena-extra/arena-extra.dto';
+import { ArenaExtraDto } from '../../../arena-extras/dto/arena-extra.dto';
 import { ArenaImageDto } from '../arena-image/arena-image.dto';
 import { ArenaLocationDto } from '../arena-location/arena-location.dto';
 

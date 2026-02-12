@@ -7,7 +7,7 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Arena } from './arena.entity';
+import { Arena } from '../../arenas/entities/arena.entity';
 import { ReservationExtra } from 'src/modules/reservations/entities/reservation-extra.entity';
 
 @Entity('arenas_extras')

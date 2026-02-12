@@ -1,7 +1,7 @@
 import { OmitType, PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsArray, IsOptional, ValidateNested } from 'class-validator';
-import { UpdateArenaExtraDto } from '../arena-extra/update-arena-extra.dto';
+import { UpdateArenaExtraDto } from '../../../arena-extras/dto/update-arena-extra.dto';
 import { UpdateArenaImageDto } from '../arena-image/update-arena-image.dto';
 import { UpdateArenaLocationDto } from '../arena-location/update-arena-location.dto';
 import { CreateArenaDto } from './create-arena.dto';

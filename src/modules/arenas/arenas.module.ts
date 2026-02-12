@@ -5,7 +5,6 @@ import { ArenaSlotsController } from './arena-slots.controller';
 import { ArenaSlotsService } from './arena-slots.service';
 import { ArenasController } from './arenas.controller';
 import { ArenasService } from './arenas.service';
-import { ArenaExtra } from './entities/arena-extra.entity';
 import { ArenaImage } from './entities/arena-image.entity';
 import { ArenaLocation } from './entities/arena-location.entity';
 import { ArenaSlot } from './entities/arena-slot.entity';
@@ -13,13 +12,7 @@ import { Arena } from './entities/arena.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      Arena,
-      ArenaLocation,
-      ArenaImage,
-      ArenaExtra,
-      ArenaSlot,
-    ]),
+    TypeOrmModule.forFeature([Arena, ArenaLocation, ArenaImage, ArenaSlot]),
     CategoriesModule,
   ],
   controllers: [ArenasController, ArenaSlotsController],

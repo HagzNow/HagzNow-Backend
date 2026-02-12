@@ -12,7 +12,7 @@ import {
 } from 'typeorm';
 import { Review } from '../../reviews/entities/review.entity';
 import { ArenaStatus } from '../interfaces/arena-status.interface';
-import { ArenaExtra } from './arena-extra.entity';
+import { ArenaExtra } from '../../arena-extras/entities/arena-extra.entity';
 import { ArenaImage } from './arena-image.entity';
 import { ArenaLocation } from './arena-location.entity';
 import { ArenaSlot } from './arena-slot.entity';
