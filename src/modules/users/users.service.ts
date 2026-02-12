@@ -15,6 +15,7 @@ import { UserRole } from './interfaces/userRole.interface';
 import { USER_CREATED } from 'src/common/event.constants';
 import { UploadService } from '../upload/upload.service';
 import { UploadEntity } from '../upload/multer.config';
+import { Language } from 'src/common/enums/language.enum';
 
 @Injectable()
 export class UsersService {
@@ -42,7 +43,10 @@ export class UsersService {
     return await paginate(query, paginationDto);
   }
 
-  async findOneById(id: string, manager?: EntityManager): Promise<User | never> {
+  async findOneById(
+    id: string,
+    manager?: EntityManager,
+  ): Promise<User | never> {
     // In case id is undefined or null without this it will return first value
     if (!id)
       return ApiResponseUtil.throwError(
@@ -82,7 +86,10 @@ export class UsersService {
     return await paginate(query, paginationDto);
   }
 
-  private async updateStatus(id: string, status: UserStatus): Promise<User | never> {
+  private async updateStatus(
+    id: string,
+    status: UserStatus,
+  ): Promise<User | never> {
     const user = await this.userRepository.findOneBy({ id });
     if (!user) {
       return ApiResponseUtil.throwError(
@@ -135,15 +142,7 @@ export class UsersService {
     Object.assign(user, updateUserDto);
     return await this.userRepository.save(user);
   }
-  async updatePhone(id: string, newPhone: string): Promise<void | never> {
-    const user = await this.userRepository.findOneBy({ id });
-    if (!user) {
-      return ApiResponseUtil.throwError(
-        'errors.auth.user_not_found',
-        'USER_NOT_FOUND',
-        HttpStatus.NOT_FOUND,
-      );
-    }
+  async updatePhone(user: User, newPhone: string): Promise<void | never> {
     // ensure different phone number
     if (user.phone === newPhone) {
       return ApiResponseUtil.throwError(
@@ -156,7 +155,7 @@ export class UsersService {
     const existingUser = await this.userRepository.findOneBy({
       phone: newPhone,
     });
-    if (existingUser && existingUser.id !== id) {
+    if (existingUser && existingUser.id !== user.id) {
       return ApiResponseUtil.throwError(
         'errors.auth.phone_already_exists',
         'PHONE_NUMBER_IN_USE',
@@ -168,6 +167,21 @@ export class UsersService {
       newPhone: newPhone,
     });
     user.phone = newPhone;
+    await this.userRepository.save(user);
+  }
+
+  async updateLanguage(
+    user: User,
+    newLanguage: Language,
+  ): Promise<void | never> {
+    if (user.language === newLanguage) {
+      return ApiResponseUtil.throwError(
+        'errors.validation.same_language',
+        'SAME_LANGUAGE',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    user.language = newLanguage;
     await this.userRepository.save(user);
   }
 }
