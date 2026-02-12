@@ -5,11 +5,9 @@ import {
   Param,
   Patch,
   Query,
-  UploadedFiles,
   UseGuards,
 } from '@nestjs/common';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import { UseImageUpload } from 'src/common/decorators/use-image-upload.decorator';
 import { AuthGuard } from 'src/common/guards/auth.guard';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -37,16 +35,11 @@ export class UsersController {
   @Serialize(UserDto)
   @UseGuards(AuthGuard)
   @Patch('profile')
-  @UseImageUpload([{ name: 'avatar', maxCount: 1 }])
   async updateProfile(
     @Body() userData: UpdateUserDto,
-    @UploadedFiles()
-    files: {
-      avatar?: Express.Multer.File[];
-    },
     @CurrentUser() { id }: User,
   ) {
-    return await this.usersService.update(id, userData, files);
+    return await this.usersService.update(id, userData);
   }
 
   @Serialize(UserDto)

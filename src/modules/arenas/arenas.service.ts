@@ -7,7 +7,6 @@ import {
   applyExactFilters,
   applyILikeFilters,
 } from 'src/common/utils/filter.utils';
-import { handleImageUpload } from 'src/common/utils/handle-image-upload.util';
 import { paginate } from 'src/common/utils/paginate';
 import { applySorting } from 'src/common/utils/sort.util';
 import {
@@ -25,37 +24,37 @@ import { ArenaFilterDto } from './dto/arena/arena-filter.dto';
 import { CreateArenaDto } from './dto/arena/create-arena.dto';
 import { UpdateArenaDto } from './dto/arena/update-arena.dto';
 import { ArenaExtra } from '../arena-extras/entities/arena-extra.entity';
+import { ArenaImage } from './entities/arena-image.entity';
 import { Arena } from './entities/arena.entity';
 import { ArenaStatus } from './interfaces/arena-status.interface';
+import { UploadService } from '../upload/upload.service';
+import { UploadEntity } from '../upload/multer.config';
 
 @Injectable()
 export class ArenasService {
   constructor(
     @InjectRepository(Arena)
     private readonly arenaRepository: Repository<Arena>,
+    @InjectRepository(ArenaImage)
+    private readonly arenaImageRepository: Repository<ArenaImage>,
     private readonly categoriesService: CategoriesService,
+    private readonly uploadService: UploadService,
   ) {}
 
   async create(
     createArenaDto: CreateArenaDto,
     owner: User,
-    files?: {
-      thumbnail?: Express.Multer.File[];
-      images?: Express.Multer.File[];
-    },
   ): Promise<Arena | never> {
     const { categoryId, ...arenaData } = createArenaDto;
 
-    const { thumbnail, images } = await handleImageUpload({
-      thumbnail: files?.thumbnail,
-      images: files?.images,
-    });
-    let imagesPath = images.map((imgPath) => {
-      return { path: imgPath };
-    });
+    // Use thumbnail and images paths directly from DTO (already uploaded via POST /upload/arenas)
+    const thumbnailPath = createArenaDto.thumbnail || '';
+    const imagesPath =
+      createArenaDto.images?.map((img) => ({ path: img.path })) || [];
+
     const arena = this.arenaRepository.create({
       ...arenaData,
-      thumbnail: thumbnail[0],
+      thumbnail: thumbnailPath,
       images: imagesPath,
       owner,
     } as DeepPartial<Arena>);
@@ -220,10 +219,64 @@ export class ArenasService {
         HttpStatus.UNAUTHORIZED,
       );
     }
-    // TODO fix update image
+
+    // Capture paths to delete from storage after save succeeds
+    let oldThumbnailPath: string | undefined;
+    if (
+      updateArenaDto.thumbnail &&
+      updateArenaDto.thumbnail !== arena.thumbnail &&
+      arena.thumbnail
+    ) {
+      oldThumbnailPath = arena.thumbnail;
+    }
+
+    let oldImagePathsToDelete: string[] = [];
+    if (updateArenaDto.images !== undefined) {
+      const newImagePaths = updateArenaDto.images
+        .map((img) => img.path)
+        .filter((path): path is string => typeof path === 'string' && path.length > 0);
+      const oldImagePaths = arena.images?.map((img) => img.path) || [];
+      oldImagePathsToDelete = oldImagePaths.filter(
+        (oldPath) => !newImagePaths.includes(oldPath),
+      );
+    }
+
+    // Merge first so DTO does not overwrite our images handling later
     this.arenaRepository.merge(arena, updateArenaDto);
 
-    return await this.arenaRepository.save(arena);
+    // Apply thumbnail (assign new path; file delete happens after save)
+    if (updateArenaDto.thumbnail) {
+      arena.thumbnail = updateArenaDto.thumbnail;
+    }
+
+    // Apply images: delete existing DB rows, then set new list
+    if (updateArenaDto.images !== undefined) {
+      await this.arenaImageRepository.delete({ arena: { id: arena.id } });
+
+      const newImagePaths: string[] = updateArenaDto.images
+        .map((img) => img.path)
+        .filter((path): path is string => typeof path === 'string' && path.length > 0);
+
+      const newImages = newImagePaths.map((p: string) => {
+        const image = new ArenaImage();
+        image.path = p;
+        image.arena = arena;
+        return image;
+      });
+      arena.images = newImages;
+    }
+
+    const savedArena = await this.arenaRepository.save(arena);
+
+    // Delete old files from storage only after save succeeded
+    if (oldThumbnailPath) {
+      await this.uploadService.deleteImage(oldThumbnailPath);
+    }
+    for (const pathToDelete of oldImagePathsToDelete) {
+      await this.uploadService.deleteImage(pathToDelete);
+    }
+
+    return savedArena;
   }
 
   async approve(id: string, status: ArenaStatus) {

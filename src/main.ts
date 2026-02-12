@@ -18,7 +18,9 @@ async function bootstrap() {
   app.use(
     morgan(':method :url :status :res[content-length] - :response-time ms'),
   );
-  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
+  const uploadsDir =
+    process.env.UPLOAD_DIR || join(process.cwd(), 'uploads');
+  app.useStaticAssets(uploadsDir, {
     prefix: '/uploads/',
   });
   const config = new DocumentBuilder()

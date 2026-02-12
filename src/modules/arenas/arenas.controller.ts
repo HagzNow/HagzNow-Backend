@@ -8,11 +8,9 @@ import {
   Patch,
   Post,
   Query,
-  UploadedFiles,
 } from '@nestjs/common';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { Roles } from 'src/common/decorators/roles.decorator';
-import { UseImageUpload } from 'src/common/decorators/use-image-upload.decorator';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { SortDto } from 'src/common/dtos/sort.dto';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
@@ -34,20 +32,11 @@ export class ArenasController {
   @Serialize(ArenaDetailsDto)
   @Roles(UserRole.OWNER)
   @Post()
-  @UseImageUpload([
-    { name: 'thumbnail', maxCount: 1 },
-    { name: 'images', maxCount: 10 },
-  ])
   create(
     @Body() createArenaDto: CreateArenaDto,
-    @UploadedFiles()
-    files: {
-      thumbnail?: Express.Multer.File[];
-      images?: Express.Multer.File[];
-    },
     @CurrentUser() owner: User,
   ) {
-    return this.arenasService.create(createArenaDto, owner, files);
+    return this.arenasService.create(createArenaDto, owner);
   }
 
   @Serialize(ArenaDetailsDto)
@@ -102,14 +91,15 @@ export class ArenasController {
 
   @Serialize(ArenaDetailsDto)
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', new ParseUUIDPipe()) id: string) {
     return this.arenasService.findOne(id);
   }
 
+  @Serialize(ArenaDetailsDto)
   @Patch(':id')
   @Roles(UserRole.OWNER)
   update(
-    @Param('id') id: string,
+    @Param('id', new ParseUUIDPipe()) id: string,
     @Body() updateArenaDto: UpdateArenaDto,
     @CurrentUser() owner: User,
   ) {
@@ -126,7 +116,7 @@ export class ArenasController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id', new ParseUUIDPipe()) id: string) {
     return this.arenasService.remove(id);
   }
 }

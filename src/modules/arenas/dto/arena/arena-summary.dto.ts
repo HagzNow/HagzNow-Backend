@@ -1,5 +1,6 @@
 import { Expose, Transform } from 'class-transformer';
 import { ArenaStatus } from '../../interfaces/arena-status.interface';
+import { getUploadUrl } from 'src/common/utils/upload-url.util';
 
 export class ArenaSummaryDto {
   @Expose()
@@ -19,6 +20,7 @@ export class ArenaSummaryDto {
   categoryName: string;
 
   @Expose()
+  @Transform(({ value }) => getUploadUrl(value))
   thumbnail: string;
 
   @Expose()

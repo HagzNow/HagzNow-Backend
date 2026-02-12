@@ -38,6 +38,7 @@ import { ReservationExtra } from './modules/reservations/entities/reservation-ex
 import { ReservationExtrasModule } from './modules/reservation-extras/reservation-extras.module';
 import { HealthModule } from './modules/health/health.module';
 import { ArenaExtrasModule } from './modules/arena-extras/arena-extras.module';
+import { UploadModule } from './modules/upload/upload.module';
 
 @Module({
   imports: [
@@ -103,6 +104,7 @@ import { ArenaExtrasModule } from './modules/arena-extras/arena-extras.module';
     ReservationExtrasModule,
     ReviewsModule,
     HealthModule,
+    UploadModule,
   ],
   controllers: [AppController],
   providers: [
