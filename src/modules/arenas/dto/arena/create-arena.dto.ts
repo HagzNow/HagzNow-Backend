@@ -12,7 +12,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { ArenaStatus } from '../../interfaces/arena-status.interface';
-import { CreateArenaExtraDto } from '../arena-extra/create-arena-extra.dto';
+import { CreateArenaExtraDto } from '../../../arena-extras/dto/create-arena-extra.dto';
 import { CreateArenaImageDto } from '../arena-image/create-arena-image.dto';
 import { CreateArenaLocationDto } from '../arena-location/create-arena-location.dto';
 

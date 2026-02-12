@@ -18,6 +18,7 @@ import { CustomersService } from 'src/modules/customerProfiles/customers.service
 import { AdminConfig } from 'src/modules/admin/admin.config';
 import { ReservationPricingService } from './reservation-pricing.service';
 import { ArenaExtraWithQuantity } from 'src/modules/arenas/types/arena-extra-with-quantity.type';
+import { ArenaExtrasService } from 'src/modules/arena-extras/arena-extras.service';
 
 @Injectable()
 export class ReservationPolicy {
@@ -27,6 +28,7 @@ export class ReservationPolicy {
     private readonly customersService: CustomersService,
     private readonly adminConfig: AdminConfig,
     private readonly reservationPricingService: ReservationPricingService,
+    private readonly arenaExtrasService: ArenaExtrasService,
   ) {}
 
   // VALIDATION METHODS
@@ -51,6 +53,16 @@ export class ReservationPolicy {
       return ApiResponseUtil.throwError(
         'errors.reservation.past_time',
         'RESERVATION_SLOT_IN_PAST',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  validateSlotsAreInAllowedRange(slots: number[], arena: Arena): void | never {
+    if (slots.some((h) => h < arena.openingHour || h >= arena.closingHour)) {
+      return ApiResponseUtil.throwError(
+        'errors.reservation.invalid_slots',
+        'INVALID_RESERVATION_SLOTS',
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -151,7 +163,7 @@ export class ReservationPolicy {
       typeof e === 'string' ? e : e.extraId,
     );
 
-    const arenaExtras = await this.arenasService.findArenaExtrasByIds(
+    const arenaExtras = await this.arenaExtrasService.findArenaExtrasByIds(
       dto.arenaId,
       extraIds,
       queryRunner.manager,

@@ -1,4 +1,4 @@
-import { ArenaExtra } from 'src/modules/arenas/entities/arena-extra.entity';
+import { ArenaExtra } from 'src/modules/arena-extras/entities/arena-extra.entity';
 import { Entity, PrimaryGeneratedColumn, ManyToOne, Column } from 'typeorm';
 import { Reservation } from './reservation.entity';
 

@@ -126,24 +126,33 @@ export class ReservationsService {
     try {
       this.reservationPolicy.validateDateAndSlots(dto.date, dto.slots);
 
+      // Load arena & extras
       const { arena, extras: arenaExtras } =
         await this.reservationPolicy.extractArenaAndExtras(dto, queryRunner);
 
+      // validate slots are within arena opening hours
+      this.reservationPolicy.validateSlotsAreInAllowedRange(dto.slots, arena);
+
+      // Find customer profile
       const customer = await this.customersService.findOneById(user.id);
 
+      // Validate slots are not already booked
       await this.arenaSlotsService.validateSlotsAreAvailable(
         dto.arenaId,
         dto.date,
         dto.slots,
         queryRunner.manager,
       );
+
+      // calculate amounts
       const amounts =
         this.reservationPricingService.calculateReservationAmounts(
           arena,
           dto.slots.map(Number),
           arenaExtras,
         );
-      console.log('Calculated amounts:', amounts);
+
+      // Validate user has sufficient balance in wallet
       await this.walletsService.validateSufficientBalance(
         user.id,
         amounts.totalAmount,
@@ -175,11 +184,13 @@ export class ReservationsService {
       const paymentContext =
         this.reservationPolicy.buildPaymentContext(reservation);
 
+      // Place hold on payment and perform wallet deduction & transaction creation
       await this.reservationPaymentService.hold(
         paymentContext,
         queryRunner.manager,
       );
 
+      // Schedule reservation settlement (bull job will validate the transaction is in HOLD stage before processing)
       await this.scheduleSettlementJob(reservation);
 
       await queryRunner.commitTransaction();
@@ -208,6 +219,9 @@ export class ReservationsService {
       // Load arena & extras
       const { arena, extras: arenaExtras } =
         await this.reservationPolicy.extractArenaAndExtras(dto, queryRunner);
+
+      // validate slots are within arena opening hours
+      this.reservationPolicy.validateSlotsAreInAllowedRange(dto.slots, arena);
 
       // Check arena ownership
       this.reservationPolicy.ensureOwner(arena, user);

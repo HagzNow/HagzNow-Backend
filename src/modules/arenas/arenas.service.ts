@@ -23,7 +23,7 @@ import { User } from '../users/entities/user.entity';
 import { ArenaFilterDto } from './dto/arena/arena-filter.dto';
 import { CreateArenaDto } from './dto/arena/create-arena.dto';
 import { UpdateArenaDto } from './dto/arena/update-arena.dto';
-import { ArenaExtra } from './entities/arena-extra.entity';
+import { ArenaExtra } from '../arena-extras/entities/arena-extra.entity';
 import { ArenaImage } from './entities/arena-image.entity';
 import { Arena } from './entities/arena.entity';
 import { ArenaStatus } from './interfaces/arena-status.interface';
@@ -35,8 +35,6 @@ export class ArenasService {
   constructor(
     @InjectRepository(Arena)
     private readonly arenaRepository: Repository<Arena>,
-    @InjectRepository(ArenaExtra)
-    private readonly extraRepository: Repository<ArenaExtra>,
     @InjectRepository(ArenaImage)
     private readonly arenaImageRepository: Repository<ArenaImage>,
     private readonly categoriesService: CategoriesService,
@@ -183,35 +181,6 @@ export class ArenasService {
       );
     }
     return arena;
-  }
-
-  async getActiveExtras(arenaId: string) {
-    return this.extraRepository.find({
-      where: { arena: { id: arenaId }, cancelledAt: IsNull() },
-    });
-  }
-
-  async findArenaExtrasByIds(
-    arenaId: string,
-    extraIds: string[],
-    manager?: EntityManager,
-  ) {
-    const repo = manager
-      ? manager.getRepository(ArenaExtra)
-      : this.extraRepository;
-    const extras = await repo.findBy({
-      arena: { id: arenaId },
-      id: In(extraIds || []),
-      cancelledAt: IsNull(),
-    });
-    if (extras.length !== (extraIds || []).length) {
-      return ApiResponseUtil.throwError(
-        'errors.arena.extra.not_found',
-        'ARENA_EXTRAS_NOT_FOUND',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-    return extras;
   }
 
   async getDistinctGovernorate() {
