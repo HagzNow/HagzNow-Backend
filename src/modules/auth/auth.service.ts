@@ -8,15 +8,12 @@ import { UserStatus } from '../users/interfaces/userStatus.interface';
 import { User } from '../users/entities/user.entity';
 import { CreateOwnerDto } from '../users/dto/create-owner.dto';
 import { UserRole } from '../users/interfaces/userRole.interface';
-import { UploadService } from '../upload/upload.service';
-import { UploadEntity } from '../upload/multer.config';
 
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
-    private uploadService: UploadService,
   ) {}
 
   async signIn(email: string, pass: string): Promise<{ token: string } | never> {
@@ -56,26 +53,14 @@ export class AuthService {
   async signUpUser(data: CreateUserDto): Promise<{ token: string }> {
     return await this.signUp(data, UserRole.USER, UserStatus.ACTIVE);
   }
-  async signUpOwner(
-    data: CreateOwnerDto,
-    files: {
-      nationalIdFront?: Express.Multer.File[];
-      nationalIdBack?: Express.Multer.File[];
-      selfieWithId?: Express.Multer.File[];
-    },
-  ): Promise<{ message: string }> {
-    await this.signUp(data, UserRole.OWNER, UserStatus.PENDING, files);
+  async signUpOwner(data: CreateOwnerDto): Promise<{ message: string }> {
+    await this.signUp(data, UserRole.OWNER, UserStatus.PENDING);
     return { message: 'messages.auth.owner_registration_pending' };
   }
   async signUp(
     data: CreateUserDto | CreateOwnerDto,
     role: UserRole = UserRole.USER,
     status: UserStatus = UserStatus.ACTIVE,
-    files?: {
-      nationalIdFront?: Express.Multer.File[];
-      nationalIdBack?: Express.Multer.File[];
-      selfieWithId?: Express.Multer.File[];
-    },
   ): Promise<{ token: string } | never> {
     const duplicateEmail = await this.usersService.findOneByEmail(data.email);
     if (duplicateEmail)
@@ -91,30 +76,9 @@ export class AuthService {
         'PHONE_IN_USE',
         HttpStatus.CONFLICT,
       );
-    if (files && data instanceof CreateOwnerDto) {
-      const frontFile = files.nationalIdFront?.[0];
-      const backFile = files.nationalIdBack?.[0];
-      const selfieFile = files.selfieWithId?.[0];
 
-      if (frontFile) {
-        data.nationalIdFront = await this.uploadService.processImage(
-          frontFile,
-          UploadEntity.AUTH,
-        );
-      }
-      if (backFile) {
-        data.nationalIdBack = await this.uploadService.processImage(
-          backFile,
-          UploadEntity.AUTH,
-        );
-      }
-      if (selfieFile) {
-        data.selfieWithId = await this.uploadService.processImage(
-          selfieFile,
-          UploadEntity.AUTH,
-        );
-      }
-    }
+    // Data already contains paths for owner registration (nationalIdFront, nationalIdBack, selfieWithId)
+    // No file processing needed - paths come from client
 
     const user = await this.usersService.create(data, role, status);
     const { password, ...result } = user;

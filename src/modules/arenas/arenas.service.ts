@@ -24,6 +24,7 @@ import { ArenaFilterDto } from './dto/arena/arena-filter.dto';
 import { CreateArenaDto } from './dto/arena/create-arena.dto';
 import { UpdateArenaDto } from './dto/arena/update-arena.dto';
 import { ArenaExtra } from './entities/arena-extra.entity';
+import { ArenaImage } from './entities/arena-image.entity';
 import { Arena } from './entities/arena.entity';
 import { ArenaStatus } from './interfaces/arena-status.interface';
 import { UploadService } from '../upload/upload.service';
@@ -36,6 +37,8 @@ export class ArenasService {
     private readonly arenaRepository: Repository<Arena>,
     @InjectRepository(ArenaExtra)
     private readonly extraRepository: Repository<ArenaExtra>,
+    @InjectRepository(ArenaImage)
+    private readonly arenaImageRepository: Repository<ArenaImage>,
     private readonly categoriesService: CategoriesService,
     private readonly uploadService: UploadService,
   ) {}
@@ -43,35 +46,17 @@ export class ArenasService {
   async create(
     createArenaDto: CreateArenaDto,
     owner: User,
-    files?: {
-      thumbnail?: Express.Multer.File[];
-      images?: Express.Multer.File[];
-    },
   ): Promise<Arena | never> {
     const { categoryId, ...arenaData } = createArenaDto;
 
-    // Process thumbnail and gallery images using the new upload service
-    let thumbnailPath: string | null = null;
-    let imagesPath: { path: string }[] = [];
+    // Use thumbnail and images paths directly from DTO (already uploaded via POST /upload/arenas)
+    const thumbnailPath = createArenaDto.thumbnail || '';
+    const imagesPath =
+      createArenaDto.images?.map((img) => ({ path: img.path })) || [];
 
-    const thumbnailFile = files?.thumbnail?.[0];
-    if (thumbnailFile) {
-      thumbnailPath = await this.uploadService.processImage(
-        thumbnailFile,
-        UploadEntity.ARENAS,
-      );
-    }
-
-    if (files?.images && files.images.length > 0) {
-      const processedImages = await this.uploadService.processMany(
-        files.images,
-        UploadEntity.ARENAS,
-      );
-      imagesPath = processedImages.map((imgPath) => ({ path: imgPath }));
-    }
     const arena = this.arenaRepository.create({
       ...arenaData,
-      thumbnail: thumbnailPath ?? '',
+      thumbnail: thumbnailPath,
       images: imagesPath,
       owner,
     } as DeepPartial<Arena>);
@@ -245,10 +230,6 @@ export class ArenasService {
     id: string,
     updateArenaDto: UpdateArenaDto,
     owner: User,
-    files?: {
-      thumbnail?: Express.Multer.File[];
-      images?: Express.Multer.File[];
-    },
   ): Promise<Arena | never> {
     const arena = await this.arenaRepository.findOne({
       where: { id },
@@ -270,32 +251,63 @@ export class ArenasService {
       );
     }
 
-    // Replace thumbnail if a new one is uploaded
-    const newThumbnailFile = files?.thumbnail?.[0];
-    if (newThumbnailFile) {
-      const newThumbnailPath = await this.uploadService.replaceImage(
-        newThumbnailFile,
-        UploadEntity.ARENAS,
-        arena.thumbnail,
-      );
-      arena.thumbnail = newThumbnailPath;
+    // Capture paths to delete from storage after save succeeds
+    let oldThumbnailPath: string | undefined;
+    if (
+      updateArenaDto.thumbnail &&
+      updateArenaDto.thumbnail !== arena.thumbnail &&
+      arena.thumbnail
+    ) {
+      oldThumbnailPath = arena.thumbnail;
     }
 
-    // Append any newly uploaded images to the existing gallery
-    if (files?.images && files.images.length > 0) {
-      const newImagePaths = await this.uploadService.processMany(
-        files.images,
-        UploadEntity.ARENAS,
+    let oldImagePathsToDelete: string[] = [];
+    if (updateArenaDto.images !== undefined) {
+      const newImagePaths = updateArenaDto.images
+        .map((img) => img.path)
+        .filter((path): path is string => typeof path === 'string' && path.length > 0);
+      const oldImagePaths = arena.images?.map((img) => img.path) || [];
+      oldImagePathsToDelete = oldImagePaths.filter(
+        (oldPath) => !newImagePaths.includes(oldPath),
       );
-      const existingImages = arena.images ?? [];
-      const newImages = newImagePaths.map((p) => ({ path: p } as any));
-      // TypeORM will handle creating related ArenaImage entities because of cascade
-      arena.images = [...existingImages, ...newImages] as any;
     }
 
+    // Merge first so DTO does not overwrite our images handling later
     this.arenaRepository.merge(arena, updateArenaDto);
 
-    return await this.arenaRepository.save(arena);
+    // Apply thumbnail (assign new path; file delete happens after save)
+    if (updateArenaDto.thumbnail) {
+      arena.thumbnail = updateArenaDto.thumbnail;
+    }
+
+    // Apply images: delete existing DB rows, then set new list
+    if (updateArenaDto.images !== undefined) {
+      await this.arenaImageRepository.delete({ arena: { id: arena.id } });
+
+      const newImagePaths: string[] = updateArenaDto.images
+        .map((img) => img.path)
+        .filter((path): path is string => typeof path === 'string' && path.length > 0);
+
+      const newImages = newImagePaths.map((p: string) => {
+        const image = new ArenaImage();
+        image.path = p;
+        image.arena = arena;
+        return image;
+      });
+      arena.images = newImages;
+    }
+
+    const savedArena = await this.arenaRepository.save(arena);
+
+    // Delete old files from storage only after save succeeded
+    if (oldThumbnailPath) {
+      await this.uploadService.deleteImage(oldThumbnailPath);
+    }
+    for (const pathToDelete of oldImagePathsToDelete) {
+      await this.uploadService.deleteImage(pathToDelete);
+    }
+
+    return savedArena;
   }
 
   async approve(id: string, status: ArenaStatus) {

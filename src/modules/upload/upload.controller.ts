@@ -6,12 +6,24 @@ import {
   UseInterceptors,
   Req,
   UploadedFile,
+  UseGuards,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import type { Request } from 'express';
+import {
+  ApiOperation,
+  ApiResponse,
+  ApiConsumes,
+  ApiBody,
+  ApiTags,
+  ApiParam,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { UploadService } from './upload.service';
 import { UploadEntity } from './multer.config';
+import { UploadResponseDto } from './dto/upload-response.dto';
+import { ConditionalAuthGuard } from './guards/conditional-auth.guard';
 
 const resolveUploadEntity = (entityParam: string): UploadEntity => {
   const normalized = entityParam?.toLowerCase();
@@ -37,7 +49,10 @@ const resolveUploadEntity = (entityParam: string): UploadEntity => {
   }
 };
 
+@ApiTags('Upload')
 @Controller('upload')
+@UseGuards(ConditionalAuthGuard)
+@ApiBearerAuth()
 export class UploadController {
   constructor(private readonly uploadService: UploadService) {}
 
@@ -45,9 +60,48 @@ export class UploadController {
    * Generic upload endpoint:
    * POST /upload/:entity
    * Body: multipart/form-data with field "image"
-   * Returns: { url: `${BASE_URL}/uploads/{entity}/{uuid}.webp` }
+   * Returns: { path: "entity/uuid.webp", url: "${BASE_URL}/uploads/entity/uuid.webp" }
+   * 
+   * Note: /upload/auth is public (no auth required) for owner registration.
+   * All other entities require authentication.
    */
   @Post(':entity')
+  @ApiOperation({
+    summary: 'Upload a single image',
+    description:
+      'Upload an image for a specific entity. Returns both relative path and full URL. /upload/auth is public (no auth required), all others require authentication.',
+  })
+  @ApiParam({
+    name: 'entity',
+    enum: UploadEntity,
+    description: 'Entity type (users, arenas, auth, etc.)',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        image: {
+          type: 'string',
+          format: 'binary',
+          description: 'Image file (jpg, jpeg, png, gif, webp)',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Image uploaded successfully',
+    type: UploadResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid file type or missing file',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized (not applicable for /upload/auth)',
+  })
   @UseInterceptors(
     FileInterceptor('image', {
       storage: memoryStorage(),
@@ -69,7 +123,7 @@ export class UploadController {
     @Param('entity') entityParam: string,
     @UploadedFile() file: Express.Multer.File,
     @Req() req: Request,
-  ) {
+  ): Promise<UploadResponseDto> {
     if (!file) {
       throw new BadRequestException('No file provided. Expected field "image".');
     }
@@ -81,8 +135,11 @@ export class UploadController {
       process.env.BASE_URL ||
       `${req.protocol}://${req.get('host') ?? 'localhost'}`;
 
+    const url = this.uploadService.buildUploadUrl(relativePath, baseUrl);
+
     return {
-      url: `${baseUrl}/uploads/${relativePath}`,
+      path: relativePath,
+      url,
     };
   }
 }

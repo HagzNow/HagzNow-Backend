@@ -113,9 +113,6 @@ export class UsersService {
   async update(
     id: string,
     updateUserDto: UpdateUserDto,
-    files?: {
-      avatar?: Express.Multer.File[];
-    },
   ): Promise<User | never> {
     const user = await this.userRepository.findOneBy({ id });
     if (!user) {
@@ -126,16 +123,15 @@ export class UsersService {
       );
     }
 
-    // Handle avatar replacement: delete old avatar if exists, save new one
-    const avatarFile = files?.avatar?.[0];
-    if (avatarFile) {
-      const newAvatarPath = await this.uploadService.replaceImage(
-        avatarFile,
-        UploadEntity.USERS,
-        user.avatar,
-      );
-      updateUserDto.avatar = newAvatarPath;
+    // Handle avatar replacement: delete old avatar file if path changed
+    if (
+      updateUserDto.avatar &&
+      updateUserDto.avatar !== user.avatar &&
+      user.avatar
+    ) {
+      await this.uploadService.deleteImage(user.avatar);
     }
+
     Object.assign(user, updateUserDto);
     return await this.userRepository.save(user);
   }

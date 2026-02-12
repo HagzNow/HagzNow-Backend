@@ -2,6 +2,7 @@ import {
   IsEmail,
   IsEnum,
   IsIn,
+  IsOptional,
   IsString,
   Length,
   Matches,
@@ -32,5 +33,7 @@ export class CreateUserDto {
   })
   password: string;
 
+  @IsOptional()
+  @IsString()
   avatar?: string;
 }

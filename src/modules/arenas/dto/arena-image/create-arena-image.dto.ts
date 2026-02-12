@@ -3,8 +3,8 @@ import { IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateArenaImageDto {
   @ApiProperty({
-    description: 'Image file path or URL',
-    example: 'https://example.com/arena1.jpg',
+    description: 'Relative path to the uploaded image (e.g., "arenas/abc123.webp")',
+    example: 'arenas/abc123.webp',
   })
   @IsString()
   @IsNotEmpty()

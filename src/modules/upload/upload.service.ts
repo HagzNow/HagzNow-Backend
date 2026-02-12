@@ -80,23 +80,6 @@ export class UploadService {
   }
 
   /**
-   * Replace an existing image:
-   * - Delete the old image if `oldImagePath` is provided
-   * - Process and save the new image
-   * Returns the new relative path.
-   */
-  async replaceImage(
-    file: Express.Multer.File,
-    entity: UploadEntity,
-    oldImagePath?: string | null,
-  ): Promise<string> {
-    if (oldImagePath) {
-      await this.deleteImage(oldImagePath);
-    }
-    return this.processImage(file, entity);
-  }
-
-  /**
    * Delete an image from disk, given a relative path like `users/abc.webp`
    * or a full URL containing `/uploads/...`.
    */
@@ -115,19 +98,18 @@ export class UploadService {
   }
 
   /**
-   * Convenience helper to process many files for the same entity.
+   * Build full public URL from relative path
+   * @param relativePath - Relative path like "users/abc123.webp"
+   * @param baseUrl - Base URL (optional, defaults to env or localhost)
+   * @returns Full URL like "https://hagznow.com/uploads/users/abc123.webp"
    */
-  async processMany(
-    files: Express.Multer.File[] | undefined,
-    entity: UploadEntity,
-  ): Promise<string[]> {
-    if (!files || files.length === 0) return [];
-    const results: string[] = [];
-    for (const file of files) {
-      const path = await this.processImage(file, entity);
-      results.push(path);
-    }
-    return results;
+  buildUploadUrl(relativePath: string, baseUrl?: string): string {
+    const base = baseUrl || process.env.BASE_URL || 'http://localhost:3000';
+    const cleanBase = base.replace(/\/$/, '');
+    const cleanPath = relativePath.startsWith('/')
+      ? relativePath.substring(1)
+      : relativePath;
+    return `${cleanBase}/uploads/${cleanPath}`;
   }
 }
 

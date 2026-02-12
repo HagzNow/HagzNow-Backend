@@ -26,16 +26,11 @@ export class CreateArenaDto {
   name: string;
 
   @ApiProperty({
-    description: 'Thumbnail image URL',
-    example: 'https://example.com/image.jpg',
+    description: 'Thumbnail image path (relative path from upload)',
+    example: 'arenas/abc123.webp',
   })
-  // @IsString()
-  // @IsNotEmpty()
-  @ApiProperty({
-    description: 'Thumbnail image (file upload)',
-    type: 'string',
-    format: 'binary',
-  })
+  @IsString()
+  @IsNotEmpty()
   thumbnail: string;
 
   // @ApiProperty({
@@ -117,14 +112,15 @@ export class CreateArenaDto {
   location: CreateArenaLocationDto;
 
   @ApiProperty({
-    description: 'Additional images for the arena (multiple file uploads)',
+    description: 'Additional images for the arena (array of image paths)',
     type: [CreateArenaImageDto],
-    items: { type: 'string', format: 'binary' },
     required: false,
   })
+  @IsOptional()
+  @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreateArenaImageDto)
-  images: CreateArenaImageDto[];
+  images?: CreateArenaImageDto[];
 
   @ApiPropertyOptional({
     type: [CreateArenaExtraDto],

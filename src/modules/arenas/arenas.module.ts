@@ -1,7 +1,8 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CategoriesModule } from '../categories/categories.module';
 import { UploadModule } from '../upload/upload.module';
+import { AuthModule } from '../auth/auth.module';
 import { ArenaSlotsController } from './arena-slots.controller';
 import { ArenaSlotsService } from './arena-slots.service';
 import { ArenasController } from './arenas.controller';
@@ -23,6 +24,7 @@ import { Arena } from './entities/arena.entity';
     ]),
     CategoriesModule,
     UploadModule,
+    forwardRef(() => AuthModule),
   ],
   controllers: [ArenasController, ArenaSlotsController],
   providers: [ArenasService, ArenaSlotsService],
