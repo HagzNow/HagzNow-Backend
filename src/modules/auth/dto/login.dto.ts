@@ -1,3 +1,4 @@
+import { Transform } from 'class-transformer';
 import {
   IsEmail,
   IsNotEmpty,
@@ -9,6 +10,9 @@ import {
 export class LoginDto {
   @IsEmail()
   @IsNotEmpty({ message: 'errors.validation.required_field' })
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.trim().toLowerCase() : value,
+  )
   email: string;
 
   @IsString()
@@ -16,5 +20,6 @@ export class LoginDto {
   @Matches(/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).*$/, {
     message: 'errors.auth.password_too_weak',
   })
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   password: string;
 }
