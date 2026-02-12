@@ -18,8 +18,8 @@ import { Roles } from 'src/common/decorators/roles.decorator';
 import { UserRole } from './interfaces/userRole.interface';
 import { OwnerDto } from './dto/owner.dto';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
-import { IsPhoneNumber } from 'class-validator';
 import { UpdatePhoneDto } from './dto/update-phone.dto';
+import { UpdateLanguageDto } from './dto/update-language.dto';
 
 @Controller('users')
 export class UsersController {
@@ -47,9 +47,19 @@ export class UsersController {
   @Patch('profile/phone')
   async updatePhone(
     @Body() updatePhoneDto: UpdatePhoneDto,
-    @CurrentUser() { id }: User,
+    @CurrentUser() user: User,
   ) {
-    return await this.usersService.updatePhone(id, updatePhoneDto.phone);
+    return await this.usersService.updatePhone(user, updatePhoneDto.newPhone);
+  }
+
+  @Serialize(UserDto)
+  @UseGuards(AuthGuard)
+  @Patch('profile/language')
+  async updateLanguage(
+    @Body() { newLanguage }: UpdateLanguageDto,
+    @CurrentUser() user: User,
+  ) {
+    return await this.usersService.updateLanguage(user, newLanguage);
   }
 
   @Serialize(OwnerDto)
@@ -72,18 +82,4 @@ export class UsersController {
   async rejectOwnerRequest(@Param('id') id: string) {
     return await this.usersService.rejectOwnerRequest(id);
   }
-
-  // @Patch(':id')
-  // @Serialize(UserDto)
-  // update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-  //   let user = this.usersService.findOneById(id);
-  //   if (!user) {
-  //     return ApiResponseUtil.throwError(
-  //       'User not found',
-  //       'USER_NOT_FOUND',
-  //       HttpStatus.NOT_FOUND,
-  //     );
-  //   }
-  //   return this.usersService.update(id, updateUserDto);
-  // }
 }

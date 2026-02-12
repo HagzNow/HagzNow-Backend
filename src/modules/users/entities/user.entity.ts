@@ -61,7 +61,7 @@ export class User {
     enum: Language,
     default: Language.ar,
   })
-  Language: Language;
+  language: Language;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;

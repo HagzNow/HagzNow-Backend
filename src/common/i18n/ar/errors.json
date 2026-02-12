@@ -30,7 +30,10 @@
     "price_must_be_positive": "السعر لازم يكون رقم موجب",
     "quantity_minimum": "الكمية لازم تكون على الأقل 1",
     "quantity_maximum": "الكمية لازم تكون أقل من 100",
-    "errors.validation.invalid_extras_format": "مصفوفة الإضافات مش صحيحة. لازم تكون مصفوفة من الكائنات اللي فيها id و quantity"
+    "errors.validation.invalid_extras_format": "مصفوفة الإضافات مش صحيحة. لازم تكون مصفوفة من الكائنات اللي فيها id و quantity",
+    "invalid_language": "اللغة اللي اخترتها مش مدعومة",
+    "language_required": "لازم تختار لغة",
+    "same_language": "اللغة الجديدة لازم تكون مختلفة عن القديمة"
   },
   "auth": {
     "passwords_do_not_match": "الباسوردات مش متطابقة",

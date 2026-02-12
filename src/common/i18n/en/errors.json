@@ -30,7 +30,9 @@
     "price_must_be_positive": "Price must be a positive number",
     "quantity_minimum": "Quantity must be at least 1",
     "quantity_maximum": "Quantity must be less than 100",
-    "errors.validation.invalid_extras_format": "Invalid extras array format. Must be an array of objects with id and quantity"
+    "errors.validation.invalid_extras_format": "Invalid extras array format. Must be an array of objects with id and quantity",
+    "invalid_language": "The selected language is not supported",
+    "language_required": "Language selection is required"
   },
   "auth": {
     "passwords_do_not_match": "Passwords do not match",
