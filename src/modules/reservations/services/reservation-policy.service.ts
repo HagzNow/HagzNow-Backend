@@ -56,6 +56,16 @@ export class ReservationPolicy {
     }
   }
 
+  validateSlotsAreInAllowedRange(slots: number[], arena: Arena): void | never {
+    if (slots.some((h) => h < arena.openingHour || h >= arena.closingHour)) {
+      return ApiResponseUtil.throwError(
+        'errors.reservation.invalid_slots',
+        'INVALID_RESERVATION_SLOTS',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
   validateExistingUser(reservation: Reservation): User | never {
     const user = reservation.customer?.user;
     if (!user) {

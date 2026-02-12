@@ -16,8 +16,6 @@ import { ArenaExtra } from './arena-extra.entity';
 import { ArenaImage } from './arena-image.entity';
 import { ArenaLocation } from './arena-location.entity';
 import { ArenaSlot } from './arena-slot.entity';
-import { AdminConfig } from 'src/modules/admin/admin.config';
-import { ReservationExtra } from 'src/modules/reservations/entities/reservation-extra.entity';
 
 @Entity('arenas')
 export class Arena {
