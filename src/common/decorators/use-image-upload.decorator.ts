@@ -23,7 +23,8 @@ export function UseImageUpload(fields: { name: string; maxCount?: number }[]) {
           }
           cb(null, true);
         },
-        limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB
+        // Align with default upload limits (5MB per file)
+        limits: { fileSize: 5 * 1024 * 1024 },
       }),
     ),
   );

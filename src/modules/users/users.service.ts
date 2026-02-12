@@ -4,7 +4,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { ApiResponseUtil } from 'src/common/utils/api-response.util';
 import { applyExactFilters } from 'src/common/utils/filter.utils';
-import { handleImageUpload } from 'src/common/utils/handle-image-upload.util';
 import { paginate } from 'src/common/utils/paginate';
 import { EntityManager, Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -14,12 +13,15 @@ import { User } from './entities/user.entity';
 import { UserStatus } from './interfaces/userStatus.interface';
 import { UserRole } from './interfaces/userRole.interface';
 import { USER_CREATED } from 'src/common/event.constants';
+import { UploadService } from '../upload/upload.service';
+import { UploadEntity } from '../upload/multer.config';
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly eventEmitter: EventEmitter2,
     @InjectRepository(User) protected userRepository: Repository<User>,
+    private readonly uploadService: UploadService,
   ) {}
   async create(user: CreateUserDto, role: UserRole, status: UserStatus) {
     const newUser = this.userRepository.create(user);
@@ -123,10 +125,17 @@ export class UsersService {
         HttpStatus.NOT_FOUND,
       );
     }
-    const { avatar } = await handleImageUpload({
-      avatar: files?.avatar,
-    });
-    if (avatar && avatar.length > 0) updateUserDto.avatar = avatar[0];
+
+    // Handle avatar replacement: delete old avatar if exists, save new one
+    const avatarFile = files?.avatar?.[0];
+    if (avatarFile) {
+      const newAvatarPath = await this.uploadService.replaceImage(
+        avatarFile,
+        UploadEntity.USERS,
+        user.avatar,
+      );
+      updateUserDto.avatar = newAvatarPath;
+    }
     Object.assign(user, updateUserDto);
     return await this.userRepository.save(user);
   }

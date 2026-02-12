@@ -7,7 +7,6 @@ import {
   applyExactFilters,
   applyILikeFilters,
 } from 'src/common/utils/filter.utils';
-import { handleImageUpload } from 'src/common/utils/handle-image-upload.util';
 import { paginate } from 'src/common/utils/paginate';
 import { applySorting } from 'src/common/utils/sort.util';
 import {
@@ -27,6 +26,8 @@ import { UpdateArenaDto } from './dto/arena/update-arena.dto';
 import { ArenaExtra } from './entities/arena-extra.entity';
 import { Arena } from './entities/arena.entity';
 import { ArenaStatus } from './interfaces/arena-status.interface';
+import { UploadService } from '../upload/upload.service';
+import { UploadEntity } from '../upload/multer.config';
 
 @Injectable()
 export class ArenasService {
@@ -35,8 +36,8 @@ export class ArenasService {
     private readonly arenaRepository: Repository<Arena>,
     @InjectRepository(ArenaExtra)
     private readonly extraRepository: Repository<ArenaExtra>,
-
     private readonly categoriesService: CategoriesService,
+    private readonly uploadService: UploadService,
   ) {}
 
   async create(
@@ -49,16 +50,28 @@ export class ArenasService {
   ): Promise<Arena | never> {
     const { categoryId, ...arenaData } = createArenaDto;
 
-    const { thumbnail, images } = await handleImageUpload({
-      thumbnail: files?.thumbnail,
-      images: files?.images,
-    });
-    let imagesPath = images.map((imgPath) => {
-      return { path: imgPath };
-    });
+    // Process thumbnail and gallery images using the new upload service
+    let thumbnailPath: string | null = null;
+    let imagesPath: { path: string }[] = [];
+
+    const thumbnailFile = files?.thumbnail?.[0];
+    if (thumbnailFile) {
+      thumbnailPath = await this.uploadService.processImage(
+        thumbnailFile,
+        UploadEntity.ARENAS,
+      );
+    }
+
+    if (files?.images && files.images.length > 0) {
+      const processedImages = await this.uploadService.processMany(
+        files.images,
+        UploadEntity.ARENAS,
+      );
+      imagesPath = processedImages.map((imgPath) => ({ path: imgPath }));
+    }
     const arena = this.arenaRepository.create({
       ...arenaData,
-      thumbnail: thumbnail[0],
+      thumbnail: thumbnailPath ?? '',
       images: imagesPath,
       owner,
     } as DeepPartial<Arena>);
@@ -232,6 +245,10 @@ export class ArenasService {
     id: string,
     updateArenaDto: UpdateArenaDto,
     owner: User,
+    files?: {
+      thumbnail?: Express.Multer.File[];
+      images?: Express.Multer.File[];
+    },
   ): Promise<Arena | never> {
     const arena = await this.arenaRepository.findOne({
       where: { id },
@@ -252,7 +269,30 @@ export class ArenasService {
         HttpStatus.UNAUTHORIZED,
       );
     }
-    // TODO fix update image
+
+    // Replace thumbnail if a new one is uploaded
+    const newThumbnailFile = files?.thumbnail?.[0];
+    if (newThumbnailFile) {
+      const newThumbnailPath = await this.uploadService.replaceImage(
+        newThumbnailFile,
+        UploadEntity.ARENAS,
+        arena.thumbnail,
+      );
+      arena.thumbnail = newThumbnailPath;
+    }
+
+    // Append any newly uploaded images to the existing gallery
+    if (files?.images && files.images.length > 0) {
+      const newImagePaths = await this.uploadService.processMany(
+        files.images,
+        UploadEntity.ARENAS,
+      );
+      const existingImages = arena.images ?? [];
+      const newImages = newImagePaths.map((p) => ({ path: p } as any));
+      // TypeORM will handle creating related ArenaImage entities because of cascade
+      arena.images = [...existingImages, ...newImages] as any;
+    }
+
     this.arenaRepository.merge(arena, updateArenaDto);
 
     return await this.arenaRepository.save(arena);

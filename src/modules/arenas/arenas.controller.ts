@@ -114,12 +114,21 @@ export class ArenasController {
 
   @Patch(':id')
   @Roles(UserRole.OWNER)
+  @UseImageUpload([
+    { name: 'thumbnail', maxCount: 1 },
+    { name: 'images', maxCount: 10 },
+  ])
   update(
     @Param('id') id: string,
     @Body() updateArenaDto: UpdateArenaDto,
     @CurrentUser() owner: User,
+    @UploadedFiles()
+    files?: {
+      thumbnail?: Express.Multer.File[];
+      images?: Express.Multer.File[];
+    },
   ) {
-    return this.arenasService.update(id, updateArenaDto, owner);
+    return this.arenasService.update(id, updateArenaDto, owner, files);
   }
 
   @Roles(UserRole.ADMIN)

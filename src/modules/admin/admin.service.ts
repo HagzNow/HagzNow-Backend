@@ -7,14 +7,16 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { ApiResponseUtil } from 'src/common/utils/api-response.util';
 import { UsersService } from '../users/users.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { UploadService } from '../upload/upload.service';
 
 @Injectable()
 export class AdminService extends UsersService {
   constructor(
     eventEmitter: EventEmitter2,
     @InjectRepository(User) userRepository: Repository<User>,
+    uploadService: UploadService,
   ) {
-    super(eventEmitter, userRepository);
+    super(eventEmitter, userRepository, uploadService);
   }
   async getStats() {
     const totalUsers = await this.userRepository.count();

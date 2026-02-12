@@ -6,15 +6,17 @@ import { CreateUserDto } from '../users/dto/create-user.dto';
 import { UsersService } from '../users/users.service';
 import { UserStatus } from '../users/interfaces/userStatus.interface';
 import { User } from '../users/entities/user.entity';
-import { handleImageUpload } from 'src/common/utils/handle-image-upload.util';
 import { CreateOwnerDto } from '../users/dto/create-owner.dto';
 import { UserRole } from '../users/interfaces/userRole.interface';
+import { UploadService } from '../upload/upload.service';
+import { UploadEntity } from '../upload/multer.config';
 
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
+    private uploadService: UploadService,
   ) {}
 
   async signIn(email: string, pass: string): Promise<{ token: string } | never> {
@@ -90,15 +92,28 @@ export class AuthService {
         HttpStatus.CONFLICT,
       );
     if (files && data instanceof CreateOwnerDto) {
-      const { nationalIdFront, nationalIdBack, selfieWithId } =
-        await handleImageUpload({
-          nationalIdFront: files?.nationalIdFront,
-          nationalIdBack: files?.nationalIdBack,
-          selfieWithId: files?.selfieWithId,
-        });
-      data.nationalIdFront = nationalIdFront[0];
-      data.nationalIdBack = nationalIdBack[0];
-      data.selfieWithId = selfieWithId[0];
+      const frontFile = files.nationalIdFront?.[0];
+      const backFile = files.nationalIdBack?.[0];
+      const selfieFile = files.selfieWithId?.[0];
+
+      if (frontFile) {
+        data.nationalIdFront = await this.uploadService.processImage(
+          frontFile,
+          UploadEntity.AUTH,
+        );
+      }
+      if (backFile) {
+        data.nationalIdBack = await this.uploadService.processImage(
+          backFile,
+          UploadEntity.AUTH,
+        );
+      }
+      if (selfieFile) {
+        data.selfieWithId = await this.uploadService.processImage(
+          selfieFile,
+          UploadEntity.AUTH,
+        );
+      }
     }
 
     const user = await this.usersService.create(data, role, status);

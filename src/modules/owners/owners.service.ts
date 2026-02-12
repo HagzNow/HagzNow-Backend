@@ -8,6 +8,7 @@ import { ArenasService } from '../arenas/arenas.service';
 import { ReservationsService } from '../reservations/services/reservations.service';
 import { WalletTransactionService } from '../wallets/wallet-transaction.service';
 import { ArenaSlotsService } from '../arenas/arena-slots.service';
+import { UploadService } from '../upload/upload.service';
 
 @Injectable()
 export class OwnersService extends UsersService {
@@ -18,8 +19,9 @@ export class OwnersService extends UsersService {
     private readonly reservationsService: ReservationsService,
     private readonly walletTransactionService: WalletTransactionService,
     private readonly ArenaSlotsService: ArenaSlotsService,
+    uploadService: UploadService,
   ) {
-    super(eventEmitter, userRepository);
+    super(eventEmitter, userRepository, uploadService);
   }
 
   async getDashboardData(ownerId: string) {
