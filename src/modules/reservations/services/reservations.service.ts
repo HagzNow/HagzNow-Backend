@@ -220,6 +220,9 @@ export class ReservationsService {
       const { arena, extras: arenaExtras } =
         await this.reservationPolicy.extractArenaAndExtras(dto, queryRunner);
 
+      // validate slots are within arena opening hours
+      this.reservationPolicy.validateSlotsAreInAllowedRange(dto.slots, arena);
+
       // Check arena ownership
       this.reservationPolicy.ensureOwner(arena, user);
 
