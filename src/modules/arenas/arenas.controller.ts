@@ -8,9 +8,11 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { Roles } from 'src/common/decorators/roles.decorator';
+import { ActiveOwnerGuard } from 'src/common/guards/active-owner.guard';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { SortDto } from 'src/common/dtos/sort.dto';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
@@ -30,6 +32,7 @@ export class ArenasController {
   constructor(private readonly arenasService: ArenasService) {}
 
   @Serialize(ArenaDetailsDto)
+  @UseGuards(ActiveOwnerGuard)
   @Roles(UserRole.OWNER)
   @Post()
   create(
@@ -70,6 +73,7 @@ export class ArenasController {
   }
 
   @Serialize(ArenaSummaryDto)
+  @UseGuards(ActiveOwnerGuard)
   @Roles(UserRole.OWNER)
   @Get('owner')
   async getOwnerArenas(
@@ -83,6 +87,7 @@ export class ArenasController {
       filters,
     );
   }
+  @UseGuards(ActiveOwnerGuard)
   @Roles(UserRole.OWNER)
   @Get('owner/names')
   async getOwnerArenasNames(@CurrentUser() owner: User) {
@@ -97,6 +102,7 @@ export class ArenasController {
 
   @Serialize(ArenaDetailsDto)
   @Patch(':id')
+  @UseGuards(ActiveOwnerGuard)
   @Roles(UserRole.OWNER)
   update(
     @Param('id', new ParseUUIDPipe()) id: string,

@@ -1,12 +1,13 @@
 import {
   BadRequestException,
   Controller,
+  ForbiddenException,
   Param,
   Post,
-  UseInterceptors,
   Req,
   UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
@@ -127,6 +128,14 @@ export class UploadController {
     }
 
     const entity = resolveUploadEntity(entityParam);
+
+    // Owner-only: ID images (auth entity) may only be uploaded by owners
+    if (entity === UploadEntity.AUTH) {
+      const user = (req as Request & { user?: { role?: string } }).user;
+      if (user?.role !== 'owner') {
+        throw new ForbiddenException('errors.general.forbidden');
+      }
+    }
     const relativePath = await this.uploadService.processImage(file, entity);
 
     const baseUrl =

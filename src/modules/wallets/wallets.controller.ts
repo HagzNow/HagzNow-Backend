@@ -11,6 +11,7 @@ import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { AuthGuard } from 'src/common/guards/auth.guard';
+import { ActiveOwnerGuard } from 'src/common/guards/active-owner.guard';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { User } from '../users/entities/user.entity';
 import { UserRole } from '../users/interfaces/userRole.interface';
@@ -55,7 +56,7 @@ export class WalletController {
   }
 
   @Serialize(WalletTransactionResponseDto)
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, ActiveOwnerGuard)
   @Roles(UserRole.OWNER)
   @Post('request-withdraw')
   async withdraw(@Body('amount') amount: number, @CurrentUser() user: User) {

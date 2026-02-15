@@ -9,9 +9,11 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { Roles } from 'src/common/decorators/roles.decorator';
+import { ActiveOwnerGuard } from 'src/common/guards/active-owner.guard';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { PaginationDto } from '../../common/dtos/pagination.dto';
 import { User } from '../users/entities/user.entity';
@@ -39,6 +41,7 @@ export class ReservationsController {
     return this.reservationsService.create(createReservationDto, user);
   }
   @Serialize(ReservationDetailsDto)
+  @UseGuards(ActiveOwnerGuard)
   @Roles(UserRole.OWNER)
   @Post('owner/manual')
   createManualReservation(
@@ -82,6 +85,7 @@ export class ReservationsController {
   }
 
   @Serialize(ReservationCalenderCardDto)
+  @UseGuards(ActiveOwnerGuard)
   @Roles(UserRole.OWNER, UserRole.ADMIN)
   @Get()
   async getReservationsByFilters(
