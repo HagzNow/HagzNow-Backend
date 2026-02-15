@@ -60,13 +60,16 @@ export class AuthService {
         ),
       };
     }
-    if (user.status === UserStatus.REJECTED)
-      return ApiResponseUtil.throwError(
-        'errors.auth.rejected_account',
-        'REJECTED_ACCOUNT',
-        HttpStatus.FORBIDDEN,
-      );
-    else if (user.status !== UserStatus.ACTIVE)
+    if (user.status === UserStatus.REJECTED) {
+      // Allow REJECTED users to sign in so they can see profile and rejection reason
+      const { password, ...result } = user;
+      return {
+        token: await this.jwtService.signAsync(
+          stripOwnerIdFieldsFromPayload(result),
+        ),
+      };
+    }
+    if (user.status !== UserStatus.ACTIVE)
       return ApiResponseUtil.throwError(
         'errors.auth.account_inactive',
         'DEACTIVATED_ACCOUNT',
