@@ -9,7 +9,7 @@ import { UserRole } from '../users/interfaces/userRole.interface';
 export class CustomersController {
   constructor(private readonly customersService: CustomersService) {}
 
-  @UseGuards(AuthGuard, RolesGuard)
+  @UseGuards(AuthGuard)
   @Roles(UserRole.OWNER)
   @Get(':phone')
   findOne(@Param('phone') phone: string) {

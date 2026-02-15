@@ -5,7 +5,7 @@ import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { ApiResponseUtil } from 'src/common/utils/api-response.util';
 import { applyExactFilters } from 'src/common/utils/filter.utils';
 import { paginate } from 'src/common/utils/paginate';
-import { EntityManager, Repository } from 'typeorm';
+import { EntityManager, Not, Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserFilterDto } from './dto/user-filter.dto';
@@ -86,11 +86,7 @@ export class UsersService {
       );
 
     const user = await this.userRepository.findOne({
-      where: [
-        { id, status: UserStatus.ACTIVE },
-        { id, status: UserStatus.PENDING },
-        { id, status: UserStatus.REJECTED },
-      ],
+      where: [{ id, status: Not(UserStatus.ACTIVE) }],
     });
     if (!user) {
       return ApiResponseUtil.throwError(
