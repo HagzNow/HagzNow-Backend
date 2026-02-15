@@ -4,13 +4,11 @@ import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { User } from '../users/entities/user.entity';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { UserRole } from '../users/interfaces/userRole.interface';
-import { ActiveOwnerGuard } from 'src/common/guards/active-owner.guard';
 
 @Controller('owner')
 export class OwnersController {
   constructor(private readonly ownersService: OwnersService) {}
 
-  @UseGuards(ActiveOwnerGuard)
   @Roles(UserRole.OWNER)
   @Get('dashboard')
   async getDashboardData(@CurrentUser() user: User) {

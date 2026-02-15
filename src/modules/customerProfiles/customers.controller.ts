@@ -2,7 +2,6 @@ import { Controller, Get, Param, UseGuards } from '@nestjs/common';
 import { CustomersService } from './customers.service';
 import { AuthGuard } from 'src/common/guards/auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
-import { ActiveOwnerGuard } from 'src/common/guards/active-owner.guard';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { UserRole } from '../users/interfaces/userRole.interface';
 
@@ -10,7 +9,7 @@ import { UserRole } from '../users/interfaces/userRole.interface';
 export class CustomersController {
   constructor(private readonly customersService: CustomersService) {}
 
-  @UseGuards(AuthGuard, RolesGuard, ActiveOwnerGuard)
+  @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.OWNER)
   @Get(':phone')
   findOne(@Param('phone') phone: string) {
