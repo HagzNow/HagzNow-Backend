@@ -82,6 +82,9 @@ export class User {
   @Column({ type: 'varchar', nullable: true })
   selfieWithId?: string;
 
+  @Column({ type: 'varchar', nullable: true })
+  rejectionReason?: string;
+
   @OneToMany(() => Arena, (arena) => arena.owner, {
     nullable: true,
   })

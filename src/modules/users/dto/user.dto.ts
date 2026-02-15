@@ -44,4 +44,7 @@ export class UserDto {
       : undefined,
   )
   verificationSubmitted?: boolean;
+
+  @Expose()
+  rejectionReason?: string;
 }

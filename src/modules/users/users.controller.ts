@@ -21,6 +21,7 @@ import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { UpdatePhoneDto } from './dto/update-phone.dto';
 import { UpdateLanguageDto } from './dto/update-language.dto';
 import { SubmitOwnerVerificationDto } from './dto/submit-owner-verification.dto';
+import { RejectOwnerRequestDto } from './dto/reject-owner-request.dto';
 
 @Controller('users')
 export class UsersController {
@@ -91,7 +92,10 @@ export class UsersController {
   @Serialize(OwnerDto)
   @Roles(UserRole.ADMIN)
   @Patch('owner-requests/:id/reject')
-  async rejectOwnerRequest(@Param('id') id: string) {
-    return await this.usersService.rejectOwnerRequest(id);
+  async rejectOwnerRequest(
+    @Param('id') id: string,
+    @Body() dto: RejectOwnerRequestDto,
+  ) {
+    return await this.usersService.rejectOwnerRequest(id, dto.reason);
   }
 }

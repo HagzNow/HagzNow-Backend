@@ -141,8 +141,25 @@ export class UsersService {
     await this.updateStatus(id, UserStatus.ACTIVE);
     return { message: 'messages.auth.owner_request.accepted' };
   }
-  async rejectOwnerRequest(id: string) {
-    await this.updateStatus(id, UserStatus.REJECTED);
+  async rejectOwnerRequest(id: string, reason?: string) {
+    const user = await this.userRepository.findOneBy({ id });
+    if (!user) {
+      return ApiResponseUtil.throwError(
+        'errors.auth.user_not_found',
+        'USER_NOT_FOUND',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    if (user.status !== UserStatus.PENDING) {
+      return ApiResponseUtil.throwError(
+        'errors.owner_request.not_pending',
+        'OWNER_REQUEST_NOT_PENDING',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    user.status = UserStatus.REJECTED;
+    user.rejectionReason = reason;
+    await this.userRepository.save(user);
     return { message: 'messages.auth.owner_request.rejected' };
   }
 
