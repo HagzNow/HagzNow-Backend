@@ -9,6 +9,7 @@ import { EntityManager, Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserFilterDto } from './dto/user-filter.dto';
+import { SubmitOwnerVerificationDto } from './dto/submit-owner-verification.dto';
 import { User } from './entities/user.entity';
 import { UserStatus } from './interfaces/userStatus.interface';
 import { UserRole } from './interfaces/userRole.interface';
@@ -71,6 +72,34 @@ export class UsersService {
     }
     return user;
   }
+
+  /**
+   * Find user by id for profile fetch. Allows ACTIVE or PENDING so that
+   * PENDING owners can fetch their own profile (e.g. to see verification state).
+   */
+  async findOneByIdForProfile(id: string): Promise<User | never> {
+    if (!id)
+      return ApiResponseUtil.throwError(
+        'errors.auth.user_not_found',
+        'USER_NOT_FOUND',
+        HttpStatus.NOT_FOUND,
+      );
+
+    const user = await this.userRepository.findOne({
+      where: [
+        { id, status: UserStatus.ACTIVE },
+        { id, status: UserStatus.PENDING },
+      ],
+    });
+    if (!user) {
+      return ApiResponseUtil.throwError(
+        'errors.auth.user_not_found',
+        'USER_NOT_FOUND',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    return user;
+  }
   async findOneByEmail(email: string) {
     return await this.userRepository.findOneBy({ email });
   }
@@ -112,9 +141,63 @@ export class UsersService {
     await this.updateStatus(id, UserStatus.ACTIVE);
     return { message: 'messages.auth.owner_request.accepted' };
   }
-  async rejectOwnerRequest(id: string) {
-    await this.updateStatus(id, UserStatus.REJECTED);
+  async rejectOwnerRequest(id: string, reason?: string) {
+    const user = await this.userRepository.findOneBy({ id });
+    if (!user) {
+      return ApiResponseUtil.throwError(
+        'errors.auth.user_not_found',
+        'USER_NOT_FOUND',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    if (user.status !== UserStatus.PENDING) {
+      return ApiResponseUtil.throwError(
+        'errors.owner_request.not_pending',
+        'OWNER_REQUEST_NOT_PENDING',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    user.status = UserStatus.REJECTED;
+    user.rejectionReason = reason;
+    await this.userRepository.save(user);
     return { message: 'messages.auth.owner_request.rejected' };
+  }
+
+  async submitVerificationImages(
+    userId: string,
+    dto: SubmitOwnerVerificationDto,
+  ): Promise<User | never> {
+    const user = await this.userRepository.findOneBy({ id: userId });
+    if (!user) {
+      return ApiResponseUtil.throwError(
+        'errors.auth.user_not_found',
+        'USER_NOT_FOUND',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    if (user.role !== UserRole.OWNER) {
+      return ApiResponseUtil.throwError(
+        'errors.auth.user_not_found',
+        'USER_NOT_FOUND',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+    const fields: (keyof SubmitOwnerVerificationDto)[] = [
+      'nationalIdFront',
+      'nationalIdBack',
+      'selfieWithId',
+    ];
+    for (const field of fields) {
+      const newPath = dto[field];
+      const oldPath = user[field];
+      if (newPath && newPath !== oldPath && oldPath) {
+        await this.uploadService.deleteImage(oldPath);
+      }
+    }
+    user.nationalIdFront = dto.nationalIdFront;
+    user.nationalIdBack = dto.nationalIdBack;
+    user.selfieWithId = dto.selfieWithId;
+    return await this.userRepository.save(user);
   }
 
   async update(

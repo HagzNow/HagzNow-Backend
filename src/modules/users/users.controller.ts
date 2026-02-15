@@ -20,6 +20,8 @@ import { OwnerDto } from './dto/owner.dto';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { UpdatePhoneDto } from './dto/update-phone.dto';
 import { UpdateLanguageDto } from './dto/update-language.dto';
+import { SubmitOwnerVerificationDto } from './dto/submit-owner-verification.dto';
+import { RejectOwnerRequestDto } from './dto/reject-owner-request.dto';
 
 @Controller('users')
 export class UsersController {
@@ -29,7 +31,7 @@ export class UsersController {
   @UseGuards(AuthGuard)
   @Get('profile')
   async getProfile(@CurrentUser() { id }: User) {
-    return await this.usersService.findOneById(id);
+    return await this.usersService.findOneByIdForProfile(id);
   }
 
   @Serialize(UserDto)
@@ -50,6 +52,17 @@ export class UsersController {
     @CurrentUser() user: User,
   ) {
     return await this.usersService.updatePhone(user, updatePhoneDto.newPhone);
+  }
+
+  @Serialize(UserDto)
+  @UseGuards(AuthGuard)
+  @Roles(UserRole.OWNER)
+  @Patch('profile/verification')
+  async submitVerification(
+    @Body() dto: SubmitOwnerVerificationDto,
+    @CurrentUser() { id }: User,
+  ) {
+    return await this.usersService.submitVerificationImages(id, dto);
   }
 
   @Serialize(UserDto)
@@ -79,7 +92,10 @@ export class UsersController {
   @Serialize(OwnerDto)
   @Roles(UserRole.ADMIN)
   @Patch('owner-requests/:id/reject')
-  async rejectOwnerRequest(@Param('id') id: string) {
-    return await this.usersService.rejectOwnerRequest(id);
+  async rejectOwnerRequest(
+    @Param('id') id: string,
+    @Body() dto: RejectOwnerRequestDto,
+  ) {
+    return await this.usersService.rejectOwnerRequest(id, dto.reason);
   }
 }

@@ -6,8 +6,24 @@ import { CreateUserDto } from '../users/dto/create-user.dto';
 import { UsersService } from '../users/users.service';
 import { UserStatus } from '../users/interfaces/userStatus.interface';
 import { User } from '../users/entities/user.entity';
-import { CreateOwnerDto } from '../users/dto/create-owner.dto';
 import { UserRole } from '../users/interfaces/userRole.interface';
+import { RegisterDto } from './dto/register.dto';
+
+const SENSITIVE_OWNER_FIELDS = [
+  'nationalIdFront',
+  'nationalIdBack',
+  'selfieWithId',
+] as const;
+
+function stripOwnerIdFieldsFromPayload<T extends Record<string, unknown>>(
+  payload: T,
+): Omit<T, (typeof SENSITIVE_OWNER_FIELDS)[number]> {
+  const result = { ...payload };
+  for (const key of SENSITIVE_OWNER_FIELDS) {
+    delete result[key];
+  }
+  return result as Omit<T, (typeof SENSITIVE_OWNER_FIELDS)[number]>;
+}
 
 @Injectable()
 export class AuthService {
@@ -29,13 +45,22 @@ export class AuthService {
         'INVALID_CREDENTIALS',
         HttpStatus.UNAUTHORIZED,
       );
-    if (user.status === UserStatus.PENDING)
+    if (user.status === UserStatus.PENDING && user.role !== UserRole.OWNER)
       return ApiResponseUtil.throwError(
         'errors.auth.pending_account',
         'PENDING_ACCOUNT',
         HttpStatus.FORBIDDEN,
       );
-    else if (user.status === UserStatus.REJECTED)
+    if (user.status === UserStatus.PENDING && user.role === UserRole.OWNER) {
+      // Allow PENDING owners to sign in so they can submit ID images or check status
+      const { password, ...result } = user;
+      return {
+        token: await this.jwtService.signAsync(
+          stripOwnerIdFieldsFromPayload(result),
+        ),
+      };
+    }
+    if (user.status === UserStatus.REJECTED)
       return ApiResponseUtil.throwError(
         'errors.auth.rejected_account',
         'REJECTED_ACCOUNT',
@@ -53,18 +78,9 @@ export class AuthService {
     };
   }
 
-  async signUpUser(data: CreateUserDto): Promise<{ token: string }> {
-    return await this.signUp(data, UserRole.USER, UserStatus.ACTIVE);
-  }
-  async signUpOwner(data: CreateOwnerDto): Promise<{ message: string }> {
-    await this.signUp(data, UserRole.OWNER, UserStatus.PENDING);
-    return { message: 'messages.auth.owner_registration_pending' };
-  }
   async signUp(
-    data: CreateUserDto | CreateOwnerDto,
-    role: UserRole = UserRole.USER,
-    status: UserStatus = UserStatus.ACTIVE,
-  ): Promise<{ token: string } | never> {
+    data: RegisterDto,
+  ): Promise<{ token: string; message?: string }> {
     const duplicateEmail = await this.usersService.findOneByEmail(data.email);
     if (duplicateEmail)
       ApiResponseUtil.throwError(
@@ -80,14 +96,22 @@ export class AuthService {
         HttpStatus.CONFLICT,
       );
 
-    // Data already contains paths for owner registration (nationalIdFront, nationalIdBack, selfieWithId)
-    // No file processing needed - paths come from client
+    const role = data.role ?? UserRole.USER;
+    const status =
+      role === UserRole.OWNER ? UserStatus.PENDING : UserStatus.ACTIVE;
+    const { role: _role, ...userData } = data;
 
-    const user = await this.usersService.create(data, role, status);
+    const user = await this.usersService.create(
+      userData as CreateUserDto,
+      role,
+      status,
+    );
     const { password, ...result } = user;
-    return {
-      token: await this.jwtService.signAsync(result),
-    };
+    const token = await this.jwtService.signAsync(
+      stripOwnerIdFieldsFromPayload(result),
+    );
+
+    return { token };
   }
 
   async setNewPassword(

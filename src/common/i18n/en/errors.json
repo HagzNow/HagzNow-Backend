@@ -47,6 +47,7 @@
     "user_not_found": "User not found",
     "email_send_failed": "Failed to send reset email. Please try again later",
     "invalid_role_assignment": "Invalid role assignment",
+    "invalid_register_role": "Role must be one of: user, owner",
     "user_restricted": "User account is restricted because of {reasonForRestriction}",
     "user_deleted": "User account has been deleted",
     "account_inactive": "User account is inactive",

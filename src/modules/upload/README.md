@@ -11,27 +11,27 @@ Single endpoint for image uploads. Data endpoints (profile, arena, owner registr
 
 ## Entities
 
-| Entity     | Use case                          |
-| ---------- | --------------------------------- |
-| `users`    | User avatar                       |
-| `arenas`   | Arena thumbnail and gallery       |
-| `auth`     | Owner registration (ID images)    |
-| `bookings` | Booking-related images            |
-| `ads`      | Ad images                         |
-| `reviews`  | Review images                     |
-| `categories` | Category images                 |
+| Entity       | Use case                                                     |
+| ------------ | ------------------------------------------------------------ |
+| `users`      | User avatar                                                  |
+| `arenas`     | Arena thumbnail and gallery                                  |
+| `auth`       | Owner ID images (after signup, when submitting verification) |
+| `bookings`   | Booking-related images                                       |
+| `ads`        | Ad images                                                    |
+| `reviews`    | Review images                                                |
+| `categories` | Category images                                              |
 
 ## Authentication
 
-- **`POST /upload/auth`** — **Public** (no token). Used for owner registration before the user has an account.
-- All other entities — **Require** `Authorization: Bearer <token>`.
+- All uploads **require** `Authorization: Bearer <token>`. Use the token from login or owner signup before uploading (e.g. owner ID images via `auth` entity after signup).
 
 ## Client flow
 
 1. **Upload** image(s) via `POST /upload/:entity` (one request per file). Collect the **`path`** from each response.
 2. **Call the data endpoint** with JSON containing those paths, e.g.:
    - `PATCH /users/profile` → `{ "avatar": "users/abc.webp" }`
-   - `POST /auth/register/owner` → `{ "nationalIdFront": "auth/...", ... }`
+   - `POST /auth/register` → `{ "fName": "...", "lName": "...", "email": "...", "phone": "...", "password": "...", "role": "owner" }` (omit `role` or use `"user"` for customer; use `"owner"` for owner; no ID images at signup)
+   - `PATCH /users/profile/verification` → `{ "nationalIdFront": "auth/...", "nationalIdBack": "auth/...", "selfieWithId": "auth/..." }` (owner only; submit ID images after signup)
    - `POST /arenas` → `{ "thumbnail": "arenas/...", "images": [{ "path": "arenas/..." }], ... }`
 
 ## Storage

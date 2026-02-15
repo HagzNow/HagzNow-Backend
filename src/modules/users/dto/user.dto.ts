@@ -32,4 +32,19 @@ export class UserDto {
 
   @Expose()
   payoutMethod: PayoutMethod;
+
+  @Expose()
+  @Transform(({ obj }) =>
+    obj.role === UserRole.OWNER
+      ? !!(
+          obj.nationalIdFront &&
+          obj.nationalIdBack &&
+          obj.selfieWithId
+        )
+      : undefined,
+  )
+  verificationSubmitted?: boolean;
+
+  @Expose()
+  rejectionReason?: string;
 }

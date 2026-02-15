@@ -23,7 +23,7 @@ import {
 import { UploadService } from './upload.service';
 import { UploadEntity } from './multer.config';
 import { UploadResponseDto } from './dto/upload-response.dto';
-import { ConditionalAuthGuard } from './guards/conditional-auth.guard';
+import { AuthGuard } from 'src/common/guards/auth.guard';
 
 const resolveUploadEntity = (entityParam: string): UploadEntity => {
   const normalized = entityParam?.toLowerCase();
@@ -51,7 +51,7 @@ const resolveUploadEntity = (entityParam: string): UploadEntity => {
 
 @ApiTags('Upload')
 @Controller('upload')
-@UseGuards(ConditionalAuthGuard)
+@UseGuards(AuthGuard)
 @ApiBearerAuth()
 export class UploadController {
   constructor(private readonly uploadService: UploadService) {}
@@ -61,15 +61,13 @@ export class UploadController {
    * POST /upload/:entity
    * Body: multipart/form-data with field "image"
    * Returns: { path: "entity/uuid.webp", url: "${BASE_URL}/uploads/entity/uuid.webp" }
-   * 
-   * Note: /upload/auth is public (no auth required) for owner registration.
-   * All other entities require authentication.
+   * All entities require authentication.
    */
   @Post(':entity')
   @ApiOperation({
     summary: 'Upload a single image',
     description:
-      'Upload an image for a specific entity. Returns both relative path and full URL. /upload/auth is public (no auth required), all others require authentication.',
+      'Upload an image for a specific entity. Returns both relative path and full URL. Requires authentication.',
   })
   @ApiParam({
     name: 'entity',
@@ -100,7 +98,7 @@ export class UploadController {
   })
   @ApiResponse({
     status: 401,
-    description: 'Unauthorized (not applicable for /upload/auth)',
+    description: 'Unauthorized',
   })
   @UseInterceptors(
     FileInterceptor('image', {
