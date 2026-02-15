@@ -74,8 +74,8 @@ export class UsersService {
   }
 
   /**
-   * Find user by id for profile fetch. Allows ACTIVE or PENDING so that
-   * PENDING owners can fetch their own profile (e.g. to see verification state).
+   * Find user by id for profile fetch. Allows ACTIVE, PENDING, or REJECTED so that
+   * PENDING owners can see verification state and REJECTED users can see rejection reason.
    */
   async findOneByIdForProfile(id: string): Promise<User | never> {
     if (!id)
@@ -89,6 +89,7 @@ export class UsersService {
       where: [
         { id, status: UserStatus.ACTIVE },
         { id, status: UserStatus.PENDING },
+        { id, status: UserStatus.REJECTED },
       ],
     });
     if (!user) {
