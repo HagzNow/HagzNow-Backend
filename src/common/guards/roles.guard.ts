@@ -7,6 +7,8 @@ import {
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 import { ApiResponseUtil } from '../utils/api-response.util';
+import { UserStatus } from '../../modules/users/interfaces/userStatus.interface';
+import { UserRole } from 'src/modules/users/interfaces/userRole.interface';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -37,6 +39,18 @@ export class RolesGuard implements CanActivate {
         HttpStatus.FORBIDDEN,
       );
 
+    // for verification of active status for owners, and pending/rejected status for all users
+    if (user.role === UserRole.OWNER && user.status !== UserStatus.ACTIVE) {
+      const messageKey =
+        user.status === UserStatus.REJECTED
+          ? 'errors.auth.rejected_account'
+          : 'errors.auth.pending_account';
+      const code =
+        user.status === UserStatus.REJECTED
+          ? 'REJECTED_ACCOUNT'
+          : 'PENDING_ACCOUNT';
+      return ApiResponseUtil.throwError(messageKey, code, HttpStatus.FORBIDDEN);
+    }
     return true;
   }
 }
