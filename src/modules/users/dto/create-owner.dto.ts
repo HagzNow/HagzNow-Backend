@@ -1,16 +1,16 @@
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsString, IsOptional } from 'class-validator';
 import { CreateUserDto } from './create-user.dto';
 
 export class CreateOwnerDto extends CreateUserDto {
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  nationalIdFront: string;
+  nationalIdFront?: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  nationalIdBack: string;
+  nationalIdBack?: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  selfieWithId: string;
+  selfieWithId?: string;
 }

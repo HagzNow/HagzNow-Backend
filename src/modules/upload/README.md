@@ -15,7 +15,7 @@ Single endpoint for image uploads. Data endpoints (profile, arena, owner registr
 | ---------- | --------------------------------- |
 | `users`    | User avatar                       |
 | `arenas`   | Arena thumbnail and gallery       |
-| `auth`     | Owner registration (ID images)    |
+| `auth`     | Owner ID images (after signup, when submitting verification) |
 | `bookings` | Booking-related images            |
 | `ads`      | Ad images                         |
 | `reviews`  | Review images                     |
@@ -23,15 +23,15 @@ Single endpoint for image uploads. Data endpoints (profile, arena, owner registr
 
 ## Authentication
 
-- **`POST /upload/auth`** — **Public** (no token). Used for owner registration before the user has an account.
-- All other entities — **Require** `Authorization: Bearer <token>`.
+- All uploads **require** `Authorization: Bearer <token>`. Use the token from login or owner signup before uploading (e.g. owner ID images via `auth` entity after signup).
 
 ## Client flow
 
 1. **Upload** image(s) via `POST /upload/:entity` (one request per file). Collect the **`path`** from each response.
 2. **Call the data endpoint** with JSON containing those paths, e.g.:
    - `PATCH /users/profile` → `{ "avatar": "users/abc.webp" }`
-   - `POST /auth/register/owner` → `{ "nationalIdFront": "auth/...", ... }`
+   - `POST /auth/register/owner` → `{ ... }` (ID images optional at signup)
+   - `PATCH /users/profile/verification` → `{ "nationalIdFront": "auth/...", "nationalIdBack": "auth/...", "selfieWithId": "auth/..." }` (owner only; submit ID images after signup)
    - `POST /arenas` → `{ "thumbnail": "arenas/...", "images": [{ "path": "arenas/..." }], ... }`
 
 ## Storage
