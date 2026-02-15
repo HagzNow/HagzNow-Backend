@@ -48,6 +48,7 @@
     "user_not_found": "المستخدم مش موجود",
     "email_send_failed": "فشل إرسال الإيميل. حاول تاني بعدين",
     "invalid_role_assignment": "الدور المحدد مش صحيح",
+    "invalid_register_role": "الدور لازم يكون: user أو owner",
     "user_restricted": "حسابك متقيد بسبب {reasonForRestriction}",
     "user_deleted": "الحساب اتمسح",
     "account_inactive": "الحساب مش نشط",

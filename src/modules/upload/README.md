@@ -11,15 +11,15 @@ Single endpoint for image uploads. Data endpoints (profile, arena, owner registr
 
 ## Entities
 
-| Entity     | Use case                          |
-| ---------- | --------------------------------- |
-| `users`    | User avatar                       |
-| `arenas`   | Arena thumbnail and gallery       |
-| `auth`     | Owner ID images (after signup, when submitting verification) |
-| `bookings` | Booking-related images            |
-| `ads`      | Ad images                         |
-| `reviews`  | Review images                     |
-| `categories` | Category images                 |
+| Entity       | Use case                                                     |
+| ------------ | ------------------------------------------------------------ |
+| `users`      | User avatar                                                  |
+| `arenas`     | Arena thumbnail and gallery                                  |
+| `auth`       | Owner ID images (after signup, when submitting verification) |
+| `bookings`   | Booking-related images                                       |
+| `ads`        | Ad images                                                    |
+| `reviews`    | Review images                                                |
+| `categories` | Category images                                              |
 
 ## Authentication
 
@@ -30,7 +30,7 @@ Single endpoint for image uploads. Data endpoints (profile, arena, owner registr
 1. **Upload** image(s) via `POST /upload/:entity` (one request per file). Collect the **`path`** from each response.
 2. **Call the data endpoint** with JSON containing those paths, e.g.:
    - `PATCH /users/profile` → `{ "avatar": "users/abc.webp" }`
-   - `POST /auth/register/owner` → `{ ... }` (ID images optional at signup)
+   - `POST /auth/register` → `{ "fName": "...", "lName": "...", "email": "...", "phone": "...", "password": "...", "role": "owner" }` (omit `role` or use `"user"` for customer; use `"owner"` for owner; no ID images at signup)
    - `PATCH /users/profile/verification` → `{ "nationalIdFront": "auth/...", "nationalIdBack": "auth/...", "selfieWithId": "auth/..." }` (owner only; submit ID images after signup)
    - `POST /arenas` → `{ "thumbnail": "arenas/...", "images": [{ "path": "arenas/..." }], ... }`
 

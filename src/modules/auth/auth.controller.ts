@@ -7,7 +7,6 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { CreateUserDto } from '../users/dto/create-user.dto';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { AuthGuard } from 'src/common/guards/auth.guard';
@@ -16,7 +15,7 @@ import { UserDto } from '../users/dto/user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { User } from '../users/entities/user.entity';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import { CreateOwnerDto } from '../users/dto/create-owner.dto';
+import { RegisterDto } from './dto/register.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -28,13 +27,8 @@ export class AuthController {
     return this.authService.signIn(signInDto.email, signInDto.password);
   }
   @Post('register')
-  signUp(@Body() signUpDto: CreateUserDto) {
-    return this.authService.signUpUser(signUpDto);
-  }
-
-  @Post('register/owner')
-  signUpOwner(@Body() signUpDto: CreateOwnerDto) {
-    return this.authService.signUpOwner(signUpDto);
+  signUp(@Body() signUpDto: RegisterDto) {
+    return this.authService.signUp(signUpDto);
   }
 
   @Serialize(UserDto)

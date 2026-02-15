@@ -6,8 +6,8 @@ import { CreateUserDto } from '../users/dto/create-user.dto';
 import { UsersService } from '../users/users.service';
 import { UserStatus } from '../users/interfaces/userStatus.interface';
 import { User } from '../users/entities/user.entity';
-import { CreateOwnerDto } from '../users/dto/create-owner.dto';
 import { UserRole } from '../users/interfaces/userRole.interface';
+import { RegisterDto } from './dto/register.dto';
 
 const SENSITIVE_OWNER_FIELDS = [
   'nationalIdFront',
@@ -78,23 +78,9 @@ export class AuthService {
     };
   }
 
-  async signUpUser(data: CreateUserDto): Promise<{ token: string }> {
-    return await this.signUp(data, UserRole.USER, UserStatus.ACTIVE);
-  }
-  async signUpOwner(
-    data: CreateOwnerDto,
-  ): Promise<{ token: string; message: string }> {
-    const { token } = await this.signUp(data, UserRole.OWNER, UserStatus.PENDING);
-    return {
-      token,
-      message: 'messages.auth.owner_registration_pending',
-    };
-  }
   async signUp(
-    data: CreateUserDto | CreateOwnerDto,
-    role: UserRole = UserRole.USER,
-    status: UserStatus = UserStatus.ACTIVE,
-  ): Promise<{ token: string } | never> {
+    data: RegisterDto,
+  ): Promise<{ token: string; message?: string }> {
     const duplicateEmail = await this.usersService.findOneByEmail(data.email);
     if (duplicateEmail)
       ApiResponseUtil.throwError(
@@ -110,16 +96,22 @@ export class AuthService {
         HttpStatus.CONFLICT,
       );
 
-    // Data already contains paths for owner registration (nationalIdFront, nationalIdBack, selfieWithId)
-    // No file processing needed - paths come from client
+    const role = data.role ?? UserRole.USER;
+    const status =
+      role === UserRole.OWNER ? UserStatus.PENDING : UserStatus.ACTIVE;
+    const { role: _role, ...userData } = data;
 
-    const user = await this.usersService.create(data, role, status);
+    const user = await this.usersService.create(
+      userData as CreateUserDto,
+      role,
+      status,
+    );
     const { password, ...result } = user;
-    return {
-      token: await this.jwtService.signAsync(
-        stripOwnerIdFieldsFromPayload(result),
-      ),
-    };
+    const token = await this.jwtService.signAsync(
+      stripOwnerIdFieldsFromPayload(result),
+    );
+
+    return { token };
   }
 
   async setNewPassword(
