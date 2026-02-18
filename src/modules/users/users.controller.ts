@@ -56,13 +56,12 @@ export class UsersController {
 
   @Serialize(UserDto)
   @UseGuards(AuthGuard)
-  @Roles(UserRole.OWNER)
   @Patch('profile/verification')
   async submitVerification(
     @Body() dto: SubmitOwnerVerificationDto,
-    @CurrentUser() { id }: User,
+    @CurrentUser() user: User,
   ) {
-    return await this.usersService.submitVerificationImages(id, dto);
+    return await this.usersService.submitVerificationImages(user, dto);
   }
 
   @Serialize(UserDto)

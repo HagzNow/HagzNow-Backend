@@ -15,7 +15,6 @@ import { UserStatus } from './interfaces/userStatus.interface';
 import { UserRole } from './interfaces/userRole.interface';
 import { USER_CREATED } from 'src/common/event.constants';
 import { UploadService } from '../upload/upload.service';
-import { UploadEntity } from '../upload/multer.config';
 import { Language } from 'src/common/enums/language.enum';
 
 @Injectable()
@@ -86,7 +85,7 @@ export class UsersService {
       );
 
     const user = await this.userRepository.findOne({
-      where: [{ id, status: Not(UserStatus.ACTIVE) }],
+      where: [{ id, status: Not(UserStatus.RESTRICTED) }],
     });
     if (!user) {
       return ApiResponseUtil.throwError(
@@ -161,21 +160,13 @@ export class UsersService {
   }
 
   async submitVerificationImages(
-    userId: string,
+    user: User,
     dto: SubmitOwnerVerificationDto,
   ): Promise<User | never> {
-    const user = await this.userRepository.findOneBy({ id: userId });
-    if (!user) {
-      return ApiResponseUtil.throwError(
-        'errors.auth.user_not_found',
-        'USER_NOT_FOUND',
-        HttpStatus.NOT_FOUND,
-      );
-    }
     if (user.role !== UserRole.OWNER) {
       return ApiResponseUtil.throwError(
-        'errors.auth.user_not_found',
-        'USER_NOT_FOUND',
+        'errors.general.forbidden',
+        'FORBIDDEN',
         HttpStatus.FORBIDDEN,
       );
     }
