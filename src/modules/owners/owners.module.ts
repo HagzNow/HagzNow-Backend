@@ -9,6 +9,7 @@ import { Reservation } from '../reservations/entities/reservation.entity';
 import { ReservationsModule } from '../reservations/reservations.module';
 import { WalletModule } from '../wallets/wallets.module';
 import { UploadModule } from '../upload/upload.module';
+import { CourtSlotsModule } from '../court-slots/court-slots.module';
 
 @Module({
   imports: [
@@ -18,7 +19,8 @@ import { UploadModule } from '../upload/upload.module';
     ReservationsModule,
     WalletModule,
     UploadModule,
-    Arena,
+    ArenasModule,
+    CourtSlotsModule,
   ],
   controllers: [OwnersController],
   providers: [OwnersService],
