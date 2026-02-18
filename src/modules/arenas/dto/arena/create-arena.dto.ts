@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+  ArrayMinSize,
   IsArray,
   IsNotEmpty,
   IsNumber,
@@ -15,6 +16,7 @@ import { ArenaStatus } from '../../interfaces/arena-status.interface';
 import { CreateArenaExtraDto } from '../../../arena-extras/dto/create-arena-extra.dto';
 import { CreateArenaImageDto } from '../arena-image/create-arena-image.dto';
 import { CreateArenaLocationDto } from '../arena-location/create-arena-location.dto';
+import { CreateCourtDto } from 'src/modules/courts/dto/create-court.dto';
 
 export class CreateArenaDto {
   @ApiProperty({
@@ -131,4 +133,11 @@ export class CreateArenaDto {
   @ValidateNested({ each: true })
   @Type(() => CreateArenaExtraDto)
   extras?: CreateArenaExtraDto[];
+
+  @IsNotEmpty({ message: 'errors.validation.required_field' })
+  @ArrayMinSize(1, { message: 'errors.validation.min_array_size' })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateCourtDto)
+  courts: CreateCourtDto[];
 }

@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { forwardRef, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { SortDto } from 'src/common/dtos/sort.dto';
@@ -12,8 +12,6 @@ import { applySorting } from 'src/common/utils/sort.util';
 import {
   DeepPartial,
   EntityManager,
-  In,
-  IsNull,
   ObjectLiteral,
   Repository,
   SelectQueryBuilder,
@@ -23,12 +21,11 @@ import { User } from '../users/entities/user.entity';
 import { ArenaFilterDto } from './dto/arena/arena-filter.dto';
 import { CreateArenaDto } from './dto/arena/create-arena.dto';
 import { UpdateArenaDto } from './dto/arena/update-arena.dto';
-import { ArenaExtra } from '../arena-extras/entities/arena-extra.entity';
 import { ArenaImage } from './entities/arena-image.entity';
 import { Arena } from './entities/arena.entity';
 import { ArenaStatus } from './interfaces/arena-status.interface';
 import { UploadService } from '../upload/upload.service';
-import { UploadEntity } from '../upload/multer.config';
+import { CourtsService } from '../courts/courts.service';
 
 @Injectable()
 export class ArenasService {
@@ -39,26 +36,45 @@ export class ArenasService {
     private readonly arenaImageRepository: Repository<ArenaImage>,
     private readonly categoriesService: CategoriesService,
     private readonly uploadService: UploadService,
+    @Inject(forwardRef(() => CourtsService))
+    private readonly courtsService: CourtsService,
   ) {}
+
+  ensureArenaIsActive(arena: Arena): void | never {
+    if (arena.status !== ArenaStatus.ACTIVE) {
+      return ApiResponseUtil.throwError(
+        'errors.arena.not_active',
+        'ARENA_NOT_ACTIVE',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  ensureOwner(arena: Arena, user: User): void | never {
+    if (arena.owner.id !== user.id) {
+      return ApiResponseUtil.throwError(
+        'errors.arena.unauthorized_update',
+        'UNAUTHORIZED_ACCESS',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+  }
 
   async create(
     createArenaDto: CreateArenaDto,
     owner: User,
   ): Promise<Arena | never> {
     const { categoryId, ...arenaData } = createArenaDto;
-
     // Use thumbnail and images paths directly from DTO (already uploaded via POST /upload/arenas)
     const thumbnailPath = createArenaDto.thumbnail || '';
     const imagesPath =
       createArenaDto.images?.map((img) => ({ path: img.path })) || [];
-
     const arena = this.arenaRepository.create({
       ...arenaData,
       thumbnail: thumbnailPath,
       images: imagesPath,
       owner,
     } as DeepPartial<Arena>);
-
     if (categoryId) {
       const category = await this.categoriesService.findOne(categoryId);
       if (!category)
@@ -69,8 +85,8 @@ export class ArenasService {
         );
       arena.category = category;
     }
-
-    return await this.arenaRepository.save(arena);
+    const arenaSaved = await this.arenaRepository.save(arena);
+    return arenaSaved;
   }
   async findAll(
     paginationDto: PaginationDto,
@@ -234,7 +250,9 @@ export class ArenasService {
     if (updateArenaDto.images !== undefined) {
       const newImagePaths = updateArenaDto.images
         .map((img) => img.path)
-        .filter((path): path is string => typeof path === 'string' && path.length > 0);
+        .filter(
+          (path): path is string => typeof path === 'string' && path.length > 0,
+        );
       const oldImagePaths = arena.images?.map((img) => img.path) || [];
       oldImagePathsToDelete = oldImagePaths.filter(
         (oldPath) => !newImagePaths.includes(oldPath),
@@ -255,7 +273,9 @@ export class ArenasService {
 
       const newImagePaths: string[] = updateArenaDto.images
         .map((img) => img.path)
-        .filter((path): path is string => typeof path === 'string' && path.length > 0);
+        .filter(
+          (path): path is string => typeof path === 'string' && path.length > 0,
+        );
 
       const newImages = newImagePaths.map((p: string) => {
         const image = new ArenaImage();
@@ -303,39 +323,6 @@ export class ArenasService {
 
   async remove(id: string) {
     return await this.arenaRepository.delete(id);
-  }
-
-  async getTotalArenaSlotsCount(
-    ownerId: string,
-    startDate?: Date,
-    endDate?: Date,
-  ) {
-    const today = new Date();
-    // Set default date range to last month to today if not provided
-    if (!startDate) {
-      startDate = new Date(
-        today.getFullYear(),
-        today.getMonth() - 1,
-        today.getDate() + 1, // ✔ correct
-      );
-    }
-    if (!endDate) {
-      endDate = new Date(
-        today.getFullYear(),
-        today.getMonth(),
-        today.getDate() + 1,
-      );
-    }
-    const totalDays =
-      (endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24) + 1;
-    const arenas = await this.arenaRepository
-      .createQueryBuilder('arena')
-      .where('arena.ownerId = :ownerId', { ownerId })
-      .getMany();
-    const totalAvailableSlots = arenas.reduce((total, arena) => {
-      return total + arena.totalAvailableHours() * totalDays;
-    }, 0);
-    return totalAvailableSlots;
   }
 
   async getMostReservedArenaByOwner(
@@ -390,5 +377,15 @@ export class ArenasService {
     applyExactFilters(query, { categoryId: filters.categoryId }, alias);
     applyILikeFilters(query, { name: filters.name }, alias);
     applyExactFilters(query, { governorate: filters.governorate }, 'location');
+  }
+
+  validateSlotsAreInAllowedRange(slots: number[], arena: Arena): void | never {
+    if (slots.some((h) => h < arena.openingHour || h >= arena.closingHour)) {
+      return ApiResponseUtil.throwError(
+        'errors.reservation.invalid_slots',
+        'INVALID_RESERVATION_SLOTS',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
   }
 }

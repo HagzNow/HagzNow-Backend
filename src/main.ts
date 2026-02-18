@@ -18,8 +18,7 @@ async function bootstrap() {
   app.use(
     morgan(':method :url :status :res[content-length] - :response-time ms'),
   );
-  const uploadsDir =
-    process.env.UPLOAD_DIR || join(process.cwd(), 'uploads');
+  const uploadsDir = process.env.UPLOAD_DIR || join(process.cwd(), 'uploads');
   app.useStaticAssets(uploadsDir, {
     prefix: '/uploads/',
   });
@@ -52,6 +51,7 @@ async function bootstrap() {
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
+      forbidNonWhitelisted: true, // throw 400 if extra fields are sent
       transform: true,
       transformOptions: {
         enableImplicitConversion: true, // 👈 important

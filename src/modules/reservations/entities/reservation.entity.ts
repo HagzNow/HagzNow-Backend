@@ -1,5 +1,5 @@
 import { Expose } from 'class-transformer';
-import { ArenaSlot } from 'src/modules/arenas/entities/arena-slot.entity';
+import { CourtSlot } from 'src/modules/court-slots/entities/court-slot.entity';
 import { Arena } from 'src/modules/arenas/entities/arena.entity';
 import { CustomerProfile } from 'src/modules/customerProfiles/entities/customer-profile.entity';
 import {
@@ -14,6 +14,7 @@ import {
 import { PaymentMethod } from '../interfaces/payment-methods.interface';
 import { ReservationStatus } from '../interfaces/reservation-status.interface';
 import { ReservationExtra } from './reservation-extra.entity';
+import { Court } from 'src/modules/courts/entities/court.entity';
 
 @Entity('reservations')
 export class Reservation {
@@ -57,11 +58,11 @@ export class Reservation {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   totalAmount: number;
 
-  @OneToMany(() => ArenaSlot, (slot) => slot.reservation, {
+  @OneToMany(() => CourtSlot, (slot) => slot.reservation, {
     onDelete: 'CASCADE',
     eager: true,
   })
-  slots: ArenaSlot[];
+  slots: CourtSlot[];
 
   @OneToMany(
     () => ReservationExtra,

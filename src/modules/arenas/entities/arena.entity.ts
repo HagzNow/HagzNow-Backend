@@ -15,7 +15,7 @@ import { ArenaStatus } from '../interfaces/arena-status.interface';
 import { ArenaExtra } from '../../arena-extras/entities/arena-extra.entity';
 import { ArenaImage } from './arena-image.entity';
 import { ArenaLocation } from './arena-location.entity';
-import { ArenaSlot } from './arena-slot.entity';
+import { Court } from 'src/modules/courts/entities/court.entity';
 
 @Entity('arenas')
 export class Arena {
@@ -55,6 +55,12 @@ export class Arena {
   })
   category: Category;
 
+  @OneToMany(() => Court, (court) => court.arena, {
+    cascade: true,
+    eager: true,
+  })
+  courts: Court[];
+
   @OneToMany(() => ArenaImage, (image) => image.arena, {
     cascade: true,
     onDelete: 'CASCADE',
@@ -78,9 +84,6 @@ export class Arena {
     eager: true,
   })
   extras: ArenaExtra[];
-
-  @OneToMany(() => ArenaSlot, (slot) => slot.arena)
-  slots: ArenaSlot[];
 
   @OneToMany(() => Reservation, (reservation) => reservation.arena)
   reservations: Reservation[];

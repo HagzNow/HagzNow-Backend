@@ -18,7 +18,6 @@ export class ReservationPricingService {
   calculateExtrasAmount(
     extras?: ArenaExtraWithQuantity[] | ReservationExtra[],
   ): number {
-    console.log('Calculating extras amount for:', extras);
     return this.normalizeExtras(extras)
       .filter((e) => !e.cancelledAt)
       .reduce((sum, e) => sum + Number(e.price) * Number(e.quantity), 0);

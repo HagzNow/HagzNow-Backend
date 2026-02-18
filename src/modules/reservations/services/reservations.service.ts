@@ -18,7 +18,6 @@ import {
   SelectQueryBuilder,
 } from 'typeorm';
 import { PaginationDto } from '../../../common/dtos/pagination.dto';
-import { ArenaSlotsService } from '../../arenas/arena-slots.service';
 import { ArenasService } from '../../arenas/arenas.service';
 import { User } from '../../users/entities/user.entity';
 import { UserRole } from '../../users/interfaces/userRole.interface';
@@ -38,7 +37,7 @@ import { ReservationPaymentService } from './reservation-payment.service';
 import { ReservationExtrasService } from '../../reservation-extras/reservation-extras.service';
 import { Arena } from 'src/modules/arenas/entities/arena.entity';
 import { ReservationPricingService } from './reservation-pricing.service';
-
+import { CourtSlotsService } from 'src/modules/court-slots/court-slots.service';
 @Injectable()
 export class ReservationsService {
   /**
@@ -51,7 +50,7 @@ export class ReservationsService {
     private reservationRepository: Repository<Reservation>,
     private readonly eventEmitter: EventEmitter2,
     private readonly arenasService: ArenasService,
-    private readonly arenaSlotsService: ArenaSlotsService,
+    private readonly courtSlotsService: CourtSlotsService,
     private readonly walletsService: WalletsService,
     private readonly customersService: CustomersService,
     private readonly reservationPolicy: ReservationPolicy,
@@ -124,23 +123,34 @@ export class ReservationsService {
     await queryRunner.startTransaction();
 
     try {
-      this.reservationPolicy.validateDateAndSlots(dto.date, dto.slots);
+      const slots = dto.slots
+        .map(({ slots }) => slots)
+        .flat()
+        .map(Number);
+
+      // Validate it's not previous time
+      this.reservationPolicy.validateDateAndSlots(dto.date, slots);
 
       // Load arena & extras
-      const { arena, extras: arenaExtras } =
-        await this.reservationPolicy.extractArenaAndExtras(dto, queryRunner);
+      const {
+        courts,
+        arena,
+        extras: arenaExtras,
+      } = await this.reservationPolicy.extractCourtsAndArenaAndExtras(
+        dto,
+        queryRunner,
+      );
 
       // validate slots are within arena opening hours
-      this.reservationPolicy.validateSlotsAreInAllowedRange(dto.slots, arena);
+      this.arenasService.validateSlotsAreInAllowedRange(slots, arena);
 
       // Find customer profile
       const customer = await this.customersService.findOneById(user.id);
 
       // Validate slots are not already booked
-      await this.arenaSlotsService.validateSlotsAreAvailable(
-        dto.arenaId,
-        dto.date,
+      await this.courtSlotsService.validateSlotsAreAvailable(
         dto.slots,
+        dto.date,
         queryRunner.manager,
       );
 
@@ -148,7 +158,7 @@ export class ReservationsService {
       const amounts =
         this.reservationPricingService.calculateReservationAmounts(
           arena,
-          dto.slots.map(Number),
+          slots,
           arenaExtras,
         );
 
@@ -173,11 +183,11 @@ export class ReservationsService {
         queryRunner.manager,
       );
 
-      reservation.slots = await this.arenaSlotsService.createSlots(
-        arena,
+      reservation.slots = await this.courtSlotsService.createSlots(
+        dto.slots,
         reservation,
         dto.date,
-        dto.slots.map(Number),
+        courts,
         queryRunner.manager,
       );
 
@@ -213,27 +223,37 @@ export class ReservationsService {
     await queryRunner.startTransaction();
 
     try {
+      const slots = dto.slots
+        .map(({ slots }) => slots)
+        .flat()
+        .map(Number);
+
       // Validate it's not previous time
-      this.reservationPolicy.validateDateAndSlots(dto.date, dto.slots);
+      this.reservationPolicy.validateDateAndSlots(dto.date, slots);
 
       // Load arena & extras
-      const { arena, extras: arenaExtras } =
-        await this.reservationPolicy.extractArenaAndExtras(dto, queryRunner);
+      const {
+        courts,
+        arena,
+        extras: arenaExtras,
+      } = await this.reservationPolicy.extractCourtsAndArenaAndExtras(
+        dto,
+        queryRunner,
+      );
 
       // validate slots are within arena opening hours
-      this.reservationPolicy.validateSlotsAreInAllowedRange(dto.slots, arena);
+      this.arenasService.validateSlotsAreInAllowedRange(slots, arena);
 
       // Check arena ownership
-      this.reservationPolicy.ensureOwner(arena, user);
+      this.arenasService.ensureOwner(arena, user);
 
       // Find customer profile if ID provided
       let customer = await this.reservationPolicy.resolveCustomer(dto);
 
       // Validate slots are not already booked
-      await this.arenaSlotsService.validateSlotsAreAvailable(
-        dto.arenaId,
-        dto.date,
+      await this.courtSlotsService.validateSlotsAreAvailable(
         dto.slots,
+        dto.date,
         queryRunner.manager,
       );
 
@@ -241,7 +261,7 @@ export class ReservationsService {
       const amounts =
         this.reservationPricingService.calculateReservationAmounts(
           arena,
-          dto.slots.map(Number),
+          slots,
           arenaExtras,
         );
       // Create reservation
@@ -263,11 +283,11 @@ export class ReservationsService {
       );
 
       // Create slots for the reservation
-      reservation.slots = await this.arenaSlotsService.createSlots(
-        arena,
+      reservation.slots = await this.courtSlotsService.createSlots(
+        dto.slots,
         reservation,
         dto.date,
-        dto.slots.map((h) => Number(h)),
+        courts,
         queryRunner.manager,
       );
 
@@ -357,7 +377,7 @@ export class ReservationsService {
       );
 
       // Mark all slots as canceled
-      await this.arenaSlotsService.cancelSlots(
+      await this.courtSlotsService.cancelSlots(
         reservation.slots,
         queryRunner.manager,
       );
@@ -500,7 +520,15 @@ export class ReservationsService {
         HttpStatus.BAD_REQUEST,
       );
     }
-    const reservation = await repo.findOneBy({ id });
+    const reservation = await repo.findOne({
+      where: { id },
+      relations: {
+        arena: { owner: true },
+        customer: { user: true },
+        extras: true,
+        slots: { court: true },
+      },
+    });
     if (!reservation) {
       return ApiResponseUtil.throwError(
         'errors.reservation.not_found',

@@ -17,6 +17,8 @@ import { AdminModule } from '../admin/admin.module';
 import { ReservationPricingService } from './services/reservation-pricing.service';
 import { ReservationExtrasModule } from '../reservation-extras/reservation-extras.module';
 import { ArenaExtrasModule } from '../arena-extras/arena-extras.module';
+import { CourtSlotsModule } from '../court-slots/court-slots.module';
+import { CourtsModule } from '../courts/courts.module';
 
 @Module({
   imports: [
@@ -30,6 +32,8 @@ import { ArenaExtrasModule } from '../arena-extras/arena-extras.module';
     WalletModule,
     CustomersModule,
     AdminModule,
+    CourtSlotsModule,
+    CourtsModule,
   ],
   controllers: [ReservationsController],
   providers: [
