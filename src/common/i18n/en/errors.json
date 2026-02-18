@@ -65,7 +65,8 @@
     "slots_already_booked": "Some slots are already booked for this arena {bookedHours}",
     "not_in_hold": "Reservation is not in HOLD status",
     "id_required": "Reservation ID is required",
-    "already_canceled": "This reservation has already been canceled"
+    "already_canceled": "This reservation has already been canceled",
+    "invalid_slots": "The selected slots are outside the arena's operating hours"
   },
   "arena": {
     "not_found": "Arena not found",
@@ -80,6 +81,15 @@
   },
   "arena_extra": {
     "not_found": "Arena extra not found"
+  },
+  "court": {
+    "not_found": "Court not found",
+    "not_belong_to_arena": "Court must belong to the same arena",
+    "duplicate_ids": "Duplicate court IDs are not allowed",
+    "inactive": "Court is not available for booking at the moment",
+    "status_not_changed": "Updated status must be different from the current status",
+    "name_not_changed": "Updated name must be different from the current name",
+    "unauthorized_update": "You are not authorized to update this court"
   },
   "category": {
     "not_found": "Category not found",

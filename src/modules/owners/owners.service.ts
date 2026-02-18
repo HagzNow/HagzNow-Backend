@@ -7,7 +7,7 @@ import { Injectable } from '@nestjs/common';
 import { ArenasService } from '../arenas/arenas.service';
 import { ReservationsService } from '../reservations/services/reservations.service';
 import { WalletTransactionService } from '../wallets/wallet-transaction.service';
-import { ArenaSlotsService } from '../arenas/arena-slots.service';
+import { CourtSlotsService } from '../court-slots/court-slots.service';
 import { UploadService } from '../upload/upload.service';
 
 @Injectable()
@@ -18,7 +18,7 @@ export class OwnersService extends UsersService {
     private readonly arenasService: ArenasService,
     private readonly reservationsService: ReservationsService,
     private readonly walletTransactionService: WalletTransactionService,
-    private readonly ArenaSlotsService: ArenaSlotsService,
+    private readonly courtSlotsService: CourtSlotsService,
     uploadService: UploadService,
   ) {
     super(eventEmitter, userRepository, uploadService);
@@ -36,20 +36,16 @@ export class OwnersService extends UsersService {
         ownerId,
       );
 
-    const occupancyRate =
-      await this.ArenaSlotsService.getOccupancyRate(ownerId);
-
     const topArena =
       await this.arenasService.getMostReservedArenaByOwner(ownerId);
 
     const popularTime =
-      await this.ArenaSlotsService.getPopularBookingTimes(ownerId);
+      await this.courtSlotsService.getPopularBookingTimes(ownerId);
 
     return {
       totalArenas,
       totalReservations,
       totalEarnings,
-      occupancyRate,
       topArena,
       popularTime,
     };

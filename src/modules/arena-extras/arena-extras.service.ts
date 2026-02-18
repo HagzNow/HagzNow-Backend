@@ -32,7 +32,7 @@ export class ArenaExtrasService {
     });
     if (extras.length !== (extraIds || []).length) {
       return ApiResponseUtil.throwError(
-        'errors.arena.extra.not_found',
+        'errors.arena_extra.not_found',
         'ARENA_EXTRAS_NOT_FOUND',
         HttpStatus.BAD_REQUEST,
       );

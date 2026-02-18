@@ -14,15 +14,10 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ReservationExtraItemDto } from '../../reservation-extras/dto/reservation-extra-item.dto';
+import { CourtReservationSlotsDto } from './court-reservation-slots.dto';
+import { ArrayUniqueBy } from 'src/common/validators/array-unique-by.validator';
 
 export class CreateReservationDto {
-  @ApiProperty({
-    description: 'The ID of the arena to reserve',
-    example: 'a3dcb37b-2b3c-4f3e-bef4-8b59bb35a5e3',
-  })
-  @IsUUID()
-  arenaId: string;
-
   @ApiProperty({
     description: 'The date for which the reservation is made (YYYY-MM-DD)',
     example: '2025-11-10',
@@ -31,18 +26,11 @@ export class CreateReservationDto {
   @IsNotEmpty({ message: 'errors.validation.required_field' })
   date: string;
 
-  @ApiProperty({
-    description:
-      'List of hours the user wants to reserve (e.g. 9 = 9:00–10:00)',
-    example: [9, 10],
-    type: [Number],
-  })
-  @IsArray()
-  @ArrayMinSize(1, { message: 'errors.validation.array_not_empty' })
-  @IsNumber({}, { each: true })
-  @Min(0, { each: true })
-  @Max(23, { each: true })
-  slots: number[];
+  @IsArray({ message: 'courtReservationSlotsDto must be an array' })
+  @ArrayMinSize(1, { message: 'courtReservationSlotsDto cannot be empty' })
+  @ValidateNested({ each: true })
+  @Type(() => CourtReservationSlotsDto)
+  slots: CourtReservationSlotsDto[];
 
   @ApiProperty({
     description:
@@ -57,5 +45,8 @@ export class CreateReservationDto {
     message: 'errors.validation.invalid_extras_format',
   })
   @Type(() => ReservationExtraItemDto)
+  @ArrayUniqueBy<CourtReservationSlotsDto>('courtId', {
+    message: 'courtReservationSlotsDto cannot have duplicate courtId',
+  })
   extras?: ReservationExtraItemDto[];
 }
