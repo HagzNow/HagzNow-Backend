@@ -1,13 +1,15 @@
 import { Expose, Transform } from 'class-transformer';
 
-export class ArenaExtraDto {
+export class ReservationExtraDto {
   @Expose()
   id: string;
 
   @Expose()
+  @Transform(({ obj }) => obj.extra?.name)
   name: string;
 
   @Expose()
+  @Transform(({ obj }) => obj.priceAtReservation)
   price: number;
 
   @Expose()

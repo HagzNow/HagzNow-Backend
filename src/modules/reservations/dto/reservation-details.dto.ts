@@ -1,8 +1,8 @@
 import { Expose, Type } from 'class-transformer';
-import { ArenaExtraDto } from 'src/modules/arena-extras/dto/arena-extra.dto';
 import { ArenaSummaryDto } from 'src/modules/arenas/dto/arena/arena-summary.dto';
 import { CourtSlotDto } from 'src/modules/court-slots/dto/court-slot.dto';
 import { CustomerResponseDto } from 'src/modules/customerProfiles/dto/customer-reponse.dto';
+import { ReservationExtraDto } from './reservation-extra.dto';
 
 export class ReservationDetailsDto {
   @Expose()
@@ -38,8 +38,8 @@ export class ReservationDetailsDto {
   slots: CourtSlotDto[];
 
   @Expose()
-  @Type(() => ArenaExtraDto)
-  extras: ArenaExtraDto[];
+  @Type(() => ReservationExtraDto)
+  extras: ReservationExtraDto[];
 
   @Expose()
   @Type(() => CustomerResponseDto)
