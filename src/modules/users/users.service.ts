@@ -33,14 +33,15 @@ export class UsersService {
     return newUser;
   }
 
-  async findAll(paginationDto: PaginationDto, filters: UserFilterDto) {
+  async findAll(filters: UserFilterDto) {
+    const { page, limit } = filters;
     const query = this.userRepository.createQueryBuilder('users');
     applyExactFilters(
       query,
       { status: filters.status, role: filters.role },
       'users',
     );
-    return await paginate(query, paginationDto);
+    return await paginate(query, { page, limit });
   }
 
   async findOneById(

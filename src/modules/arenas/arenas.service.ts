@@ -88,12 +88,8 @@ export class ArenasService {
     const arenaSaved = await this.arenaRepository.save(arena);
     return arenaSaved;
   }
-  async findAll(
-    paginationDto: PaginationDto,
-    filters: ArenaFilterDto,
-    sort: SortDto,
-  ) {
-    const { orderBy, direction } = sort;
+  async findAll(filters: ArenaFilterDto) {
+    const { orderBy, direction, page, limit } = filters;
     // Start a query builder
     const query = this.arenaRepository
       .createQueryBuilder('arenas')
@@ -110,10 +106,11 @@ export class ArenasService {
     }
 
     // Paginate (using your existing paginate util)
-    return paginate(query, paginationDto);
+    return paginate(query, { page, limit });
   }
 
-  async findRequests(paginationDto: PaginationDto, filters: ArenaFilterDto) {
+  async findRequests(filters: ArenaFilterDto) {
+    const { page, limit } = filters;
     // Start a query builder
     const query = this.arenaRepository
       .createQueryBuilder('arenas')
@@ -124,14 +121,11 @@ export class ArenasService {
     // Apply filters dynamically
     this.applyFilters(query, filters);
     // Paginate (using your existing paginate util)
-    return paginate(query, paginationDto);
+    return paginate(query, { page, limit });
   }
 
-  async findByOwner(
-    ownerId: string,
-    paginationDto: PaginationDto,
-    filters: ArenaFilterDto,
-  ) {
+  async findByOwner(ownerId: string, filters: ArenaFilterDto) {
+    const { page, limit } = filters;
     const query = this.arenaRepository
       .createQueryBuilder('arenas')
       .leftJoinAndSelect('arenas.reviews', 'review')
@@ -140,7 +134,7 @@ export class ArenasService {
       .leftJoinAndSelect('arenas.owner', 'owner')
       .where('arenas.ownerId = :ownerId', { ownerId });
     this.applyFilters(query, filters);
-    return await paginate(query, paginationDto);
+    return await paginate(query, { page, limit });
   }
   async getNumberOfArenasByOwner(ownerId: string) {
     const count = await this.arenaRepository.count({

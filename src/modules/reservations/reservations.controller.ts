@@ -14,7 +14,6 @@ import {
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
-import { PaginationDto } from '../../common/dtos/pagination.dto';
 import { User } from '../users/entities/user.entity';
 import { UserRole } from '../users/interfaces/userRole.interface';
 import { CreateReservationDto } from './dto/create-reservation.dto';
@@ -56,30 +55,20 @@ export class ReservationsController {
   @Roles(UserRole.USER)
   @Get('past')
   findPastReservations(
-    @Query() paginationDto: PaginationDto,
     @Query() filters: ReservationFilterDto,
     @CurrentUser() user: User,
   ) {
-    return this.reservationsService.findPastReservations(
-      paginationDto,
-      filters,
-      user,
-    );
+    return this.reservationsService.findPastReservations(filters, user);
   }
 
   @Serialize(ReservationSummaryDto)
   @Roles(UserRole.USER)
   @Get('upcoming')
   findUpcomingReservations(
-    @Query() paginationDto: PaginationDto,
     @Query() filters: ReservationFilterDto,
     @CurrentUser() user: User,
   ) {
-    return this.reservationsService.findUpcomingReservations(
-      paginationDto,
-      filters,
-      user,
-    );
+    return this.reservationsService.findUpcomingReservations(filters, user);
   }
 
   @Serialize(ReservationCalenderCardDto)

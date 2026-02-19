@@ -413,10 +413,10 @@ export class ReservationsService {
   // 🔒 Private reusable query builder
   private async findReservationsByDateRelation(
     user: User,
-    paginationDto: PaginationDto,
     filters: ReservationFilterDto,
     isPast: boolean,
   ) {
+    const { page, limit } = filters;
     const today = new Date();
 
     const query = this.reservationRepository
@@ -437,7 +437,7 @@ export class ReservationsService {
     // Apply filters
     this.applyFilters(query, filters);
 
-    return await paginate(query, paginationDto);
+    return await paginate(query, { page, limit });
   }
 
   private applyFilters<T extends ObjectLiteral>(
@@ -455,31 +455,13 @@ export class ReservationsService {
   }
 
   // 🌅 Upcoming reservations (today or future)
-  async findUpcomingReservations(
-    paginationDto: PaginationDto,
-    filters: ReservationFilterDto,
-    user: User,
-  ) {
-    return this.findReservationsByDateRelation(
-      user,
-      paginationDto,
-      filters,
-      false,
-    );
+  async findUpcomingReservations(filters: ReservationFilterDto, user: User) {
+    return this.findReservationsByDateRelation(user, filters, false);
   }
 
   // 🌇 Past reservations (before today)
-  async findPastReservations(
-    paginationDto: PaginationDto,
-    filters: ReservationFilterDto,
-    user: User,
-  ) {
-    return this.findReservationsByDateRelation(
-      user,
-      paginationDto,
-      filters,
-      true,
-    );
+  async findPastReservations(filters: ReservationFilterDto, user: User) {
+    return this.findReservationsByDateRelation(user, filters, true);
   }
 
   async findReservationsByDateRange(
