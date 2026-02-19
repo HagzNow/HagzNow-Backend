@@ -8,17 +8,13 @@ import {
   Patch,
   Post,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { Roles } from 'src/common/decorators/roles.decorator';
-import { PaginationDto } from 'src/common/dtos/pagination.dto';
-import { SortDto } from 'src/common/dtos/sort.dto';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { User } from '../users/entities/user.entity';
 import { UserRole } from '../users/interfaces/userRole.interface';
 import { ArenasService } from './arenas.service';
-import { ArenaExtraDto } from '../arena-extras/dto/arena-extra.dto';
 import { ArenaDetailsDto } from './dto/arena/arena-details.dto';
 import { ArenaFilterDto } from './dto/arena/arena-filter.dto';
 import { ArenaSummaryDto } from './dto/arena/arena-summary.dto';
@@ -50,21 +46,14 @@ export class ArenasController {
 
   @Serialize(ArenaSummaryDto)
   @Get()
-  findAll(
-    @Query() paginationDto: PaginationDto,
-    @Query() filters: ArenaFilterDto,
-    @Query() sort: SortDto,
-  ) {
-    return this.arenasService.findAll(paginationDto, filters, sort);
+  findAll(@Query() filters: ArenaFilterDto) {
+    return this.arenasService.findAll(filters);
   }
   @Serialize(ArenaSummaryDto)
   @Roles(UserRole.ADMIN)
   @Get('requests')
-  findRequests(
-    @Query() paginationDto: PaginationDto,
-    @Query() filters: ArenaFilterDto,
-  ) {
-    return this.arenasService.findRequests(paginationDto, filters);
+  findRequests(@Query() filters: ArenaFilterDto) {
+    return this.arenasService.findRequests(filters);
   }
 
   @Serialize(ArenaSummaryDto)
@@ -72,14 +61,9 @@ export class ArenasController {
   @Get('owner')
   async getOwnerArenas(
     @CurrentUser() owner: User,
-    @Query() paginationDto: PaginationDto,
     @Query() filters: ArenaFilterDto,
   ) {
-    return await this.arenasService.findByOwner(
-      owner.id,
-      paginationDto,
-      filters,
-    );
+    return await this.arenasService.findByOwner(owner.id, filters);
   }
   @Roles(UserRole.OWNER)
   @Get('owner/names')

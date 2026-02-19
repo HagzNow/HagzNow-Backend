@@ -9,7 +9,6 @@ import {
   Query,
 } from '@nestjs/common';
 import { Roles } from 'src/common/decorators/roles.decorator';
-import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { UserFilterDto } from '../users/dto/user-filter.dto';
@@ -34,11 +33,8 @@ export class AdminController {
 
   @Serialize(UserDto)
   @Get('users')
-  findAll(
-    @Query() paginationDto: PaginationDto,
-    @Query() filters: UserFilterDto,
-  ) {
-    return this.AdminService.findAll(paginationDto, filters);
+  findAll(@Query() filters: UserFilterDto) {
+    return this.AdminService.findAll(filters);
   }
 
   @Get('users/stats')
