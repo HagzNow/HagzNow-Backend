@@ -5,11 +5,13 @@ export class ArenaExtraDto {
   id: string;
 
   @Expose()
-  @Transform(({ obj }) => obj.extra.name)
+  @Transform(({ obj }) => obj.extra?.name || obj.name)
   name: string;
 
   @Expose()
-  @Transform(({ obj }) => obj.priceAtReservation)
+  @Transform(({ obj }) => {
+    return obj.priceAtReservation || obj.extra?.price || obj.price;
+  })
   price: number;
 
   @Expose()

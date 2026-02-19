@@ -182,7 +182,17 @@ export class ArenasService {
       );
 
     const repo = manager ? manager.getRepository(Arena) : this.arenaRepository;
-    const arena = await repo.findOneBy({ id });
+    const arena = await repo.findOne({
+      where: { id },
+      relations: {
+        extras: true,
+        location: true,
+        category: true,
+        owner: true,
+        reviews: true,
+        images: true,
+      },
+    });
     if (!arena) {
       return ApiResponseUtil.throwError(
         'errors.arena.not_found',
