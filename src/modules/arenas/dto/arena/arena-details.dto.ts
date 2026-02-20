@@ -1,23 +1,12 @@
 import { Expose, Transform, Type } from 'class-transformer';
 import { CategoryDto } from 'src/modules/categories/dto/category.dto';
 import { UserDto } from 'src/modules/users/dto/user.dto';
-import { ArenaStatus } from '../../interfaces/arena-status.interface';
 import { ArenaExtraDto } from '../../../arena-extras/dto/arena-extra.dto';
 import { ArenaImageDto } from '../arena-image/arena-image.dto';
 import { ArenaLocationDto } from '../arena-location/arena-location.dto';
-import { getUploadUrl } from 'src/common/utils/upload-url.util';
+import { ArenaSummaryDto } from './arena-summary.dto';
 
-export class ArenaDetailsDto {
-  @Expose()
-  id: string;
-
-  @Expose()
-  name: string;
-
-  @Expose()
-  @Transform(({ value }) => getUploadUrl(value))
-  thumbnail: string;
-
+export class ArenaDetailsDto extends ArenaSummaryDto {
   @Expose()
   minPeriod: number;
 
@@ -26,12 +15,6 @@ export class ArenaDetailsDto {
 
   @Expose()
   closingHour: number;
-
-  @Expose()
-  pricePerHour: number;
-
-  @Expose()
-  depositPercent: number;
 
   @Expose()
   description: string;
@@ -54,9 +37,6 @@ export class ArenaDetailsDto {
   @Type(() => ArenaExtraDto)
   @Expose()
   extras?: ArenaExtraDto[];
-
-  @Expose()
-  status: ArenaStatus;
 
   @Expose()
   @Type(() => UserDto)

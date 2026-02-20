@@ -45,8 +45,23 @@ export class ArenaSummaryDto {
   averageRating: number;
 
   @Expose()
+  @Transform(({ obj }) => {
+    if (!obj.reviews) {
+      return 0;
+    }
+    return obj.reviews.length;
+  })
+  numOfReviews: number;
+
+  @Expose()
   status: ArenaStatus;
 
   @Expose()
+  @Transform(({ obj }) => {
+    if (!obj.courts || obj.courts.length === 0) {
+      return 0;
+    }
+    return obj.courts.length;
+  })
   numOfCourts: number;
 }
