@@ -21,18 +21,40 @@ export class CourtSlotsService {
   ) {}
 
   private validateAndFormatDate(date: string): string | never {
-    // Step 0: validate date
     const today = new Date();
-    const formattedDate = today.toISOString().split('T')[0]; // 'YYYY-MM-DD'
+    const formattedTodayDate = today.toISOString().split('T')[0];
 
-    if (formattedDate > date) {
+    if (formattedTodayDate > date) {
       return ApiResponseUtil.throwError(
         'errors.reservation.past_time',
         'INVALID_DATE',
         HttpStatus.BAD_REQUEST,
       );
     }
-    return formattedDate;
+    return formattedTodayDate;
+  }
+
+  private generateAllHours(openingHour: number, closingHour: number): number[] {
+    return Array.from(
+      { length: closingHour - openingHour },
+      (_, i) => openingHour + i,
+    );
+  }
+
+  private filterAvailableHours(
+    allHours: number[],
+    bookedHours: number[],
+    date: string,
+  ): number[] {
+    const formattedTodayDate = this.validateAndFormatDate(date);
+    let availableHours = allHours.filter((h) => !bookedHours.includes(h));
+
+    if (formattedTodayDate === date) {
+      const currentHour = new Date().getHours();
+      availableHours = availableHours.filter((h) => h >= currentHour);
+    }
+
+    return availableHours;
   }
 
   async createSlots(
@@ -67,35 +89,25 @@ export class CourtSlotsService {
   ): Promise<
     { courtId: string; date: string; availableHours: number[] } | never
   > {
-    const formattedDate = this.validateAndFormatDate(date);
+    const formattedTodayDate = this.validateAndFormatDate(date);
 
-    // Step 1: find court
     const court = await this.courtsService.findOne(courtId);
-
-    // Step 2: get all booked slots for that date
     const bookedSlots = await this.slotRepo.find({
       where: { court: { id: courtId }, date },
       select: ['hour'],
     });
 
     const bookedHours = bookedSlots.map((slot) => slot.hour);
-
-    // Step 3: get arena to know opening and closing hours
     const arena = await this.arenasService.findOne(court.arena.id);
-    // Step 3: generate all possible hours for this court
-    const allHours: number[] = [];
-    for (let h = arena.openingHour; h < arena.closingHour; h++) {
-      allHours.push(h);
-    }
-
-    // Step 4: filter available ones
-    let availableHours = allHours.filter((h) => !bookedHours.includes(h));
-
-    // Step 5: filter out past hours if date is today
-    if (formattedDate === date) {
-      const currentHour = new Date().getHours();
-      availableHours = availableHours.filter((h) => h >= currentHour);
-    }
+    const allHours = this.generateAllHours(
+      arena.openingHour,
+      arena.closingHour,
+    );
+    const availableHours = this.filterAvailableHours(
+      allHours,
+      bookedHours,
+      date,
+    );
 
     return {
       courtId,
@@ -105,7 +117,7 @@ export class CourtSlotsService {
   }
 
   async getAvailableSlotsForArena(arenaId: string, date: string) {
-    const formattedDate = this.validateAndFormatDate(date);
+    const formattedTodayDate = this.validateAndFormatDate(date);
     const arena = await this.arenasService.findOne(arenaId);
     const courts = await this.courtsService.findByArena(
       arenaId,
@@ -115,7 +127,7 @@ export class CourtSlotsService {
     const bookedSlots = await this.slotRepo.find({
       where: {
         court: { id: In(courtIds) },
-        date: formattedDate,
+        date: date,
       },
       relations: { court: true },
     });
@@ -129,15 +141,15 @@ export class CourtSlotsService {
 
     const result = courts.map((court) => {
       const bookedHours = bookedHoursByCourt[court.id] || [];
-      const allHours: number[] = [];
-      for (let h = arena.openingHour; h < arena.closingHour; h++) {
-        allHours.push(h);
-      }
-      let availableHours = allHours.filter((h) => !bookedHours.includes(h));
-      if (formattedDate === date) {
-        const currentHour = new Date().getHours();
-        availableHours = availableHours.filter((h) => h >= currentHour);
-      }
+      const allHours = this.generateAllHours(
+        arena.openingHour,
+        arena.closingHour,
+      );
+      const availableHours = this.filterAvailableHours(
+        allHours,
+        bookedHours,
+        date,
+      );
       return {
         courtId: court.id,
         courtName: court.name,
@@ -145,7 +157,6 @@ export class CourtSlotsService {
         availableHours,
       };
     });
-
     return result;
   }
 
@@ -156,7 +167,6 @@ export class CourtSlotsService {
   ) {
     const repo = manager ? manager.getRepository(CourtSlot) : this.slotRepo;
 
-    // 1. Map the DTOs into TypeORM where conditions
     const whereConditions = courtReservationSlotsDto.map(
       ({ courtId, slots }) => ({
         court: { id: courtId },
@@ -166,7 +176,6 @@ export class CourtSlotsService {
       }),
     );
 
-    // 2. Execute a single query with the array of conditions (joined by OR)
     const slotsBooked = await repo.find({
       where: whereConditions,
       select: {
@@ -176,7 +185,6 @@ export class CourtSlotsService {
       relations: ['court'],
     });
 
-    // 3. Extract and return the hours grouped by court
     const result: Record<string, number[]> = {};
     slotsBooked.forEach((slot) => {
       if (!result[slot.court.id]) {
@@ -220,7 +228,6 @@ export class CourtSlotsService {
     startDate?: Date,
     endDate?: Date,
   ) {
-    // Set default date range to last month to today if not provided
     if (!startDate) {
       const today = new Date();
       startDate = new Date(
@@ -234,7 +241,6 @@ export class CourtSlotsService {
       endDate = new Date(today.getFullYear(), today.getMonth(), today.getDay());
     }
 
-    // Query to get popular booking times
     const result = await this.slotRepo
       .createQueryBuilder('slot')
       .innerJoin('slot.arena', 'arena')
