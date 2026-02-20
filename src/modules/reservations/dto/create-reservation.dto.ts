@@ -45,8 +45,5 @@ export class CreateReservationDto {
     message: 'errors.validation.invalid_extras_format',
   })
   @Type(() => ReservationExtraItemDto)
-  @ArrayUniqueBy<CourtReservationSlotsDto>('courtId', {
-    message: 'courtReservationSlotsDto cannot have duplicate courtId',
-  })
   extras?: ReservationExtraItemDto[];
 }
