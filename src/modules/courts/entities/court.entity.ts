@@ -1,4 +1,3 @@
-import { Reservation } from 'src/modules/reservations/entities/reservation.entity';
 import {
   Column,
   Entity,
@@ -6,7 +5,6 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { ArenaStatus } from '../../arenas/interfaces/arena-status.interface';
 import { CourtSlot } from '../../court-slots/entities/court-slot.entity';
 import { Arena } from '../../arenas/entities/arena.entity';
 import { CourtStatus } from '../interfaces/court-status.interface';

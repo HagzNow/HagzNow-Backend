@@ -140,6 +140,7 @@ export class CourtSlotsService {
       }
       return {
         courtId: court.id,
+        courtName: court.name,
         date,
         availableHours,
       };
