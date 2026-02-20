@@ -46,4 +46,7 @@ export class ArenaSummaryDto {
 
   @Expose()
   status: ArenaStatus;
+
+  @Expose()
+  numOfCourts: number;
 }
