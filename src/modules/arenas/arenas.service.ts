@@ -96,9 +96,8 @@ export class ArenasService {
       .leftJoinAndSelect('arenas.reviews', 'review')
       .leftJoinAndSelect('arenas.location', 'location')
       .leftJoinAndSelect('arenas.category', 'category')
-      .where('arenas.status = :status', { status: 'active' })
-      .loadRelationCountAndMap('arenas.numOfCourts', 'arenas.courts');
-
+      .leftJoinAndSelect('arenas.courts', 'courts')
+      .where('arenas.status = :status', { status: 'active' });
     // Apply filters dynamically
     this.applyFilters(query, filters);
     // Apply sorting dynamically
