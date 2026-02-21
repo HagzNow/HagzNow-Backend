@@ -20,13 +20,11 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, any> {
     return next.handle().pipe(
       map((data) => {
         let translatedMessage;
-        console.log('Original Message:', data?.message); // Debug log
         if (data?.message) {
           translatedMessage =
             this.i18n.translate(data.message, {
               lang,
             }) || data.message;
-          console.log('Translated Message:', translatedMessage); // Debug log
         }
         delete data?.message; // Remove the original message key from the response
         return ApiResponseUtil.success(data, translatedMessage);

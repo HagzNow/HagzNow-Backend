@@ -276,8 +276,7 @@ export class UsersService {
       );
     }
     user.email = newEmail;
-    const updatedUser = await this.userRepository.save(user);
-    console.log('Emitting emailUpdated event for user:', updatedUser);
+    await this.userRepository.save(user);
     return { message: 'messages.user.email_updated_successfully' };
   }
 
