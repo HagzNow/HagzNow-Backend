@@ -22,6 +22,7 @@ import { UpdatePhoneDto } from './dto/update-phone.dto';
 import { UpdateLanguageDto } from './dto/update-language.dto';
 import { SubmitOwnerVerificationDto } from './dto/submit-owner-verification.dto';
 import { RejectOwnerRequestDto } from './dto/reject-owner-request.dto';
+import { UpdateEmailDto } from './dto/update-email.dto';
 
 @Controller('users')
 export class UsersController {
@@ -44,14 +45,28 @@ export class UsersController {
     return await this.usersService.update(id, userData);
   }
 
-  @Serialize(UserDto)
   @UseGuards(AuthGuard)
   @Patch('profile/phone')
   async updatePhone(
     @Body() updatePhoneDto: UpdatePhoneDto,
     @CurrentUser() user: User,
   ) {
-    return await this.usersService.updatePhone(user, updatePhoneDto.newPhone);
+    return await this.usersService.updatePhone(
+      user.id,
+      updatePhoneDto.newPhone,
+    );
+  }
+
+  @UseGuards(AuthGuard)
+  @Patch('profile/email')
+  async updateEmail(
+    @Body() updateEmailDto: UpdateEmailDto,
+    @CurrentUser() user: User,
+  ) {
+    return await this.usersService.updateEmail(
+      user.id,
+      updateEmailDto.newEmail,
+    );
   }
 
   @Serialize(UserDto)
@@ -64,14 +79,13 @@ export class UsersController {
     return await this.usersService.submitVerificationImages(user, dto);
   }
 
-  @Serialize(UserDto)
   @UseGuards(AuthGuard)
   @Patch('profile/language')
   async updateLanguage(
     @Body() { newLanguage }: UpdateLanguageDto,
     @CurrentUser() user: User,
   ) {
-    return await this.usersService.updateLanguage(user, newLanguage);
+    return await this.usersService.updateLanguage(user.id, newLanguage);
   }
 
   @Serialize(OwnerDto)

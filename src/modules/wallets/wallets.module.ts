@@ -10,9 +10,14 @@ import { WalletTransactionService } from './wallet-transaction.service';
 import { WalletController } from './wallets.controller';
 import { WalletsListener } from './wallets.listener';
 import { WalletsService } from './wallets.service';
+import { UsersModule } from '../users/users.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Wallet, WalletTransaction]), AuthModule],
+  imports: [
+    TypeOrmModule.forFeature([Wallet, WalletTransaction]),
+    AuthModule,
+    UsersModule,
+  ],
 
   controllers: [
     WalletController,

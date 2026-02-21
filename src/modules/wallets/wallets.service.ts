@@ -10,6 +10,7 @@ import { Wallet } from './entities/wallet.entity';
 import { TransactionStage } from './interfaces/transaction-stage.interface';
 import { TransactionType } from './interfaces/transaction-type.interface';
 import { WalletTransactionService } from './wallet-transaction.service';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class WalletsService {
@@ -18,6 +19,7 @@ export class WalletsService {
     private readonly dataSource: DataSource,
     @Inject(forwardRef(() => WalletTransactionService))
     private readonly walletTransactionService: WalletTransactionService,
+    private readonly usersService: UsersService,
   ) {}
   async create(user: User) {
     const newWallet = this.walletRepository.create({ user, balance: 0 });
@@ -90,7 +92,11 @@ export class WalletsService {
     return true;
   }
 
-  async lockAmount(userId: string, amount: number, manager?: EntityManager): Promise<boolean | never> {
+  async lockAmount(
+    userId: string,
+    amount: number,
+    manager?: EntityManager,
+  ): Promise<boolean | never> {
     const repo = manager
       ? manager.getRepository(Wallet)
       : this.walletRepository;
@@ -198,7 +204,11 @@ export class WalletsService {
     });
   }
 
-  async deduceAmount(amount: number, user: User, manager?: EntityManager): Promise<{ message: string; balance: number } | never> {
+  async deduceAmount(
+    amount: number,
+    user: User,
+    manager?: EntityManager,
+  ): Promise<{ message: string; balance: number } | never> {
     const repo = manager
       ? manager.getRepository(Wallet)
       : this.walletRepository;
@@ -222,12 +232,13 @@ export class WalletsService {
     return { message: 'Withdrawal successful', balance: wallet.balance };
   }
 
-  async requestWithdrawal(amount: number, user: User) {
+  async requestWithdrawal(amount: number, userId: string) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
+      const user = await this.usersService.findOneById(userId);
       // 1. Validate amount
       if (!amount || amount <= 0) {
         throw ApiResponseUtil.throwError(
