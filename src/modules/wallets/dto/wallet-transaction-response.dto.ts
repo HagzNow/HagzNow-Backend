@@ -20,7 +20,12 @@ export class WalletTransactionResponseDto {
   referenceId: string;
 
   @Expose()
-  @Transform(({ obj }) => obj.user.fName + ' ' + obj.user.lName)
+  @Transform(({ obj }) => {
+    if (obj.user.fName && obj.user.lName) {
+      return `${obj.user.fName} ${obj.user.lName}`;
+    }
+    return null;
+  })
   userName: string;
 
   @Expose()

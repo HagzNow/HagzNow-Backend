@@ -45,11 +45,11 @@ export class UsersService {
   }
 
   async findOneById(
-    id: string,
+    userId: string,
     manager?: EntityManager,
   ): Promise<User | never> {
     // In case id is undefined or null without this it will return first value
-    if (!id)
+    if (!userId)
       return ApiResponseUtil.throwError(
         'errors.auth.user_not_found',
         'USER_NOT_FOUND',
@@ -59,7 +59,7 @@ export class UsersService {
     const repo = manager ? manager.getRepository(User) : this.userRepository;
     const user = await repo.findOne({
       where: {
-        id,
+        id: userId,
         status: UserStatus.ACTIVE,
       },
     });
@@ -77,8 +77,8 @@ export class UsersService {
    * Find user by id for profile fetch. Allows ACTIVE, PENDING, or REJECTED so that
    * PENDING owners can see verification state and REJECTED users can see rejection reason.
    */
-  async findOneByIdForProfile(id: string): Promise<User | never> {
-    if (!id)
+  async findOneByIdForProfile(userId: string): Promise<User | never> {
+    if (!userId)
       return ApiResponseUtil.throwError(
         'errors.auth.user_not_found',
         'USER_NOT_FOUND',
@@ -86,7 +86,7 @@ export class UsersService {
       );
 
     const user = await this.userRepository.findOne({
-      where: [{ id, status: Not(UserStatus.RESTRICTED) }],
+      where: [{ id: userId, status: Not(UserStatus.RESTRICTED) }],
     });
     if (!user) {
       return ApiResponseUtil.throwError(
@@ -113,10 +113,10 @@ export class UsersService {
   }
 
   private async updateStatus(
-    id: string,
+    userId: string,
     status: UserStatus,
   ): Promise<User | never> {
-    const user = await this.userRepository.findOneBy({ id });
+    const user = await this.userRepository.findOneBy({ id: userId });
     if (!user) {
       return ApiResponseUtil.throwError(
         'errors.auth.user_not_found',
@@ -134,12 +134,14 @@ export class UsersService {
     user.status = status;
     return await this.userRepository.save(user);
   }
-  async acceptOwnerRequest(id: string) {
-    await this.updateStatus(id, UserStatus.ACTIVE);
+
+  async acceptOwnerRequest(userId: string) {
+    await this.updateStatus(userId, UserStatus.ACTIVE);
     return { message: 'messages.auth.owner_request.accepted' };
   }
-  async rejectOwnerRequest(id: string, reason?: string) {
-    const user = await this.userRepository.findOneBy({ id });
+
+  async rejectOwnerRequest(userId: string, reason?: string) {
+    const user = await this.userRepository.findOneBy({ id: userId });
     if (!user) {
       return ApiResponseUtil.throwError(
         'errors.auth.user_not_found',
@@ -188,20 +190,23 @@ export class UsersService {
     user.selfieWithId = dto.selfieWithId;
     return await this.userRepository.save(user);
   }
-
-  async update(
-    id: string,
-    updateUserDto: UpdateUserDto,
-  ): Promise<User | never> {
-    const user = await this.userRepository.findOneBy({ id });
-    if (!user) {
+  private async validateUserCanUpdateAndFetch(userId: string): Promise<User> {
+    const user = await this.findOneById(userId);
+    if (user.status !== UserStatus.ACTIVE) {
       return ApiResponseUtil.throwError(
-        'errors.auth.user_not_found',
-        'USER_NOT_FOUND',
-        HttpStatus.NOT_FOUND,
+        'errors.auth.account_inactive',
+        'INACTIVE_ACCOUNT',
+        HttpStatus.FORBIDDEN,
       );
     }
+    return user;
+  }
 
+  async update(
+    userId: string,
+    updateUserDto: UpdateUserDto,
+  ): Promise<User | never> {
+    const user = await this.validateUserCanUpdateAndFetch(userId);
     // Handle avatar replacement: delete old avatar file if path changed
     if (
       updateUserDto.avatar &&
@@ -214,7 +219,12 @@ export class UsersService {
     Object.assign(user, updateUserDto);
     return await this.userRepository.save(user);
   }
-  async updatePhone(user: User, newPhone: string): Promise<void | never> {
+
+  async updatePhone(
+    userId: string,
+    newPhone: string,
+  ): Promise<{ message: string } | never> {
+    const user = await this.validateUserCanUpdateAndFetch(userId);
     // ensure different phone number
     if (user.phone === newPhone) {
       return ApiResponseUtil.throwError(
@@ -240,12 +250,42 @@ export class UsersService {
     });
     user.phone = newPhone;
     await this.userRepository.save(user);
+    return { message: 'messages.user.phone_updated_successfully' };
+  }
+
+  async updateEmail(
+    userId: string,
+    newEmail: string,
+  ): Promise<{ message: string } | never> {
+    const user = await this.validateUserCanUpdateAndFetch(userId);
+    // ensure different email
+    if (user.email === newEmail) {
+      return ApiResponseUtil.throwError(
+        'errors.auth.same_email',
+        'SAME_EMAIL',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    // ensure unique email
+    const existingUser = await this.findOneByEmail(newEmail);
+    if (existingUser && existingUser.id !== user.id) {
+      return ApiResponseUtil.throwError(
+        'errors.auth.email_already_exists',
+        'EMAIL_IN_USE',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    user.email = newEmail;
+    const updatedUser = await this.userRepository.save(user);
+    console.log('Emitting emailUpdated event for user:', updatedUser);
+    return { message: 'messages.user.email_updated_successfully' };
   }
 
   async updateLanguage(
-    user: User,
+    userId: string,
     newLanguage: Language,
-  ): Promise<void | never> {
+  ): Promise<{ message: string } | never> {
+    const user = await this.validateUserCanUpdateAndFetch(userId);
     if (user.language === newLanguage) {
       return ApiResponseUtil.throwError(
         'errors.validation.same_language',
@@ -255,5 +295,24 @@ export class UsersService {
     }
     user.language = newLanguage;
     await this.userRepository.save(user);
+    return { message: 'messages.user.language_updated_successfully' };
+  }
+
+  async updatePassword(
+    userId: string,
+    newPassword: string,
+  ): Promise<{ message: string } | never> {
+    const user = await this.validateUserCanUpdateAndFetch(userId);
+    if (user.password === newPassword) {
+      return ApiResponseUtil.throwError(
+        'errors.auth.same_password',
+        'SAME_PASSWORD',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    user.password = newPassword;
+    await this.userRepository.save(user);
+    return { message: 'messages.user.password_updated_successfully' };
   }
 }

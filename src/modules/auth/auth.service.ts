@@ -84,7 +84,7 @@ export class AuthService {
     currentUser: User,
     oldPassword: string,
     newPassword: string,
-  ): Promise<User | never> {
+  ): Promise<{ message: string } | never> {
     const user = await this.usersService.findOneById(currentUser.id);
     if (user.status !== UserStatus.ACTIVE)
       return ApiResponseUtil.throwError(
@@ -101,7 +101,7 @@ export class AuthService {
         'INVALID_OLD_PASSWORD',
         HttpStatus.UNAUTHORIZED,
       );
-
-    return await this.usersService.update(user.id, { password: newPassword });
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    return await this.usersService.updatePassword(user.id, hashedPassword);
   }
 }

@@ -33,12 +33,15 @@
     "errors.validation.invalid_extras_format": "مصفوفة الإضافات مش صحيحة. لازم تكون مصفوفة من الكائنات اللي فيها id و quantity",
     "invalid_language": "اللغة اللي اخترتها مش مدعومة",
     "language_required": "لازم تختار لغة",
+    "email_required": "الإيميل مطلوب",
+    "invalid_email": "الإيميل مش صحيح",
     "same_language": "اللغة الجديدة لازم تكون مختلفة عن القديمة"
   },
   "auth": {
     "passwords_do_not_match": "الباسوردات مش متطابقة",
     "password_too_weak": "الباسورد لازم يكون ٨ أحرف على الأقل وفيه حروف كبيرة وصغيرة ورقم وعلامات خاصة",
     "password_length": "يجب أن تكون كلمة المرور بين 8 و 20 حرفًا",
+    "same_email": "الإيميل الجديد لازم يكون مختلف عن القديم",
     "email_already_exists": "الإيميل ده موجود قبل كده",
     "username_already_exists": "اسم المستخدم ده موجود قبل كده",
     "phone_already_exists": "رقم الموبايل ده موجود قبل كده",

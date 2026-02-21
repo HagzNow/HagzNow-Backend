@@ -32,12 +32,15 @@
     "quantity_maximum": "Quantity must be less than 100",
     "errors.validation.invalid_extras_format": "Invalid extras array format. Must be an array of objects with id and quantity",
     "invalid_language": "The selected language is not supported",
+    "email_required": "Email is required",
+    "invalid_email": "Invalid email format",
     "language_required": "Language selection is required"
   },
   "auth": {
     "passwords_do_not_match": "Passwords do not match",
     "password_too_weak": "Password must be at least 8 characters with uppercase, lowercase, number, and special character",
     "password_length": "Password must be between 8 and 20 characters",
+    "same_email": "New email must be different from the old one",
     "email_already_exists": "Email already exists",
     "username_already_exists": "Username already exists",
     "phone_already_exists": "Phone number already exists",

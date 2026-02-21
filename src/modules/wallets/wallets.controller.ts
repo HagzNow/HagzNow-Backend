@@ -59,7 +59,7 @@ export class WalletController {
   @Roles(UserRole.OWNER)
   @Post('request-withdraw')
   async withdraw(@Body('amount') amount: number, @CurrentUser() user: User) {
-    return await this.walletsService.requestWithdrawal(amount, user);
+    return await this.walletsService.requestWithdrawal(amount, user.id);
   }
 
   @Serialize(WalletTransactionResponseDto)
