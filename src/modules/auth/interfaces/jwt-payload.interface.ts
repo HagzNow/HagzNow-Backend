@@ -4,4 +4,6 @@ export class JwtPayload {
   id: string;
   role: UserRole;
   status: UserStatus;
+  email: string;
+  phone: string;
 }

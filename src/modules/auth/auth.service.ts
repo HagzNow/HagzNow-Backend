@@ -18,8 +18,8 @@ export class AuthService {
   ) {}
 
   private mapToJwtPayload(user: User): JwtPayload {
-    const { id, role, status } = user;
-    return { id, role, status };
+    const { id, role, status, email, phone } = user;
+    return { id, role, status, email, phone };
   }
 
   async signIn(
