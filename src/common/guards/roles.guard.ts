@@ -51,6 +51,14 @@ export class RolesGuard implements CanActivate {
           : 'PENDING_ACCOUNT';
       return ApiResponseUtil.throwError(messageKey, code, HttpStatus.FORBIDDEN);
     }
+    if (user.status === UserStatus.RESTRICTED) {
+      return ApiResponseUtil.throwError(
+        'errors.auth.user_restricted',
+        'RESTRICTED_ACCOUNT',
+        HttpStatus.FORBIDDEN,
+        { reasonForRestriction: user.rejectionReason },
+      );
+    }
     return true;
   }
 }

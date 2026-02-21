@@ -23,7 +23,10 @@ export class PaymobService {
   // -----------------------------
   // 🧩 Webhook handler
   // -----------------------------
-  async handleWebhook(payload: any, hmac: string): Promise<{ received: boolean } | never> {
+  async handleWebhook(
+    payload: any,
+    hmac: string,
+  ): Promise<{ received: boolean } | never> {
     const obj = payload.obj;
 
     const dataToHash = [
@@ -135,7 +138,7 @@ export class PaymobService {
         billing_data: {
           userId: '5151541',
           apartment: 'NA',
-          email,
+          email: email ?? 'test@test.com',
           floor: 'NA',
           first_name: 'Mohamed',
           last_name: 'Hisham',
