@@ -6,22 +6,22 @@ export class ReservationSummaryDto {
   id: string;
 
   @Expose()
-  @Transform(({ obj }) => obj.arena.thumbnail)
+  @Transform(({ obj }) => obj.arena?.thumbnail)
   arenaThumbnail: string;
 
   @Expose()
-  @Transform(({ obj }) => obj.arena.name)
+  @Transform(({ obj }) => obj.arena?.name)
   arenaName: string;
 
   @Expose()
-  @Transform(({ obj }) => obj.arena.category.name)
+  @Transform(({ obj }) => obj.arena?.category?.name)
   arenaCategory: string;
 
   @Expose()
   dateOfReservation: string;
 
   @Expose()
-  @Transform(({ obj }) => obj.slots.map((slot) => slot.hour))
+  @Transform(({ obj }) => obj.slots?.map((slot) => slot.hour))
   slots: string[];
 
   @Expose()
