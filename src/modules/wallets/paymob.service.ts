@@ -4,8 +4,8 @@ import * as crypto from 'crypto';
 import { ApiResponseUtil } from 'src/common/utils/api-response.util';
 import { DataSource } from 'typeorm';
 import { User } from '../users/entities/user.entity';
-import { TransactionStage } from './interfaces/transaction-stage.interface';
-import { TransactionType } from './interfaces/transaction-type.interface';
+import { TransactionStage } from '../../common/interfaces/transactions/transaction-stage.interface';
+import { TransactionType } from '../../common/interfaces/transactions/transaction-type.interface';
 import { WalletTransactionService } from './wallet-transaction.service';
 
 @Injectable()

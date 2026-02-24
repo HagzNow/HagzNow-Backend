@@ -7,8 +7,8 @@ import {
   Min,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { TransactionStage } from '../interfaces/transaction-stage.interface';
-import { TransactionType } from '../interfaces/transaction-type.interface';
+import { TransactionStage } from '../../../common/interfaces/transactions/transaction-stage.interface';
+import { TransactionType } from '../../../common/interfaces/transactions/transaction-type.interface';
 
 export class CreateWalletTransactionDto {
   @ApiProperty({

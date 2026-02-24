@@ -5,16 +5,14 @@ import { CustomerProfile } from 'src/modules/customerProfiles/entities/customer-
 import {
   Column,
   Entity,
-  JoinTable,
-  ManyToMany,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { PaymentMethod } from '../interfaces/payment-methods.interface';
+import { PaymentMethod } from '../../../common/interfaces/transactions/payment-methods.interface';
 import { ReservationStatus } from '../interfaces/reservation-status.interface';
 import { ReservationExtra } from './reservation-extra.entity';
-import { Court } from 'src/modules/courts/entities/court.entity';
+import { ReservationTransaction } from 'src/modules/reservation-transactions/entities/reservation-transaction.entity';
 
 @Entity('reservations')
 export class Reservation {
@@ -79,4 +77,14 @@ export class Reservation {
     eager: true,
   })
   customer: CustomerProfile;
+
+  @OneToMany(
+    () => ReservationTransaction,
+    (transaction) => transaction.reservation,
+    {
+      cascade: true,
+      eager: true,
+    },
+  )
+  transactions: ReservationTransaction[];
 }

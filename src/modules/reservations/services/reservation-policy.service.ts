@@ -8,7 +8,7 @@ import { EntityManager, QueryRunner } from 'typeorm';
 import { CreateManualReservationDto } from '../dto/create-manual-reservation.dto';
 import { CreateReservationDto } from '../dto/create-reservation.dto';
 import { ArenasService } from '../../arenas/arenas.service';
-import { TransactionStage } from 'src/modules/wallets/interfaces/transaction-stage.interface';
+import { TransactionStage } from 'src/common/interfaces/transactions/transaction-stage.interface';
 import { Reservation } from '../entities/reservation.entity';
 import { ReservationStatus } from '../interfaces/reservation-status.interface';
 import { WalletTransactionService } from 'src/modules/wallets/wallet-transaction.service';

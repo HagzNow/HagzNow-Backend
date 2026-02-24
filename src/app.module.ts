@@ -41,8 +41,9 @@ import { ArenaExtrasModule } from './modules/arena-extras/arena-extras.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { CourtsModule } from './modules/courts/courts.module';
 import { Court } from './modules/courts/entities/court.entity';
-import { CourtSlotsController } from './modules/court-slots/court-slots.controller';
 import { CourtSlotsModule } from './modules/court-slots/court-slots.module';
+import { ReservationTransaction } from './modules/reservation-transactions/entities/reservation-transaction.entity';
+import { ReservationTransactionsModule } from './modules/reservation-transactions/reservation-transactions.module';
 
 @Module({
   imports: [
@@ -92,6 +93,7 @@ import { CourtSlotsModule } from './modules/court-slots/court-slots.module';
           WalletTransaction,
           Reservation,
           ReservationExtra,
+          ReservationTransaction,
           Review,
           CustomerProfile,
           CourtsModule,
@@ -108,6 +110,7 @@ import { CourtSlotsModule } from './modules/court-slots/court-slots.module';
     WalletModule,
     ReservationsModule,
     ReservationExtrasModule,
+    ReservationTransactionsModule,
     ReviewsModule,
     HealthModule,
     UploadModule,

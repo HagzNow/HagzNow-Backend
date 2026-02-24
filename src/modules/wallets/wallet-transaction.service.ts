@@ -9,8 +9,8 @@ import { User } from '../users/entities/user.entity';
 import { CreateWalletTransactionDto } from './dto/create-wallet-transaction.dto';
 import { WalletTransaction } from './entities/wallet-transaction.entity';
 import { Wallet } from './entities/wallet.entity';
-import { TransactionStage } from './interfaces/transaction-stage.interface';
-import { TransactionType } from './interfaces/transaction-type.interface';
+import { TransactionStage } from '../../common/interfaces/transactions/transaction-stage.interface';
+import { TransactionType } from '../../common/interfaces/transactions/transaction-type.interface';
 import { WalletsService } from './wallets.service';
 
 @Injectable()
@@ -57,7 +57,10 @@ export class WalletTransactionService {
     return await paginate(query, paginationDto);
   }
 
-  async findOne(id: string, manager?: EntityManager): Promise<WalletTransaction | never> {
+  async findOne(
+    id: string,
+    manager?: EntityManager,
+  ): Promise<WalletTransaction | never> {
     const repo = manager
       ? manager.getRepository(WalletTransaction)
       : this.walletTransactionRepository;
@@ -72,7 +75,10 @@ export class WalletTransactionService {
     return transaction;
   }
 
-  async findOneByReferenceId(referenceId: string, manager?: EntityManager): Promise<WalletTransaction | never> {
+  async findOneByReferenceId(
+    referenceId: string,
+    manager?: EntityManager,
+  ): Promise<WalletTransaction | never> {
     const repo = manager
       ? manager.getRepository(WalletTransaction)
       : this.walletTransactionRepository;
