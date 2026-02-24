@@ -60,7 +60,8 @@
     "invalid_old_password": "Old password is incorrect",
     "same_phone_number": "New phone number must be different from the old one",
     "token_not_found": "Authentication token not found",
-    "invalid_token": "Invalid or expired token"
+    "invalid_token": "Invalid or expired token",
+    "same_language": "New language must be different from the old one"
   },
   "reservation": {
     "not_found": "Reservation not found",
@@ -69,7 +70,13 @@
     "not_in_hold": "Reservation is not in HOLD status",
     "id_required": "Reservation ID is required",
     "already_canceled": "This reservation has already been canceled",
-    "invalid_slots": "The selected slots are outside the arena's operating hours"
+    "invalid_slots": "The selected slots are outside the arena's operating hours",
+    "not_allowed_to_add_transaction": "You cannot add a transaction to this reservation"
+  },
+  "reservation_transaction": {
+    "not_found": "Reservation transaction not found",
+    "not_owner": "You do not have permission to modify this transaction",
+    "transaction_canceled": "This transaction has already been canceled"
   },
   "arena": {
     "not_found": "Arena not found",

@@ -7,8 +7,8 @@ import { v4 as uuidv4 } from 'uuid'; // <-- Import v4 function
 import { User } from '../users/entities/user.entity';
 import { UserRole } from '../users/interfaces/userRole.interface';
 import { Wallet } from './entities/wallet.entity';
-import { TransactionStage } from './interfaces/transaction-stage.interface';
-import { TransactionType } from './interfaces/transaction-type.interface';
+import { TransactionStage } from '../../common/interfaces/transactions/transaction-stage.interface';
+import { TransactionType } from '../../common/interfaces/transactions/transaction-type.interface';
 import { WalletTransactionService } from './wallet-transaction.service';
 import { UsersService } from '../users/users.service';
 

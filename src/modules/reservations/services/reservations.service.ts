@@ -26,7 +26,7 @@ import { CreateReservationDto } from '../dto/create-reservation.dto';
 import { ReservationFilterDto } from '../dto/reservation-filter.dto';
 import { UpdateReservationDto } from '../dto/update-reservation.dto';
 import { Reservation } from '../entities/reservation.entity';
-import { PaymentMethod } from '../interfaces/payment-methods.interface';
+import { PaymentMethod } from '../../../common/interfaces/transactions/payment-methods.interface';
 import { ReservationStatus } from '../interfaces/reservation-status.interface';
 import { ReservationsProducer } from '../queue/reservations.producer';
 import { CustomersService } from '../../customerProfiles/customers.service';
@@ -490,7 +490,10 @@ export class ReservationsService {
     return reservations;
   }
 
-  async findOne(id: string, manager?: EntityManager) {
+  async findOne(
+    id: string,
+    manager?: EntityManager,
+  ): Promise<Reservation | never> {
     const repo = manager
       ? manager.getRepository(Reservation)
       : this.reservationRepository;

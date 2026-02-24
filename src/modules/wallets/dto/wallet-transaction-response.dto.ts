@@ -1,7 +1,7 @@
 import { Expose, Transform } from 'class-transformer';
 import { PayoutMethod } from 'src/modules/users/interfaces/payout-method.interface';
-import { TransactionStage } from '../interfaces/transaction-stage.interface';
-import { TransactionType } from '../interfaces/transaction-type.interface';
+import { TransactionStage } from '../../../common/interfaces/transactions/transaction-stage.interface';
+import { TransactionType } from '../../../common/interfaces/transactions/transaction-type.interface';
 
 export class WalletTransactionResponseDto {
   @Expose()
