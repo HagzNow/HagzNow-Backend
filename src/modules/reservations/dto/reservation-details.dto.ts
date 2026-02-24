@@ -3,6 +3,8 @@ import { ArenaSummaryDto } from 'src/modules/arenas/dto/arena/arena-summary.dto'
 import { CourtSlotDto } from 'src/modules/court-slots/dto/court-slot.dto';
 import { CustomerResponseDto } from 'src/modules/customerProfiles/dto/customer-reponse.dto';
 import { ReservationExtraDto } from './reservation-extra.dto';
+import { Reservation } from '../entities/reservation.entity';
+import { ReservationTransactionResponseDto } from '../../reservation-transactions/dto/reservation-transactions-response.dto';
 
 export class ReservationDetailsDto {
   @Expose()
@@ -44,4 +46,8 @@ export class ReservationDetailsDto {
   @Expose()
   @Type(() => CustomerResponseDto)
   customer: CustomerResponseDto;
+
+  @Expose()
+  @Type(() => ReservationTransactionResponseDto)
+  transactions: ReservationTransactionResponseDto[];
 }

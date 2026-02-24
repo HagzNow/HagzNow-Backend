@@ -1,5 +1,5 @@
 import {
-  IsEnum,
+  IsIn,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -18,7 +18,7 @@ export class CreateReservationTransactionDto {
   amount: number;
 
   @IsNotEmpty()
-  @IsEnum([TransactionStage.PENDING, TransactionStage.INSTANT])
+  @IsIn([TransactionStage.PENDING, TransactionStage.INSTANT])
   stage: TransactionStage;
 
   @IsOptional()

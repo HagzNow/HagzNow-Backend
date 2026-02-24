@@ -511,6 +511,7 @@ export class ReservationsService {
         arena: { owner: true },
         customer: { user: true },
         extras: true,
+        transactions: true,
         slots: { court: true },
       },
     });

@@ -1,4 +1,4 @@
-import { IsEnum, IsNumber, IsOptional } from 'class-validator';
+import { IsEnum, IsNumber, IsOptional, IsString } from 'class-validator';
 import { TransactionStage } from 'src/common/interfaces/transactions/transaction-stage.interface';
 
 export class UpdateReservationTransactionDto {
@@ -9,4 +9,8 @@ export class UpdateReservationTransactionDto {
   @IsOptional()
   @IsEnum([TransactionStage.PENDING, TransactionStage.INSTANT])
   stage?: TransactionStage;
+
+  @IsOptional()
+  @IsString()
+  note?: string;
 }

@@ -19,6 +19,9 @@ export class ReservationTransactionResponseDto {
   method: string;
 
   @Expose()
+  stage: string;
+
+  @Expose()
   status: string;
 
   @Expose()

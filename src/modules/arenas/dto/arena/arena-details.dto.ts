@@ -5,6 +5,7 @@ import { ArenaExtraDto } from '../../../arena-extras/dto/arena-extra.dto';
 import { ArenaImageDto } from '../arena-image/arena-image.dto';
 import { ArenaLocationDto } from '../arena-location/arena-location.dto';
 import { ArenaSummaryDto } from './arena-summary.dto';
+import { CourtDto } from 'src/modules/courts/dto/court.dto';
 
 export class ArenaDetailsDto extends ArenaSummaryDto {
   @Expose()
@@ -41,4 +42,8 @@ export class ArenaDetailsDto extends ArenaSummaryDto {
   @Expose()
   @Type(() => UserDto)
   owner: UserDto;
+
+  @Expose()
+  @Type(() => CourtDto)
+  courts: CourtDto[];
 }

@@ -145,6 +145,7 @@ export class ReservationTransactionsService {
 
     transaction.amount = updateDto.amount ?? transaction.amount;
     transaction.stage = updateDto.stage ?? transaction.stage;
+    transaction.note = updateDto.note ?? transaction.note;
     return await this.reservationTransactionRepository.save(transaction);
   }
 
