@@ -469,14 +469,7 @@ export class ReservationsService {
     endDate: Date,
     filters: ReservationFilterDto,
   ) {
-    const arena = await this.arenasService.findOne(arenaId);
-    if (arena.owner.id !== user.id && user.role !== UserRole.ADMIN) {
-      return ApiResponseUtil.throwError(
-        'errors.general.unauthorized',
-        'UNAUTHORIZED_ACCESS',
-        HttpStatus.UNAUTHORIZED,
-      );
-    }
+    await this.reservationPolicy.validateArenaOwnershipOrAdmin(arenaId, user);
     const reservations = await this.reservationRepository.find({
       where: {
         arena: { id: arenaId },

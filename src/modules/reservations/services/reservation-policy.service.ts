@@ -19,6 +19,7 @@ import { AdminConfig } from 'src/modules/admin/admin.config';
 import { ReservationPricingService } from './reservation-pricing.service';
 import { ArenaExtraWithQuantity } from 'src/modules/arenas/types/arena-extra-with-quantity.type';
 import { ArenaExtrasService } from 'src/modules/arena-extras/arena-extras.service';
+import { UserRole } from 'src/modules/users/interfaces/userRole.interface';
 
 @Injectable()
 export class ReservationPolicy {
@@ -119,6 +120,21 @@ export class ReservationPolicy {
     }
   }
 
+  // Validate arena ownership or admin role for reservation access
+  async validateArenaOwnershipOrAdmin(
+    arenaId: string,
+    user: User,
+  ): Promise<void | never> {
+    const arena = await this.arenasService.findOne(arenaId);
+    if (arena.owner.id !== user.id && user.role !== UserRole.ADMIN) {
+      return ApiResponseUtil.throwError(
+        'errors.general.unauthorized',
+        'UNAUTHORIZED_ACCESS',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+  }
+
   ensureArenaIsActive(arena: Arena): void | never {
     if (arena.status !== ArenaStatus.ACTIVE) {
       return ApiResponseUtil.throwError(
@@ -205,6 +221,6 @@ export class ReservationPolicy {
     if (dto.customerId) {
       return this.customersService.findOneById(dto.customerId);
     }
-    return this.customersService.create(dto.customerDto);
+    return this.customersService.create(dto.customerId, dto.customerDto);
   }
 }
