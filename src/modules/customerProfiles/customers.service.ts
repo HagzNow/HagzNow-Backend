@@ -17,7 +17,10 @@ export class CustomersService {
     protected customersRepository: Repository<CustomerProfile>,
   ) {}
 
-  async create(customerDto: CreateCustomerDto): Promise<CustomerProfile | never> {
+  async create(
+    id: string,
+    customerDto: CreateCustomerDto,
+  ): Promise<CustomerProfile | never> {
     const duplicatePhoneCustomer = await this.customersRepository.findOne({
       where: {
         phone: customerDto.phone,
@@ -30,7 +33,7 @@ export class CustomersService {
         400,
       );
     }
-    const newCustomer = this.customersRepository.create(customerDto);
+    const newCustomer = this.customersRepository.create({ ...customerDto, id });
     await this.customersRepository.save(newCustomer);
     return newCustomer;
   }

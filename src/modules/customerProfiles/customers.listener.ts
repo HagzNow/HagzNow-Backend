@@ -18,7 +18,7 @@ export class CustomersListener {
         user.phone,
       );
       if (!customer) {
-        return await this.customersService.create({
+        return await this.customersService.create(user.id, {
           fName: user.fName,
           lName: user.lName,
           phone: user.phone,
