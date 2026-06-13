@@ -483,6 +483,58 @@ export class ReservationsService {
     return reservations;
   }
 
+  async findLiveReservationsForArena(
+    arenaId: string,
+    user: User,
+  ): Promise<Reservation[]> {
+    // 1. Guard against unauthorized access
+    await this.reservationPolicy.validateArenaOwnershipOrAdmin(arenaId, user);
+
+    const now = DateTime.now();
+
+    // Define our 30-minute grace padding boundaries
+    const absoluteStartLimit = now.minus({ minutes: 30 }); // Past boundary
+    const absoluteEndLimit = now.plus({ minutes: 30 }); // Future boundary
+
+    // Convert boundaries to database formats
+    const startDateStr = absoluteStartLimit.toFormat('yyyy-MM-dd');
+    const startHourInt = absoluteStartLimit.hour;
+
+    const endDateStr = absoluteEndLimit.toFormat('yyyy-MM-dd');
+    const endHourInt = absoluteEndLimit.hour;
+
+    return this.reservationRepository
+      .createQueryBuilder('reservation')
+      .innerJoinAndSelect('reservation.slots', 'slots')
+      .leftJoinAndSelect('reservation.customer', 'customer')
+      .leftJoinAndSelect('reservation.extras', 'extras')
+      .where('reservation.arenaId = :arenaId', { arenaId })
+      .andWhere('reservation.status IN (:...statuses)', {
+        statuses: [ReservationStatus.HOLD, ReservationStatus.CONFIRMED],
+      })
+      .andWhere('slots.cancelledAt IS NULL')
+
+      .andWhere(
+        `(
+        (slots.date = :startDateStr AND slots.hour >= :startHourInt)
+        OR
+        (slots.date > :startDateStr)
+      )
+      AND
+      (
+        (slots.date = :endDateStr AND slots.hour <= :endHourInt)
+        OR
+        (slots.date < :endDateStr)
+      )`,
+        {
+          startDateStr,
+          startHourInt,
+          endDateStr,
+          endHourInt,
+        },
+      )
+      .getMany();
+  }
   async findOne(
     id: string,
     manager?: EntityManager,

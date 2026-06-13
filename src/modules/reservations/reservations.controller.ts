@@ -90,6 +90,16 @@ export class ReservationsController {
     );
   }
 
+  @Serialize(ReservationCalenderCardDto)
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @Get('arena/:arenaId')
+  async getLiveReservations(
+    @Param('arenaId', new ParseUUIDPipe({ version: '4' })) arenaId: string,
+    @CurrentUser() user: User,
+  ) {
+    return this.reservationsService.findLiveReservationsForArena(arenaId, user);
+  }
+
   @Serialize(ReservationDetailsDto)
   @Get(':id')
   findOne(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
