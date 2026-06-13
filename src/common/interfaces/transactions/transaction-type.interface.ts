@@ -4,4 +4,5 @@ export enum TransactionType {
   PAYMENT = 'payment', // Paying for a reservation
   REFUND = 'refund', // Refund issued to user
   FEE = 'fee', // Service fee charged
+  MANUAL = 'manual', // Manually created transaction (e.g. adjustment)
 }

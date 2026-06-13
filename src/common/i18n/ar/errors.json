@@ -33,12 +33,15 @@
     "errors.validation.invalid_extras_format": "مصفوفة الإضافات مش صحيحة. لازم تكون مصفوفة من الكائنات اللي فيها id و quantity",
     "invalid_language": "اللغة اللي اخترتها مش مدعومة",
     "language_required": "لازم تختار لغة",
+    "email_required": "الإيميل مطلوب",
+    "invalid_email": "الإيميل مش صحيح",
     "same_language": "اللغة الجديدة لازم تكون مختلفة عن القديمة"
   },
   "auth": {
     "passwords_do_not_match": "الباسوردات مش متطابقة",
     "password_too_weak": "الباسورد لازم يكون ٨ أحرف على الأقل وفيه حروف كبيرة وصغيرة ورقم وعلامات خاصة",
     "password_length": "يجب أن تكون كلمة المرور بين 8 و 20 حرفًا",
+    "same_email": "الإيميل الجديد لازم يكون مختلف عن القديم",
     "email_already_exists": "الإيميل ده موجود قبل كده",
     "username_already_exists": "اسم المستخدم ده موجود قبل كده",
     "phone_already_exists": "رقم الموبايل ده موجود قبل كده",
@@ -66,7 +69,14 @@
     "slots_already_booked": " الاوقات دي محجوزة خلاص في الملعب ده ({bookedHours})",
     "not_in_hold": "الحجز مش في حالة الانتظار",
     "id_required": "رقم الحجز مطلوب",
-    "already_canceled": "الحجز ده اتلغى قبل كده"
+    "already_canceled": "الحجز ده اتلغى قبل كده",
+    "invalid_slots": "الأوقات اللي اخترتها  خارج نطاق ساعات الملعب",
+    "not_allowed_to_add_transaction": "مش مسموح لك تضيف عملية مالية للحجز ده"
+  },
+  "reservation_transaction": {
+    "not_found": "العملية مش موجودة",
+    "not_owner": "ملكش صلاحيه علي العمليه ديه ",
+    "transaction_canceled": "العملية دي اتلغت قبل كده"
   },
   "arena": {
     "not_found": "الملعب مش موجود",
@@ -81,6 +91,15 @@
   },
   "arena_extra": {
     "not_found": "الإضافة مش موجودة"
+  },
+  "court": {
+    "not_found": "الملعب الفرعي مش موجود",
+    "not_belong_to_arena": "الملعب الفرعي لازم يكون تابع لنفس الملعب الرئيسي",
+    "duplicate_ids": "معرفات الملاعب الفرعية لا يمكن أن تكون مكررة",
+    "inactive": "الملعب الفرعي مش متاح للحجز دلوقتي",
+    "status_not_changed": "حالة الملعب الفرعي المحدثة لازم تكون مختلفة عن الحالة الحالية",
+    "name_not_changed": "اسم الملعب الفرعي المحدث لازم يكون مختلف عن الاسم الحالي",
+    "unauthorized_update": "مش مسموح ليك تعدل الملعب الفرعي ده"
   },
   "category": {
     "not_found": "الفئة مش موجودة",

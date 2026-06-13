@@ -8,7 +8,7 @@ import { EntityManager, QueryRunner } from 'typeorm';
 import { CreateManualReservationDto } from '../dto/create-manual-reservation.dto';
 import { CreateReservationDto } from '../dto/create-reservation.dto';
 import { ArenasService } from '../../arenas/arenas.service';
-import { TransactionStage } from 'src/modules/wallets/interfaces/transaction-stage.interface';
+import { TransactionStage } from 'src/common/interfaces/transactions/transaction-stage.interface';
 import { Reservation } from '../entities/reservation.entity';
 import { ReservationStatus } from '../interfaces/reservation-status.interface';
 import { WalletTransactionService } from 'src/modules/wallets/wallet-transaction.service';
@@ -20,6 +20,8 @@ import { ReservationPricingService } from './reservation-pricing.service';
 import { ArenaExtraWithQuantity } from 'src/modules/arenas/types/arena-extra-with-quantity.type';
 import { ArenaExtrasService } from 'src/modules/arena-extras/arena-extras.service';
 import { UserRole } from 'src/modules/users/interfaces/userRole.interface';
+import { Court } from 'src/modules/courts/entities/court.entity';
+import { CourtsService } from 'src/modules/courts/courts.service';
 
 @Injectable()
 export class ReservationPolicy {
@@ -30,6 +32,7 @@ export class ReservationPolicy {
     private readonly adminConfig: AdminConfig,
     private readonly reservationPricingService: ReservationPricingService,
     private readonly arenaExtrasService: ArenaExtrasService,
+    private readonly courtsService: CourtsService,
   ) {}
 
   // VALIDATION METHODS
@@ -54,16 +57,6 @@ export class ReservationPolicy {
       return ApiResponseUtil.throwError(
         'errors.reservation.past_time',
         'RESERVATION_SLOT_IN_PAST',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-  }
-
-  validateSlotsAreInAllowedRange(slots: number[], arena: Arena): void | never {
-    if (slots.some((h) => h < arena.openingHour || h >= arena.closingHour)) {
-      return ApiResponseUtil.throwError(
-        'errors.reservation.invalid_slots',
-        'INVALID_RESERVATION_SLOTS',
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -156,23 +149,35 @@ export class ReservationPolicy {
   }
 
   // EXTRACTION METHODS
-  async extractArenaAndExtras(
+  async extractCourtsAndArenaAndExtras(
     dto: CreateReservationDto | CreateManualReservationDto,
     queryRunner: QueryRunner,
   ): Promise<{
+    courts: Court[];
     arena: Arena;
     extras: ArenaExtraWithQuantity[];
   }> {
+    const courts = await this.courtsService.findManyByIds(
+      dto.slots.map(({ courtId }) => courtId),
+      queryRunner.manager,
+    );
+
     const arena = await this.arenasService.findOne(
-      dto.arenaId,
+      courts[0].arena.id,
       queryRunner.manager,
     );
     // Make sure arena is active
-    this.ensureArenaIsActive(arena);
+    this.arenasService.ensureArenaIsActive(arena);
+
+    // Make sure all courts are active
+    this.courtsService.validateAllCourtsAreActive(courts);
+
+    // validate all courts belong to the same arena
+    this.courtsService.validateAllCourtsBelongToSameArena(courts, arena);
 
     // Load extras with quantity mapping
     if (!dto.extras || dto.extras.length === 0) {
-      return { arena, extras: [] };
+      return { courts, arena, extras: [] };
     }
 
     const extraIds = dto.extras.map((e) =>
@@ -180,7 +185,7 @@ export class ReservationPolicy {
     );
 
     const arenaExtras = await this.arenaExtrasService.findArenaExtrasByIds(
-      dto.arenaId,
+      arena.id,
       extraIds,
       queryRunner.manager,
     );
@@ -195,7 +200,7 @@ export class ReservationPolicy {
       return { ...extra, quantity };
     });
 
-    return { arena, extras: extrasWithQuantity };
+    return { courts, arena, extras: extrasWithQuantity };
   }
 
   buildPaymentContext(reservation: Reservation): ReservationPaymentContext {

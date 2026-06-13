@@ -1,8 +1,15 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { User } from '../../users/entities/user.entity';
-import { TransactionStage } from '../interfaces/transaction-stage.interface';
-import { TransactionType } from '../interfaces/transaction-type.interface';
+import { TransactionStage } from '../../../common/interfaces/transactions/transaction-stage.interface';
+import { TransactionType } from '../../../common/interfaces/transactions/transaction-type.interface';
 import { Wallet } from './wallet.entity';
+import { ReservationTransaction } from 'src/modules/reservation-transactions/entities/reservation-transaction.entity';
 
 @Entity('wallet_transactions')
 export class WalletTransaction {
@@ -37,6 +44,6 @@ export class WalletTransaction {
   @ManyToOne(() => User, { onDelete: 'RESTRICT', eager: true })
   user: User;
 
-  // @Column({ unique: true, nullable: true })
-  // orderId: number;
+  @OneToMany(() => ReservationTransaction, (rt) => rt.walletTransaction)
+  reservationTransactions: ReservationTransaction[];
 }

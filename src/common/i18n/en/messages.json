@@ -18,6 +18,12 @@
       "rejected": "Owner request rejected successfully"
     }
   },
+  "user": {
+    "password_updated_successfully": "Password updated successfully",
+    "language_updated_successfully": "Language updated successfully",
+    "email_updated_successfully": "Email updated successfully",
+    "phone_updated_successfully": "Phone number updated successfully"
+  },
   "wallet_transaction": {
     "withdrawal_request_accepted": "Withdrawal request accepted successfully",
     "withdrawal_request_rejected": "Withdrawal request rejected successfully"

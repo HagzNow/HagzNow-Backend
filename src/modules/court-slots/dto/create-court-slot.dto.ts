@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsInt, IsNotEmpty, IsString } from 'class-validator';
 
-export class CreateArenaSlotDto {
+export class CreateCourtSlotDto {
   @ApiProperty({
     description: 'Date of the slot (YYYY-MM-DD)',
     example: '2024-07-15',
@@ -24,5 +24,5 @@ export class CreateArenaSlotDto {
   })
   @IsNotEmpty()
   @IsInt()
-  arenaId: string;
+  courtId: string;
 }

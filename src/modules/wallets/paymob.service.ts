@@ -4,8 +4,8 @@ import * as crypto from 'crypto';
 import { ApiResponseUtil } from 'src/common/utils/api-response.util';
 import { DataSource } from 'typeorm';
 import { User } from '../users/entities/user.entity';
-import { TransactionStage } from './interfaces/transaction-stage.interface';
-import { TransactionType } from './interfaces/transaction-type.interface';
+import { TransactionStage } from '../../common/interfaces/transactions/transaction-stage.interface';
+import { TransactionType } from '../../common/interfaces/transactions/transaction-type.interface';
 import { WalletTransactionService } from './wallet-transaction.service';
 
 @Injectable()
@@ -23,7 +23,10 @@ export class PaymobService {
   // -----------------------------
   // 🧩 Webhook handler
   // -----------------------------
-  async handleWebhook(payload: any, hmac: string): Promise<{ received: boolean } | never> {
+  async handleWebhook(
+    payload: any,
+    hmac: string,
+  ): Promise<{ received: boolean } | never> {
     const obj = payload.obj;
 
     const dataToHash = [
@@ -135,7 +138,7 @@ export class PaymobService {
         billing_data: {
           userId: '5151541',
           apartment: 'NA',
-          email,
+          email: email ?? 'test@test.com',
           floor: 'NA',
           first_name: 'Mohamed',
           last_name: 'Hisham',

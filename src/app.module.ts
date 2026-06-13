@@ -14,7 +14,7 @@ import { ArenasModule } from './modules/arenas/arenas.module';
 import { ArenaExtra } from './modules/arena-extras/entities/arena-extra.entity';
 import { ArenaImage } from './modules/arenas/entities/arena-image.entity';
 import { ArenaLocation } from './modules/arenas/entities/arena-location.entity';
-import { ArenaSlot } from './modules/arenas/entities/arena-slot.entity';
+import { CourtSlot } from './modules/court-slots/entities/court-slot.entity';
 import { Arena } from './modules/arenas/entities/arena.entity';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { Category } from './modules/categories/entities/category.entity';
@@ -39,6 +39,11 @@ import { ReservationExtrasModule } from './modules/reservation-extras/reservatio
 import { HealthModule } from './modules/health/health.module';
 import { ArenaExtrasModule } from './modules/arena-extras/arena-extras.module';
 import { UploadModule } from './modules/upload/upload.module';
+import { CourtsModule } from './modules/courts/courts.module';
+import { Court } from './modules/courts/entities/court.entity';
+import { CourtSlotsModule } from './modules/court-slots/court-slots.module';
+import { ReservationTransaction } from './modules/reservation-transactions/entities/reservation-transaction.entity';
+import { ReservationTransactionsModule } from './modules/reservation-transactions/reservation-transactions.module';
 
 @Module({
   imports: [
@@ -82,13 +87,16 @@ import { UploadModule } from './modules/upload/upload.module';
           ArenaImage,
           ArenaLocation,
           ArenaExtra,
-          ArenaSlot,
+          Court,
+          CourtSlot,
           Wallet,
           WalletTransaction,
           Reservation,
           ReservationExtra,
+          ReservationTransaction,
           Review,
           CustomerProfile,
+          CourtsModule,
         ],
       }),
     }),
@@ -102,9 +110,12 @@ import { UploadModule } from './modules/upload/upload.module';
     WalletModule,
     ReservationsModule,
     ReservationExtrasModule,
+    ReservationTransactionsModule,
     ReviewsModule,
     HealthModule,
     UploadModule,
+    CourtsModule,
+    CourtSlotsModule,
   ],
   controllers: [AppController],
   providers: [

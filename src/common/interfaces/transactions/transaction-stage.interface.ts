@@ -7,4 +7,5 @@ export enum TransactionStage {
   FAILED = 'failed', // Transaction failed
   PROCESSED = 'processed', // Transaction has been processed
   REJECTED = 'rejected', // Transaction has been rejected
+  CANCELED = 'canceled', // Transaction has been canceled by user or system
 }

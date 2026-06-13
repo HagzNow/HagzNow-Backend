@@ -6,17 +6,14 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Arena } from './arena.entity';
+import { Court } from '../../courts/entities/court.entity';
 
-@Entity('arena_slots')
-@Index(
-  'unique_arena_date_hour_reservation_cancelledAt',
-  ['arena', 'date', 'hour', 'reservation', 'cancelledAt'],
-  {
-    unique: true,
-  },
-)
-export class ArenaSlot {
+@Entity('court_slots')
+@Index('unique_active_court_slot', ['court', 'date', 'hour'], {
+  unique: true,
+  where: `"cancelledAt" IS NULL`,
+})
+export class CourtSlot {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -29,8 +26,8 @@ export class ArenaSlot {
   @Column({ type: 'timestamp', nullable: true })
   cancelledAt: Date | null;
 
-  @ManyToOne(() => Arena, (arena) => arena.slots, { onDelete: 'CASCADE' })
-  arena: Arena;
+  @ManyToOne(() => Court, (court) => court.slots, { onDelete: 'CASCADE' })
+  court: Court;
 
   @ManyToOne(() => Reservation, (reservation) => reservation.slots, {
     onDelete: 'CASCADE',

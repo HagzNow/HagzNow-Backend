@@ -1,18 +1,17 @@
-// src/common/dtos/pagination.dto.ts
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, Max, Min } from 'class-validator';
+import { IsNumber, IsOptional, Max, Min } from 'class-validator';
 
 export class PaginationDto {
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
+  @IsNumber()
   @Min(1)
-  page = 1;
+  @Type(() => Number)
+  page: number = 1;
 
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
+  @IsNumber()
   @Min(1)
   @Max(100)
-  limit = 10;
+  @Type(() => Number)
+  limit: number = 10;
 }

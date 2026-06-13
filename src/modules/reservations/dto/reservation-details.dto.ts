@@ -1,9 +1,8 @@
-import { Expose, Transform, Type } from 'class-transformer';
-import { validate, ValidateNested } from 'class-validator';
-import { ArenaExtraDto } from 'src/modules/arena-extras/dto/arena-extra.dto';
-import { ArenaSlotDto } from 'src/modules/arenas/dto/arena-slot/arena-slot.dto';
+import { Expose, Type } from 'class-transformer';
 import { ArenaSummaryDto } from 'src/modules/arenas/dto/arena/arena-summary.dto';
+import { CourtSlotDto } from 'src/modules/court-slots/dto/court-slot.dto';
 import { CustomerResponseDto } from 'src/modules/customerProfiles/dto/customer-reponse.dto';
+import { ReservationExtraDto } from './reservation-extra.dto';
 
 export class ReservationDetailsDto {
   @Expose()
@@ -35,12 +34,12 @@ export class ReservationDetailsDto {
   totalAmount: number;
 
   @Expose()
-  @Type(() => ArenaSlotDto)
-  slots: ArenaSlotDto[];
+  @Type(() => CourtSlotDto)
+  slots: CourtSlotDto[];
 
   @Expose()
-  @Type(() => ArenaExtraDto)
-  extras: ArenaExtraDto[];
+  @Type(() => ReservationExtraDto)
+  extras: ReservationExtraDto[];
 
   @Expose()
   @Type(() => CustomerResponseDto)

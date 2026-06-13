@@ -8,22 +8,7 @@ import { UserStatus } from '../users/interfaces/userStatus.interface';
 import { User } from '../users/entities/user.entity';
 import { UserRole } from '../users/interfaces/userRole.interface';
 import { RegisterDto } from './dto/register.dto';
-
-const SENSITIVE_OWNER_FIELDS = [
-  'nationalIdFront',
-  'nationalIdBack',
-  'selfieWithId',
-] as const;
-
-function stripOwnerIdFieldsFromPayload<T extends Record<string, unknown>>(
-  payload: T,
-): Omit<T, (typeof SENSITIVE_OWNER_FIELDS)[number]> {
-  const result = { ...payload };
-  for (const key of SENSITIVE_OWNER_FIELDS) {
-    delete result[key];
-  }
-  return result as Omit<T, (typeof SENSITIVE_OWNER_FIELDS)[number]>;
-}
+import { JwtPayload } from './interfaces/jwt-payload.interface';
 
 @Injectable()
 export class AuthService {
@@ -31,6 +16,11 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
   ) {}
+
+  private mapToJwtPayload(user: User): JwtPayload {
+    const { id, role, status, email, phone } = user;
+    return { id, role, status, email, phone };
+  }
 
   async signIn(
     email: string,
@@ -45,39 +35,15 @@ export class AuthService {
         'INVALID_CREDENTIALS',
         HttpStatus.UNAUTHORIZED,
       );
-    if (user.status === UserStatus.PENDING && user.role !== UserRole.OWNER)
+    if (user.status === UserStatus.RESTRICTED)
       return ApiResponseUtil.throwError(
-        'errors.auth.pending_account',
-        'PENDING_ACCOUNT',
+        'errors.auth.user_restricted',
+        'RESTRICTED_ACCOUNT',
         HttpStatus.FORBIDDEN,
+        { reasonForRestriction: user.rejectionReason },
       );
-    if (user.status === UserStatus.PENDING && user.role === UserRole.OWNER) {
-      // Allow PENDING owners to sign in so they can submit ID images or check status
-      const { password, ...result } = user;
-      return {
-        token: await this.jwtService.signAsync(
-          stripOwnerIdFieldsFromPayload(result),
-        ),
-      };
-    }
-    if (user.status === UserStatus.REJECTED) {
-      // Allow REJECTED users to sign in so they can see profile and rejection reason
-      const { password, ...result } = user;
-      return {
-        token: await this.jwtService.signAsync(
-          stripOwnerIdFieldsFromPayload(result),
-        ),
-      };
-    }
-    if (user.status !== UserStatus.ACTIVE)
-      return ApiResponseUtil.throwError(
-        'errors.auth.account_inactive',
-        'DEACTIVATED_ACCOUNT',
-        HttpStatus.FORBIDDEN,
-      );
-    const { password, ...result } = user;
     return {
-      token: await this.jwtService.signAsync(result),
+      token: await this.jwtService.signAsync(this.mapToJwtPayload(user)),
     };
   }
 
@@ -109,10 +75,7 @@ export class AuthService {
       role,
       status,
     );
-    const { password, ...result } = user;
-    const token = await this.jwtService.signAsync(
-      stripOwnerIdFieldsFromPayload(result),
-    );
+    const token = await this.jwtService.signAsync(this.mapToJwtPayload(user));
 
     return { token };
   }
@@ -121,7 +84,7 @@ export class AuthService {
     currentUser: User,
     oldPassword: string,
     newPassword: string,
-  ): Promise<User | never> {
+  ): Promise<{ message: string } | never> {
     const user = await this.usersService.findOneById(currentUser.id);
     if (user.status !== UserStatus.ACTIVE)
       return ApiResponseUtil.throwError(
@@ -138,7 +101,7 @@ export class AuthService {
         'INVALID_OLD_PASSWORD',
         HttpStatus.UNAUTHORIZED,
       );
-
-    return await this.usersService.update(user.id, { password: newPassword });
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    return await this.usersService.updatePassword(user.id, hashedPassword);
   }
 }

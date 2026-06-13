@@ -1,5 +1,5 @@
 import { BullModule } from '@nestjs/bullmq';
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ArenasModule } from '../arenas/arenas.module';
 import { AuthModule } from '../auth/auth.module';
@@ -17,6 +17,9 @@ import { AdminModule } from '../admin/admin.module';
 import { ReservationPricingService } from './services/reservation-pricing.service';
 import { ReservationExtrasModule } from '../reservation-extras/reservation-extras.module';
 import { ArenaExtrasModule } from '../arena-extras/arena-extras.module';
+import { CourtSlotsModule } from '../court-slots/court-slots.module';
+import { CourtsModule } from '../courts/courts.module';
+import { ReservationTransactionsModule } from '../reservation-transactions/reservation-transactions.module';
 
 @Module({
   imports: [
@@ -30,6 +33,9 @@ import { ArenaExtrasModule } from '../arena-extras/arena-extras.module';
     WalletModule,
     CustomersModule,
     AdminModule,
+    CourtSlotsModule,
+    CourtsModule,
+    forwardRef(() => ReservationTransactionsModule),
   ],
   controllers: [ReservationsController],
   providers: [

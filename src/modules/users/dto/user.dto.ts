@@ -3,6 +3,7 @@ import { UserRole } from '../interfaces/userRole.interface';
 import { UserStatus } from '../interfaces/userStatus.interface';
 import { PayoutMethod } from '../interfaces/payout-method.interface';
 import { getUploadUrl } from 'src/common/utils/upload-url.util';
+import { Language } from 'src/common/enums/language.enum';
 
 export class UserDto {
   @Expose()
@@ -36,15 +37,14 @@ export class UserDto {
   @Expose()
   @Transform(({ obj }) =>
     obj.role === UserRole.OWNER
-      ? !!(
-          obj.nationalIdFront &&
-          obj.nationalIdBack &&
-          obj.selfieWithId
-        )
+      ? !!(obj.nationalIdFront && obj.nationalIdBack && obj.selfieWithId)
       : undefined,
   )
   verificationSubmitted?: boolean;
 
   @Expose()
   rejectionReason?: string;
+
+  @Expose()
+  language: Language;
 }

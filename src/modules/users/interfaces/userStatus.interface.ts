@@ -3,4 +3,5 @@ export enum UserStatus {
   ACTIVE = 'active',
   DISABLED = 'disabled',
   REJECTED = 'rejected',
+  RESTRICTED = 'restricted',
 }

@@ -1,19 +1,18 @@
 import { Expose } from 'class-transformer';
-import { ArenaSlot } from 'src/modules/arenas/entities/arena-slot.entity';
+import { CourtSlot } from 'src/modules/court-slots/entities/court-slot.entity';
 import { Arena } from 'src/modules/arenas/entities/arena.entity';
 import { CustomerProfile } from 'src/modules/customerProfiles/entities/customer-profile.entity';
 import {
   Column,
   Entity,
-  JoinTable,
-  ManyToMany,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { PaymentMethod } from '../interfaces/payment-methods.interface';
+import { PaymentMethod } from '../../../common/interfaces/transactions/payment-methods.interface';
 import { ReservationStatus } from '../interfaces/reservation-status.interface';
 import { ReservationExtra } from './reservation-extra.entity';
+import { ReservationTransaction } from 'src/modules/reservation-transactions/entities/reservation-transaction.entity';
 
 @Entity('reservations')
 export class Reservation {
@@ -57,11 +56,11 @@ export class Reservation {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   totalAmount: number;
 
-  @OneToMany(() => ArenaSlot, (slot) => slot.reservation, {
+  @OneToMany(() => CourtSlot, (slot) => slot.reservation, {
     onDelete: 'CASCADE',
     eager: true,
   })
-  slots: ArenaSlot[];
+  slots: CourtSlot[];
 
   @OneToMany(
     () => ReservationExtra,
@@ -78,4 +77,14 @@ export class Reservation {
     eager: true,
   })
   customer: CustomerProfile;
+
+  @OneToMany(
+    () => ReservationTransaction,
+    (transaction) => transaction.reservation,
+    {
+      cascade: true,
+      eager: true,
+    },
+  )
+  transactions: ReservationTransaction[];
 }

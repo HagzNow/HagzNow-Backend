@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { forwardRef, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { SortDto } from 'src/common/dtos/sort.dto';
@@ -12,8 +12,6 @@ import { applySorting } from 'src/common/utils/sort.util';
 import {
   DeepPartial,
   EntityManager,
-  In,
-  IsNull,
   ObjectLiteral,
   Repository,
   SelectQueryBuilder,
@@ -23,12 +21,11 @@ import { User } from '../users/entities/user.entity';
 import { ArenaFilterDto } from './dto/arena/arena-filter.dto';
 import { CreateArenaDto } from './dto/arena/create-arena.dto';
 import { UpdateArenaDto } from './dto/arena/update-arena.dto';
-import { ArenaExtra } from '../arena-extras/entities/arena-extra.entity';
 import { ArenaImage } from './entities/arena-image.entity';
 import { Arena } from './entities/arena.entity';
 import { ArenaStatus } from './interfaces/arena-status.interface';
 import { UploadService } from '../upload/upload.service';
-import { UploadEntity } from '../upload/multer.config';
+import { CourtsService } from '../courts/courts.service';
 
 @Injectable()
 export class ArenasService {
@@ -39,26 +36,45 @@ export class ArenasService {
     private readonly arenaImageRepository: Repository<ArenaImage>,
     private readonly categoriesService: CategoriesService,
     private readonly uploadService: UploadService,
+    @Inject(forwardRef(() => CourtsService))
+    private readonly courtsService: CourtsService,
   ) {}
+
+  ensureArenaIsActive(arena: Arena): void | never {
+    if (arena.status !== ArenaStatus.ACTIVE) {
+      return ApiResponseUtil.throwError(
+        'errors.arena.not_active',
+        'ARENA_NOT_ACTIVE',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  ensureOwner(arena: Arena, user: User): void | never {
+    if (arena.owner.id !== user.id) {
+      return ApiResponseUtil.throwError(
+        'errors.arena.unauthorized_update',
+        'UNAUTHORIZED_ACCESS',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+  }
 
   async create(
     createArenaDto: CreateArenaDto,
     owner: User,
   ): Promise<Arena | never> {
     const { categoryId, ...arenaData } = createArenaDto;
-
     // Use thumbnail and images paths directly from DTO (already uploaded via POST /upload/arenas)
     const thumbnailPath = createArenaDto.thumbnail || '';
     const imagesPath =
       createArenaDto.images?.map((img) => ({ path: img.path })) || [];
-
     const arena = this.arenaRepository.create({
       ...arenaData,
       thumbnail: thumbnailPath,
       images: imagesPath,
       owner,
     } as DeepPartial<Arena>);
-
     if (categoryId) {
       const category = await this.categoriesService.findOne(categoryId);
       if (!category)
@@ -69,23 +85,19 @@ export class ArenasService {
         );
       arena.category = category;
     }
-
-    return await this.arenaRepository.save(arena);
+    const arenaSaved = await this.arenaRepository.save(arena);
+    return arenaSaved;
   }
-  async findAll(
-    paginationDto: PaginationDto,
-    filters: ArenaFilterDto,
-    sort: SortDto,
-  ) {
-    const { orderBy, direction } = sort;
+  async findAll(filters: ArenaFilterDto) {
+    const { orderBy, direction, page, limit } = filters;
     // Start a query builder
     const query = this.arenaRepository
       .createQueryBuilder('arenas')
       .leftJoinAndSelect('arenas.reviews', 'review')
       .leftJoinAndSelect('arenas.location', 'location')
       .leftJoinAndSelect('arenas.category', 'category')
+      .leftJoinAndSelect('arenas.courts', 'courts')
       .where('arenas.status = :status', { status: 'active' });
-
     // Apply filters dynamically
     this.applyFilters(query, filters);
     // Apply sorting dynamically
@@ -94,10 +106,11 @@ export class ArenasService {
     }
 
     // Paginate (using your existing paginate util)
-    return paginate(query, paginationDto);
+    return paginate(query, { page, limit });
   }
 
-  async findRequests(paginationDto: PaginationDto, filters: ArenaFilterDto) {
+  async findRequests(filters: ArenaFilterDto) {
+    const { page, limit } = filters;
     // Start a query builder
     const query = this.arenaRepository
       .createQueryBuilder('arenas')
@@ -108,14 +121,11 @@ export class ArenasService {
     // Apply filters dynamically
     this.applyFilters(query, filters);
     // Paginate (using your existing paginate util)
-    return paginate(query, paginationDto);
+    return paginate(query, { page, limit });
   }
 
-  async findByOwner(
-    ownerId: string,
-    paginationDto: PaginationDto,
-    filters: ArenaFilterDto,
-  ) {
+  async findByOwner(ownerId: string, filters: ArenaFilterDto) {
+    const { page, limit } = filters;
     const query = this.arenaRepository
       .createQueryBuilder('arenas')
       .leftJoinAndSelect('arenas.reviews', 'review')
@@ -124,7 +134,7 @@ export class ArenasService {
       .leftJoinAndSelect('arenas.owner', 'owner')
       .where('arenas.ownerId = :ownerId', { ownerId });
     this.applyFilters(query, filters);
-    return await paginate(query, paginationDto);
+    return await paginate(query, { page, limit });
   }
   async getNumberOfArenasByOwner(ownerId: string) {
     const count = await this.arenaRepository.count({
@@ -172,7 +182,17 @@ export class ArenasService {
       );
 
     const repo = manager ? manager.getRepository(Arena) : this.arenaRepository;
-    const arena = await repo.findOneBy({ id });
+    const arena = await repo.findOne({
+      where: { id },
+      relations: {
+        extras: true,
+        location: true,
+        category: true,
+        owner: true,
+        reviews: true,
+        images: true,
+      },
+    });
     if (!arena) {
       return ApiResponseUtil.throwError(
         'errors.arena.not_found',
@@ -234,7 +254,9 @@ export class ArenasService {
     if (updateArenaDto.images !== undefined) {
       const newImagePaths = updateArenaDto.images
         .map((img) => img.path)
-        .filter((path): path is string => typeof path === 'string' && path.length > 0);
+        .filter(
+          (path): path is string => typeof path === 'string' && path.length > 0,
+        );
       const oldImagePaths = arena.images?.map((img) => img.path) || [];
       oldImagePathsToDelete = oldImagePaths.filter(
         (oldPath) => !newImagePaths.includes(oldPath),
@@ -255,7 +277,9 @@ export class ArenasService {
 
       const newImagePaths: string[] = updateArenaDto.images
         .map((img) => img.path)
-        .filter((path): path is string => typeof path === 'string' && path.length > 0);
+        .filter(
+          (path): path is string => typeof path === 'string' && path.length > 0,
+        );
 
       const newImages = newImagePaths.map((p: string) => {
         const image = new ArenaImage();
@@ -303,39 +327,6 @@ export class ArenasService {
 
   async remove(id: string) {
     return await this.arenaRepository.delete(id);
-  }
-
-  async getTotalArenaSlotsCount(
-    ownerId: string,
-    startDate?: Date,
-    endDate?: Date,
-  ) {
-    const today = new Date();
-    // Set default date range to last month to today if not provided
-    if (!startDate) {
-      startDate = new Date(
-        today.getFullYear(),
-        today.getMonth() - 1,
-        today.getDate() + 1, // ✔ correct
-      );
-    }
-    if (!endDate) {
-      endDate = new Date(
-        today.getFullYear(),
-        today.getMonth(),
-        today.getDate() + 1,
-      );
-    }
-    const totalDays =
-      (endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24) + 1;
-    const arenas = await this.arenaRepository
-      .createQueryBuilder('arena')
-      .where('arena.ownerId = :ownerId', { ownerId })
-      .getMany();
-    const totalAvailableSlots = arenas.reduce((total, arena) => {
-      return total + arena.totalAvailableHours() * totalDays;
-    }, 0);
-    return totalAvailableSlots;
   }
 
   async getMostReservedArenaByOwner(
@@ -390,5 +381,15 @@ export class ArenasService {
     applyExactFilters(query, { categoryId: filters.categoryId }, alias);
     applyILikeFilters(query, { name: filters.name }, alias);
     applyExactFilters(query, { governorate: filters.governorate }, 'location');
+  }
+
+  validateSlotsAreInAllowedRange(slots: number[], arena: Arena): void | never {
+    if (slots.some((h) => h < arena.openingHour || h >= arena.closingHour)) {
+      return ApiResponseUtil.throwError(
+        'errors.reservation.invalid_slots',
+        'INVALID_RESERVATION_SLOTS',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
   }
 }

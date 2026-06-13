@@ -32,12 +32,15 @@
     "quantity_maximum": "Quantity must be less than 100",
     "errors.validation.invalid_extras_format": "Invalid extras array format. Must be an array of objects with id and quantity",
     "invalid_language": "The selected language is not supported",
+    "email_required": "Email is required",
+    "invalid_email": "Invalid email format",
     "language_required": "Language selection is required"
   },
   "auth": {
     "passwords_do_not_match": "Passwords do not match",
     "password_too_weak": "Password must be at least 8 characters with uppercase, lowercase, number, and special character",
     "password_length": "Password must be between 8 and 20 characters",
+    "same_email": "New email must be different from the old one",
     "email_already_exists": "Email already exists",
     "username_already_exists": "Username already exists",
     "phone_already_exists": "Phone number already exists",
@@ -57,7 +60,8 @@
     "invalid_old_password": "Old password is incorrect",
     "same_phone_number": "New phone number must be different from the old one",
     "token_not_found": "Authentication token not found",
-    "invalid_token": "Invalid or expired token"
+    "invalid_token": "Invalid or expired token",
+    "same_language": "New language must be different from the old one"
   },
   "reservation": {
     "not_found": "Reservation not found",
@@ -65,7 +69,14 @@
     "slots_already_booked": "Some slots are already booked for this arena {bookedHours}",
     "not_in_hold": "Reservation is not in HOLD status",
     "id_required": "Reservation ID is required",
-    "already_canceled": "This reservation has already been canceled"
+    "already_canceled": "This reservation has already been canceled",
+    "invalid_slots": "The selected slots are outside the arena's operating hours",
+    "not_allowed_to_add_transaction": "You cannot add a transaction to this reservation"
+  },
+  "reservation_transaction": {
+    "not_found": "Reservation transaction not found",
+    "not_owner": "You do not have permission to modify this transaction",
+    "transaction_canceled": "This transaction has already been canceled"
   },
   "arena": {
     "not_found": "Arena not found",
@@ -80,6 +91,15 @@
   },
   "arena_extra": {
     "not_found": "Arena extra not found"
+  },
+  "court": {
+    "not_found": "Court not found",
+    "not_belong_to_arena": "Court must belong to the same arena",
+    "duplicate_ids": "Duplicate court IDs are not allowed",
+    "inactive": "Court is not available for booking at the moment",
+    "status_not_changed": "Updated status must be different from the current status",
+    "name_not_changed": "Updated name must be different from the current name",
+    "unauthorized_update": "You are not authorized to update this court"
   },
   "category": {
     "not_found": "Category not found",
