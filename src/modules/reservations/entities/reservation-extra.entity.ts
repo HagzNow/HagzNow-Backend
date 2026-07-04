@@ -1,16 +1,11 @@
 import { ArenaExtra } from 'src/modules/arena-extras/entities/arena-extra.entity';
 import { Entity, PrimaryGeneratedColumn, ManyToOne, Column } from 'typeorm';
-import { Reservation } from './reservation.entity';
+import { ReservationTransaction } from 'src/modules/reservation-transactions/entities/reservation-transaction.entity';
 
 @Entity('reservation_extras')
 export class ReservationExtra {
   @PrimaryGeneratedColumn('uuid')
   id: string;
-
-  @ManyToOne(() => Reservation, (r) => r.extras, {
-    onDelete: 'CASCADE',
-  })
-  reservation: Reservation;
 
   @ManyToOne(() => ArenaExtra, (extra) => extra.reservationExtras, {
     eager: true,
@@ -22,6 +17,11 @@ export class ReservationExtra {
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   priceAtReservation: number;
+
+  @ManyToOne(() => ReservationTransaction, (tx) => tx.extras, {
+    onDelete: 'CASCADE',
+  })
+  transaction: ReservationTransaction;
 
   @Column({ type: 'timestamp', nullable: true })
   cancelledAt: Date | null;

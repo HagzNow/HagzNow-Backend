@@ -2,9 +2,8 @@ import {
   Column,
   Entity,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
-  CreateDateColumn,
-  Transaction,
 } from 'typeorm';
 import { Reservation } from '../../reservations/entities/reservation.entity';
 import { WalletTransaction } from 'src/modules/wallets/entities/wallet-transaction.entity';
@@ -12,6 +11,7 @@ import { User } from 'src/modules/users/entities/user.entity';
 import { PaymentMethod } from 'src/common/interfaces/transactions/payment-methods.interface';
 import { TransactionType } from 'src/common/interfaces/transactions/transaction-type.interface';
 import { TransactionStage } from 'src/common/interfaces/transactions/transaction-stage.interface';
+import { ReservationExtra } from 'src/modules/reservations/entities/reservation-extra.entity';
 
 @Entity('reservation_transactions')
 export class ReservationTransaction {
@@ -48,6 +48,16 @@ export class ReservationTransaction {
 
   @ManyToOne(() => WalletTransaction, { nullable: true, eager: false })
   walletTransaction?: WalletTransaction;
+
+  @OneToMany(
+    () => ReservationExtra,
+    (reservationExtra) => reservationExtra.transaction,
+    {
+      cascade: false,
+      eager: true,
+    },
+  )
+  extras: ReservationExtra[];
 
   @ManyToOne(() => User, { onDelete: 'RESTRICT', eager: true })
   user: User;

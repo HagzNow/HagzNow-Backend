@@ -62,16 +62,6 @@ export class Reservation {
   })
   slots: CourtSlot[];
 
-  @OneToMany(
-    () => ReservationExtra,
-    (reservationExtra) => reservationExtra.reservation,
-    {
-      cascade: true,
-      eager: true,
-    },
-  )
-  extras: ReservationExtra[];
-
   @ManyToOne(() => CustomerProfile, (customer) => customer.reservations, {
     onDelete: 'CASCADE',
     eager: true,
@@ -87,4 +77,10 @@ export class Reservation {
     },
   )
   transactions: ReservationTransaction[];
+
+  @Expose()
+  get allExtras(): ReservationExtra[] {
+    // Flattens the extras arrays from all transactions into one unified array
+    return this.transactions?.flatMap((tx) => tx.extras ?? []) ?? [];
+  }
 }
