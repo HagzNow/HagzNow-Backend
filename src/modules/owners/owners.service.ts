@@ -6,7 +6,7 @@ import { UsersService } from '../users/users.service';
 import { Injectable } from '@nestjs/common';
 import { ArenasService } from '../arenas/arenas.service';
 import { ReservationsService } from '../reservations/services/reservations.service';
-import { WalletTransactionService } from '../wallets/wallet-transaction.service';
+import { WalletTransactionService } from '../wallets/services/wallet-transaction.service';
 import { CourtSlotsService } from '../court-slots/court-slots.service';
 import { UploadService } from '../upload/upload.service';
 

@@ -73,6 +73,24 @@ export class UsersService {
     return user;
   }
 
+  async isActiveAdmin(
+    userId: string,
+    manager?: EntityManager,
+  ): Promise<boolean> {
+    if (!userId) {
+      return false;
+    }
+
+    const repo = manager ? manager.getRepository(User) : this.userRepository;
+    return repo.exist({
+      where: {
+        id: userId,
+        role: UserRole.ADMIN,
+        status: UserStatus.ACTIVE,
+      },
+    });
+  }
+
   /**
    * Find user by id for profile fetch. Allows ACTIVE, PENDING, or REJECTED so that
    * PENDING owners can see verification state and REJECTED users can see rejection reason.

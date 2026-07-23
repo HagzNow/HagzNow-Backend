@@ -6,7 +6,7 @@ import { DataSource } from 'typeorm';
 import { User } from '../users/entities/user.entity';
 import { TransactionStage } from '../../common/interfaces/transactions/transaction-stage.interface';
 import { TransactionType } from '../../common/interfaces/transactions/transaction-type.interface';
-import { WalletTransactionService } from './wallet-transaction.service';
+import { WalletTransactionService } from './services/wallet-transaction.service';
 
 @Injectable()
 export class PaymobService {

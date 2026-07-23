@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { User } from 'src/modules/users/entities/user.entity';
-import { WalletsService } from './wallets.service';
+import { WalletsService } from './services/wallets.service';
 import { USER_CREATED } from 'src/common/event.constants';
 
 @Injectable()

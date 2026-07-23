@@ -38,4 +38,13 @@ export class AdminConfig {
     const admin = await this.usersService.findOneById(id);
     return admin;
   }
+  // Inside your AdminConfig class, add this getter:
+  get modificationBufferHours(): number {
+    const buffer = Number(this.config.get('MODIFICATION_BUFFER_HOURS'));
+    // If not configured or invalid, default to 2 hours
+    if (isNaN(buffer) || buffer < 0) {
+      return 2;
+    }
+    return buffer;
+  }
 }

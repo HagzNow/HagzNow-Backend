@@ -7,49 +7,23 @@ import {
   ParseDatePipe,
   ParseUUIDPipe,
   Patch,
-  Post,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { User } from '../users/entities/user.entity';
 import { UserRole } from '../users/interfaces/userRole.interface';
-import { CreateReservationDto } from './dto/create-reservation.dto';
 import { ReservationCalenderCardDto } from './dto/reservation-calender-card.dto';
 import { ReservationDetailsDto } from './dto/reservation-details.dto';
 import { ReservationFilterDto } from './dto/reservation-filter.dto';
 import { ReservationSummaryDto } from './dto/reservation-summary.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
 import { ReservationsService } from './services/reservations.service';
-import { CreateManualReservationDto } from './dto/create-manual-reservation.dto';
 
 @Controller('reservations')
 export class ReservationsController {
   constructor(private readonly reservationsService: ReservationsService) {}
-
-  @Serialize(ReservationDetailsDto)
-  @Roles(UserRole.USER)
-  @Post()
-  create(
-    @Body() createReservationDto: CreateReservationDto,
-    @CurrentUser() user: User,
-  ) {
-    return this.reservationsService.create(createReservationDto, user);
-  }
-  @Serialize(ReservationDetailsDto)
-  @Roles(UserRole.OWNER)
-  @Post('owner/manual')
-  createManualReservation(
-    @Body() createManualReservationDto: CreateManualReservationDto,
-    @CurrentUser() user: User,
-  ) {
-    return this.reservationsService.createManualReservation(
-      createManualReservationDto,
-      user,
-    );
-  }
 
   @Serialize(ReservationSummaryDto)
   @Roles(UserRole.USER)
@@ -101,9 +75,13 @@ export class ReservationsController {
   }
 
   @Serialize(ReservationDetailsDto)
+  @Roles(UserRole.USER, UserRole.OWNER, UserRole.ADMIN)
   @Get(':id')
-  findOne(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
-    return this.reservationsService.findOne(id);
+  findOne(
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @CurrentUser() user: User,
+  ) {
+    return this.reservationsService.findDetails(id, user);
   }
 
   @Patch(':id')
@@ -114,14 +92,6 @@ export class ReservationsController {
     return this.reservationsService.update(id, updateReservationDto);
   }
 
-  @Roles(UserRole.USER)
-  @Patch('cancel/:id')
-  cancel(
-    @CurrentUser() user: User,
-    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
-  ) {
-    return this.reservationsService.cancelReservation(id, user);
-  }
   @Delete(':id')
   remove(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
     return this.reservationsService.remove(id);

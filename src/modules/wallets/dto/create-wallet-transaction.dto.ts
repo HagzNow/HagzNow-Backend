@@ -2,6 +2,7 @@ import {
   IsEnum,
   IsNotEmpty,
   IsNumber,
+  IsOptional,
   IsPositive,
   IsString,
   Min,
@@ -30,4 +31,8 @@ export class CreateWalletTransactionDto {
 
   @IsString()
   referenceId?: string;
+
+  @IsOptional()
+  @IsString()
+  note?: string;
 }

@@ -35,6 +35,9 @@ export class WalletTransaction {
   @Column({ type: 'varchar', nullable: true })
   referenceId?: string;
 
+  @Column({ type: 'varchar', nullable: true })
+  note?: string;
+
   @ManyToOne(() => Wallet, (wallet) => wallet.transactions, {
     onDelete: 'RESTRICT',
     eager: true,

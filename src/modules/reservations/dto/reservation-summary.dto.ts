@@ -1,5 +1,6 @@
 import { Expose, Transform } from 'class-transformer';
 import { ReservationStatus } from '../interfaces/reservation-status.interface';
+import { ReservationPaymentStatus } from '../interfaces/reservation-payment-status.interface';
 
 export class ReservationSummaryDto {
   @Expose()
@@ -26,6 +27,18 @@ export class ReservationSummaryDto {
 
   @Expose()
   totalAmount: number;
+
+  @Expose()
+  depositTotalAmount: number;
+
+  @Expose()
+  paidAmount: number;
+
+  @Expose()
+  remainingAmount: number;
+
+  @Expose()
+  paymentStatus: ReservationPaymentStatus;
 
   @Expose()
   status: ReservationStatus;

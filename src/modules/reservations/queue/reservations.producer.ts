@@ -3,6 +3,7 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable } from '@nestjs/common';
 import { Queue } from 'bullmq';
 import { DateTime } from 'luxon';
+import { Reservation } from '../entities/reservation.entity';
 
 @Injectable()
 export class ReservationsProducer {
@@ -22,10 +23,20 @@ export class ReservationsProducer {
     return true;
   }
 
-  async scheduleSettlement(
+  public async scheduleSettlementJob(reservation: Reservation) {
+    // Schedule reservation settlement
+    const tz = 'Africa/Cairo';
+    const runAt = DateTime.fromISO(reservation.dateOfReservation, { zone: tz })
+      .startOf('day')
+      .toUTC();
+
+    // run after 1 minute for testing
+    // const runAt = DateTime.now().plus({ minutes: 1 }).toUTC();
+    await this.scheduleSettlement(reservation.id, runAt);
+  }
+  private async scheduleSettlement(
     reservationId: string,
     runAt: DateTime, // DateTime
-    amount: number,
   ) {
     if (!runAt?.isValid) throw new Error('Invalid runAt DateTime');
 
@@ -34,7 +45,7 @@ export class ReservationsProducer {
     // Add job to the queue
     const job = await this.queue.add(
       'settleReservation',
-      { reservationId, amount },
+      { reservationId },
       {
         jobId: `settle-${reservationId}`,
         delay,

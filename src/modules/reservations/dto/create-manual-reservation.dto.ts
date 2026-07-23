@@ -3,7 +3,10 @@ import { CreateReservationDto } from './create-reservation.dto';
 import { Type } from 'class-transformer';
 import {
   IsDefined,
+  IsNotEmpty,
+  IsNumber,
   IsOptional,
+  IsPositive,
   IsUUID,
   ValidateIf,
   ValidateNested,
@@ -19,4 +22,13 @@ export class CreateManualReservationDto extends CreateReservationDto {
   @ValidateNested()
   @Type(() => CreateCustomerDto)
   customerDto: CreateCustomerDto;
+
+  @Type(() => Number)
+  @IsNumber(
+    { maxDecimalPlaces: 2 },
+    { message: 'errors.validation.invalid_amount' },
+  )
+  @IsPositive()
+  @IsNotEmpty({ message: 'errors.validation.required_field' })
+  paidAmount: number;
 }

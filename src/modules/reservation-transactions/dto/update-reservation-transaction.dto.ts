@@ -1,12 +1,12 @@
-import { IsEnum, IsNumber, IsOptional } from 'class-validator';
-import { TransactionStage } from 'src/common/interfaces/transactions/transaction-stage.interface';
+import { IsNumber, IsOptional, IsString, Min } from 'class-validator';
 
 export class UpdateReservationTransactionDto {
   @IsOptional()
   @IsNumber()
+  @Min(1)
   amount?: number;
 
   @IsOptional()
-  @IsEnum([TransactionStage.PENDING, TransactionStage.INSTANT])
-  stage?: TransactionStage;
+  @IsString()
+  note?: string;
 }

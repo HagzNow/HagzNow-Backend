@@ -44,6 +44,7 @@ import { Court } from './modules/courts/entities/court.entity';
 import { CourtSlotsModule } from './modules/court-slots/court-slots.module';
 import { ReservationTransaction } from './modules/reservation-transactions/entities/reservation-transaction.entity';
 import { ReservationTransactionsModule } from './modules/reservation-transactions/reservation-transactions.module';
+import { DatabaseUtilityModule } from './modules/common/database/database-utility.module';
 
 @Module({
   imports: [
@@ -116,6 +117,7 @@ import { ReservationTransactionsModule } from './modules/reservation-transaction
     UploadModule,
     CourtsModule,
     CourtSlotsModule,
+    DatabaseUtilityModule,
   ],
   controllers: [AppController],
   providers: [

@@ -16,7 +16,8 @@ import { User } from '../users/entities/user.entity';
 import { UserRole } from '../users/interfaces/userRole.interface';
 import { WalletTransactionResponseDto } from './dto/wallet-transaction-response.dto';
 import { PaymobService } from './paymob.service';
-import { WalletsService } from './wallets.service';
+import { WalletsService } from './services/wallets.service';
+import { AddFundsDto } from './dto/add-funds.dto';
 
 @Controller('wallet')
 export class WalletController {
@@ -33,7 +34,8 @@ export class WalletController {
   @UseGuards(AuthGuard)
   @Roles(UserRole.USER)
   @Post('add-funds')
-  async addFunds(@Body('amount') amount: number, @CurrentUser() user: User) {
+  async addFunds(@Body() dto: AddFundsDto, @CurrentUser() user: User) {
+    const amount = dto.amount;
     const amountCents = amount * 100;
 
     const token = await this.paymobService.authenticate();

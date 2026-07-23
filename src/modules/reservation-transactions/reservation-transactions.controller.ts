@@ -1,6 +1,5 @@
-import { Body, Controller, Patch, Post, Param } from '@nestjs/common';
+import { Body, Controller, Param, ParseUUIDPipe, Patch } from '@nestjs/common';
 import { ReservationTransactionsService } from './reservation-transactions.service';
-import { CreateReservationTransactionDto } from './dto/create-reservation-transaction.dto';
 import { User } from '../users/entities/user.entity';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { Roles } from 'src/common/decorators/roles.decorator';
@@ -16,23 +15,11 @@ export class ReservationTransactionsController {
     private readonly reservationTransactionsService: ReservationTransactionsService,
   ) {}
 
-  @Post('manual')
-  @Serialize(ReservationTransactionResponseDto)
-  async createManualForOwner(
-    @Body() createReservationTransactionDto: CreateReservationTransactionDto,
-    @CurrentUser() user: User,
-  ) {
-    return this.reservationTransactionsService.createManualForOwner(
-      createReservationTransactionDto,
-      user,
-    );
-  }
-
   @Patch(':id')
   @Serialize(ReservationTransactionResponseDto)
   async update(
     @Body() updateDto: UpdateReservationTransactionDto,
-    @Param('id') id: string,
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
     @CurrentUser() user: User,
   ) {
     return this.reservationTransactionsService.update(id, updateDto, user);
@@ -40,7 +27,22 @@ export class ReservationTransactionsController {
 
   @Patch(':id/cancel')
   @Serialize(ReservationTransactionResponseDto)
-  async cancel(@Param('id') id: string, @CurrentUser() user: User) {
-    return this.reservationTransactionsService.cancel(id, user);
+  async cancel(
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @CurrentUser() user: User,
+  ) {
+    return this.reservationTransactionsService.cancelByTransactionId(id, user);
+  }
+
+  @Patch(':id/settle')
+  @Serialize(ReservationTransactionResponseDto)
+  async settle(
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @CurrentUser() user: User,
+  ) {
+    return this.reservationTransactionsService.settleOnFieldTransaction(
+      id,
+      user,
+    );
   }
 }

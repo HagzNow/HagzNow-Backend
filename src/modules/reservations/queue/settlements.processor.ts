@@ -1,18 +1,20 @@
 // reservations/queue/settlements.processor.ts
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Injectable } from '@nestjs/common';
-import { ReservationsService } from '../services/reservations.service';
+import { ReservationFacade } from '../services/facades/reservation.facade';
 
 @Injectable()
 @Processor('settlements', { concurrency: 5 })
 export class SettlementsProcessor extends WorkerHost {
-  constructor(private readonly reservationsService: ReservationsService) {
+  constructor(private readonly reservationFacade: ReservationFacade) {
     super();
   }
 
   async process(job) {
     try {
-      await this.reservationsService.settleReservation(job.data.reservationId);
+      await this.reservationFacade.settleReservationWorkflow(
+        job.data.reservationId,
+      );
       return;
     } catch (err) {
       console.log('Settlement failed — rescheduling for later...', err);

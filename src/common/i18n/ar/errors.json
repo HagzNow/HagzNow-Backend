@@ -71,12 +71,16 @@
     "id_required": "رقم الحجز مطلوب",
     "already_canceled": "الحجز ده اتلغى قبل كده",
     "invalid_slots": "الأوقات اللي اخترتها  خارج نطاق ساعات الملعب",
-    "not_allowed_to_add_transaction": "مش مسموح لك تضيف عملية مالية للحجز ده"
+    "not_allowed_to_add_transaction": "مش مسموح لك تضيف عملية مالية للحجز ده",
+    "paid_amount_exceeds_total": "المبلغ المدفوع لا يمكن أن يتجاوز إجمالي الحجز"
   },
   "reservation_transaction": {
     "not_found": "العملية مش موجودة",
     "not_owner": "ملكش صلاحيه علي العمليه ديه ",
-    "transaction_canceled": "العملية دي اتلغت قبل كده"
+    "transaction_canceled": "العملية دي اتلغت قبل كده",
+    "cannot_update_amount_attached_to_reservation_extras": "مقدرتش تحدث المبلغ لأن العملية دي مرتبطة بإضافة من اضافات الملعب",
+    "not_on_field": "العملية دي مش عملية دفع داخل الملعب",
+    "not_pending": "لازم العملية تكون معلقة علشان تقدر تنفذ الإجراء ده"
   },
   "arena": {
     "not_found": "الملعب مش موجود",

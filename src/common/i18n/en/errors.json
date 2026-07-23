@@ -71,12 +71,17 @@
     "id_required": "Reservation ID is required",
     "already_canceled": "This reservation has already been canceled",
     "invalid_slots": "The selected slots are outside the arena's operating hours",
-    "not_allowed_to_add_transaction": "You cannot add a transaction to this reservation"
+    "not_allowed_to_add_transaction": "You cannot add a transaction to this reservation",
+    "cannot_update_amount_attached_to_reservation_extras": "Cannot update amount because this transaction is attached to an arena extra",
+    "paid_amount_exceeds_total": "Paid amount cannot exceed the reservation total"
   },
   "reservation_transaction": {
     "not_found": "Reservation transaction not found",
     "not_owner": "You do not have permission to modify this transaction",
-    "transaction_canceled": "This transaction has already been canceled"
+    "transaction_canceled": "This transaction has already been canceled",
+    "cannot_update_amount_attached_to_reservation_extras": "Cannot update amount because this transaction is attached to an arena extra",
+    "not_on_field": "Only on-field transactions support this operation",
+    "not_pending": "Only pending on-field transactions support this operation"
   },
   "arena": {
     "not_found": "Arena not found",

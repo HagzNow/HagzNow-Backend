@@ -5,12 +5,12 @@ import { ApiResponseUtil } from 'src/common/utils/api-response.util';
 import { paginate } from 'src/common/utils/paginate';
 import { applySorting } from 'src/common/utils/sort.util';
 import { DataSource, EntityManager, Repository } from 'typeorm';
-import { User } from '../users/entities/user.entity';
-import { CreateWalletTransactionDto } from './dto/create-wallet-transaction.dto';
-import { WalletTransaction } from './entities/wallet-transaction.entity';
-import { Wallet } from './entities/wallet.entity';
-import { TransactionStage } from '../../common/interfaces/transactions/transaction-stage.interface';
-import { TransactionType } from '../../common/interfaces/transactions/transaction-type.interface';
+import { User } from '../../users/entities/user.entity';
+import { CreateWalletTransactionDto } from '../dto/create-wallet-transaction.dto';
+import { WalletTransaction } from '../entities/wallet-transaction.entity';
+import { Wallet } from '../entities/wallet.entity';
+import { TransactionStage } from '../../../common/interfaces/transactions/transaction-stage.interface';
+import { TransactionType } from '../../../common/interfaces/transactions/transaction-type.interface';
 import { WalletsService } from './wallets.service';
 
 @Injectable()

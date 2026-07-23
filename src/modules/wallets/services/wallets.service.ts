@@ -4,13 +4,13 @@ import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { ApiResponseUtil } from 'src/common/utils/api-response.util';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid'; // <-- Import v4 function
-import { User } from '../users/entities/user.entity';
-import { UserRole } from '../users/interfaces/userRole.interface';
-import { Wallet } from './entities/wallet.entity';
-import { TransactionStage } from '../../common/interfaces/transactions/transaction-stage.interface';
-import { TransactionType } from '../../common/interfaces/transactions/transaction-type.interface';
+import { User } from '../../users/entities/user.entity';
+import { UserRole } from '../../users/interfaces/userRole.interface';
+import { Wallet } from '.././entities/wallet.entity';
+import { TransactionStage } from '../../../common/interfaces/transactions/transaction-stage.interface';
+import { TransactionType } from '../../../common/interfaces/transactions/transaction-type.interface';
 import { WalletTransactionService } from './wallet-transaction.service';
-import { UsersService } from '../users/users.service';
+import { UsersService } from '../../users/users.service';
 
 @Injectable()
 export class WalletsService {
@@ -220,13 +220,8 @@ export class WalletsService {
         HttpStatus.BAD_REQUEST,
       );
     }
-    if (wallet.balance < amount) {
-      return ApiResponseUtil.throwError(
-        'errors.wallet.insufficient_funds',
-        'INSUFFICIENT_FUNDS',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
+    await this.validateSufficientBalance(user.id, amount, manager);
+
     wallet.balance = Number(wallet.balance) - amount;
     await repo.save(wallet);
     return { message: 'Withdrawal successful', balance: wallet.balance };
@@ -249,14 +244,11 @@ export class WalletsService {
       }
 
       // 2. Ensure balance is enough
-      const hasEnough = await this.hasEnoughBalance(user.id, amount);
-      if (!hasEnough) {
-        throw ApiResponseUtil.throwError(
-          'errors.wallet.insufficient_funds',
-          'INSUFFICIENT_FUNDS',
-          HttpStatus.BAD_REQUEST,
-        );
-      }
+      await this.validateSufficientBalance(
+        user.id,
+        amount,
+        queryRunner.manager,
+      );
 
       // 3. Lock amount
       await this.lockAmount(user.id, amount, queryRunner.manager);

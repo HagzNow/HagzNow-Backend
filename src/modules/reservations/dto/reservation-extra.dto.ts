@@ -9,8 +9,17 @@ export class ReservationExtraDto {
   name: string;
 
   @Expose()
-  @Transform(({ obj }) => obj.priceAtReservation)
+  @Transform(({ obj }) => Number(obj.priceAtReservation))
   price: number;
+
+  @Expose()
+  @Transform(
+    ({ obj }) =>
+      (Math.round(Number(obj.priceAtReservation) * 100) *
+        Number(obj.quantity)) /
+      100,
+  )
+  subtotal: number;
 
   @Expose()
   @Transform(({ obj }) => obj.cancelledAt === null)

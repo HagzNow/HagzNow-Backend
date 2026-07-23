@@ -1,18 +1,36 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { UserRole } from './interfaces/userRole.interface';
+import { UserStatus } from './interfaces/userStatus.interface';
 import { UsersService } from './users.service';
 
 describe('UsersService', () => {
-  let service: UsersService;
+  const userRepository = {
+    exist: jest.fn(),
+  };
+  const service = new UsersService(
+    {} as never,
+    userRepository as never,
+    {} as never,
+  );
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [UsersService],
-    }).compile();
-
-    service = module.get<UsersService>(UsersService);
+  beforeEach(() => {
+    jest.clearAllMocks();
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  it('checks active admin status using the user repository', async () => {
+    userRepository.exist.mockResolvedValue(true);
+
+    await expect(service.isActiveAdmin('admin-id')).resolves.toBe(true);
+    expect(userRepository.exist).toHaveBeenCalledWith({
+      where: {
+        id: 'admin-id',
+        role: UserRole.ADMIN,
+        status: UserStatus.ACTIVE,
+      },
+    });
+  });
+
+  it('returns false without querying when the user id is missing', async () => {
+    await expect(service.isActiveAdmin('')).resolves.toBe(false);
+    expect(userRepository.exist).not.toHaveBeenCalled();
   });
 });

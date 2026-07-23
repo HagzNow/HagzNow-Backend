@@ -1,4 +1,5 @@
 import { Expose, Transform } from 'class-transformer';
+import { ReservationPaymentStatus } from '../interfaces/reservation-payment-status.interface';
 export class ReservationCalenderCardDto {
   @Expose()
   id: string;
@@ -8,6 +9,18 @@ export class ReservationCalenderCardDto {
 
   @Expose()
   totalAmount: number;
+
+  @Expose()
+  depositTotalAmount: number;
+
+  @Expose()
+  paidAmount: number;
+
+  @Expose()
+  remainingAmount: number;
+
+  @Expose()
+  paymentStatus: ReservationPaymentStatus;
 
   @Expose()
   @Transform(({ obj }) => {

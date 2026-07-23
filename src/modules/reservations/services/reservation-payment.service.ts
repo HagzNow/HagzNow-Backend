@@ -1,20 +1,17 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import { WalletsService } from '../../wallets/wallets.service';
+import { Injectable } from '@nestjs/common';
+import { WalletsService } from '../../wallets/services/wallets.service';
 import { EntityManager } from 'typeorm';
 import { TransactionStage } from 'src/common/interfaces/transactions/transaction-stage.interface';
 import { TransactionType } from 'src/common/interfaces/transactions/transaction-type.interface';
-import { WalletTransactionService } from 'src/modules/wallets/wallet-transaction.service';
+import { WalletTransactionService } from 'src/modules/wallets/services/wallet-transaction.service';
 import { User } from 'src/modules/users/entities/user.entity';
 import { ReservationPaymentContext } from '../interfaces/reservation-payment.context';
-import { ReservationTransactionsService } from 'src/modules/reservation-transactions/reservation-transactions.service';
 
 @Injectable()
 export class ReservationPaymentService {
   constructor(
     private readonly walletsService: WalletsService,
     private readonly walletTransactionService: WalletTransactionService,
-    @Inject(forwardRef(() => ReservationTransactionsService))
-    private readonly reservationTransactionsService: ReservationTransactionsService,
   ) {}
   async hold(ctx: ReservationPaymentContext, manager: EntityManager) {
     await this.walletTransactionService.create(
@@ -110,17 +107,6 @@ export class ReservationPaymentService {
         referenceId: ctx.referenceId,
       },
       { id: ctx.adminId } as User,
-      manager,
-    );
-
-    // Create transactions for reservation
-    await this.reservationTransactionsService.createForUser(
-      {
-        reservationId: ctx.referenceId,
-        stage: TransactionStage.INSTANT,
-        amount: ctx.amounts.player,
-      },
-      { id: ctx.userId } as User,
       manager,
     );
   }

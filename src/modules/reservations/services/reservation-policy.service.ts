@@ -1,17 +1,10 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Arena } from 'src/modules/arenas/entities/arena.entity';
-import { User } from 'src/modules/users/entities/user.entity';
-import { DateTime } from 'luxon';
-import { ApiResponseUtil } from 'src/common/utils/api-response.util';
-import { ArenaStatus } from 'src/modules/arenas/interfaces/arena-status.interface';
-import { EntityManager, QueryRunner } from 'typeorm';
+import { EntityManager } from 'typeorm';
 import { CreateManualReservationDto } from '../dto/create-manual-reservation.dto';
 import { CreateReservationDto } from '../dto/create-reservation.dto';
 import { ArenasService } from '../../arenas/arenas.service';
-import { TransactionStage } from 'src/common/interfaces/transactions/transaction-stage.interface';
 import { Reservation } from '../entities/reservation.entity';
-import { ReservationStatus } from '../interfaces/reservation-status.interface';
-import { WalletTransactionService } from 'src/modules/wallets/wallet-transaction.service';
 import { CustomerProfile } from 'src/modules/customerProfiles/entities/customer-profile.entity';
 import { ReservationPaymentContext } from '../interfaces/reservation-payment.context';
 import { CustomersService } from 'src/modules/customerProfiles/customers.service';
@@ -19,7 +12,6 @@ import { AdminConfig } from 'src/modules/admin/admin.config';
 import { ReservationPricingService } from './reservation-pricing.service';
 import { ArenaExtraWithQuantity } from 'src/modules/arenas/types/arena-extra-with-quantity.type';
 import { ArenaExtrasService } from 'src/modules/arena-extras/arena-extras.service';
-import { UserRole } from 'src/modules/users/interfaces/userRole.interface';
 import { Court } from 'src/modules/courts/entities/court.entity';
 import { CourtsService } from 'src/modules/courts/courts.service';
 
@@ -27,7 +19,6 @@ import { CourtsService } from 'src/modules/courts/courts.service';
 export class ReservationPolicy {
   constructor(
     private readonly arenasService: ArenasService,
-    private readonly walletTransactionService: WalletTransactionService,
     private readonly customersService: CustomersService,
     private readonly adminConfig: AdminConfig,
     private readonly reservationPricingService: ReservationPricingService,
@@ -35,123 +26,9 @@ export class ReservationPolicy {
     private readonly courtsService: CourtsService,
   ) {}
 
-  // VALIDATION METHODS
-  validateDateAndSlots(date: string, slots: number[]): void | never {
-    const now = DateTime.now().setZone('Africa/Cairo');
-    const reservationDate = DateTime.fromISO(date, {
-      zone: 'Africa/Cairo',
-    });
-    if (reservationDate < now.startOf('day')) {
-      return ApiResponseUtil.throwError(
-        'errors.reservation.past_time',
-        'RESERVATION_DATE_IN_PAST',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-    // validate it's not previous slot
-    let CurrentHour = now.hour;
-    if (
-      slots.some((h) => Number(h) < CurrentHour) &&
-      reservationDate.hasSame(now, 'day')
-    ) {
-      return ApiResponseUtil.throwError(
-        'errors.reservation.past_time',
-        'RESERVATION_SLOT_IN_PAST',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-  }
-
-  validateExistingUser(reservation: Reservation): User | never {
-    const user = reservation.customer?.user;
-    if (!user) {
-      ApiResponseUtil.throwError(
-        'errors.customer.user_not_found',
-        'CUSTOMER_USER_NOT_FOUND',
-        HttpStatus.NOT_FOUND,
-      );
-    }
-    return user;
-  }
-
-  async validateHeldTransaction(
-    reservation: Reservation,
-    manager: EntityManager,
-  ): Promise<void | never> {
-    const transaction =
-      await this.walletTransactionService.findOneByReferenceId(
-        reservation.id,
-        manager,
-      );
-
-    if (!transaction || transaction.stage !== TransactionStage.HOLD) {
-      return ApiResponseUtil.throwError(
-        'errors.reservation.not_in_hold',
-        'WALLET_TRANSACTION_NOT_FOUND_OR_INVALID_STAGE',
-        HttpStatus.NOT_FOUND,
-      );
-    }
-  }
-
-  async validateStatusAndOwnershipForCancellation(
-    reservation: Reservation,
-    user: User,
-  ): Promise<void | never> {
-    if (reservation.status === ReservationStatus.CANCELED) {
-      return ApiResponseUtil.throwError(
-        'errors.reservation.already_canceled',
-        'RESERVATION_ALREADY_CANCELED',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-    if (reservation.customer.id !== user.id) {
-      return ApiResponseUtil.throwError(
-        'errors.general.unauthorized',
-        'UNAUTHORIZED_ACCESS',
-        HttpStatus.UNAUTHORIZED,
-      );
-    }
-  }
-
-  // Validate arena ownership or admin role for reservation access
-  async validateArenaOwnershipOrAdmin(
-    arenaId: string,
-    user: User,
-  ): Promise<void | never> {
-    const arena = await this.arenasService.findOne(arenaId);
-    if (arena.owner.id !== user.id && user.role !== UserRole.ADMIN) {
-      return ApiResponseUtil.throwError(
-        'errors.general.unauthorized',
-        'UNAUTHORIZED_ACCESS',
-        HttpStatus.UNAUTHORIZED,
-      );
-    }
-  }
-
-  ensureArenaIsActive(arena: Arena): void | never {
-    if (arena.status !== ArenaStatus.ACTIVE) {
-      return ApiResponseUtil.throwError(
-        'errors.arena.not_active',
-        'ARENA_NOT_ACTIVE',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-  }
-
-  ensureOwner(arena: Arena, user: User): void | never {
-    if (arena.owner.id !== user.id) {
-      return ApiResponseUtil.throwError(
-        'errors.arena.unauthorized_update',
-        'UNAUTHORIZED_ACCESS',
-        HttpStatus.UNAUTHORIZED,
-      );
-    }
-  }
-
-  // EXTRACTION METHODS
   async extractCourtsAndArenaAndExtras(
     dto: CreateReservationDto | CreateManualReservationDto,
-    queryRunner: QueryRunner,
+    entityManager: EntityManager,
   ): Promise<{
     courts: Court[];
     arena: Arena;
@@ -159,41 +36,34 @@ export class ReservationPolicy {
   }> {
     const courts = await this.courtsService.findManyByIds(
       dto.slots.map(({ courtId }) => courtId),
-      queryRunner.manager,
+      entityManager,
     );
 
     const arena = await this.arenasService.findOne(
       courts[0].arena.id,
-      queryRunner.manager,
+      entityManager,
     );
-    // Make sure arena is active
     this.arenasService.ensureArenaIsActive(arena);
-
-    // Make sure all courts are active
     this.courtsService.validateAllCourtsAreActive(courts);
-
-    // validate all courts belong to the same arena
     this.courtsService.validateAllCourtsBelongToSameArena(courts, arena);
 
-    // Load extras with quantity mapping
     if (!dto.extras || dto.extras.length === 0) {
       return { courts, arena, extras: [] };
     }
 
-    const extraIds = dto.extras.map((e) =>
-      typeof e === 'string' ? e : e.extraId,
+    const extraIds = dto.extras.map((extra) =>
+      typeof extra === 'string' ? extra : extra.extraId,
     );
-
     const arenaExtras = await this.arenaExtrasService.findArenaExtrasByIds(
       arena.id,
       extraIds,
-      queryRunner.manager,
+      entityManager,
     );
-
-    // Map extras with their quantities
     const extrasWithQuantity = arenaExtras.map((extra) => {
-      const extraItem = (dto.extras || []).find((e) =>
-        typeof e === 'string' ? e === extra.id : e.extraId === extra.id,
+      const extraItem = dto.extras?.find((item) =>
+        typeof item === 'string'
+          ? item === extra.id
+          : item.extraId === extra.id,
       );
       const quantity =
         typeof extraItem === 'object' && extraItem ? extraItem.quantity : 1;
@@ -205,7 +75,7 @@ export class ReservationPolicy {
 
   buildPaymentContext(reservation: Reservation): ReservationPaymentContext {
     const revenueAmounts = this.reservationPricingService.calculateRevenueSplit(
-      reservation.totalAmount,
+      reservation.depositTotalAmount,
     );
     return {
       userId: reservation.customer.id,

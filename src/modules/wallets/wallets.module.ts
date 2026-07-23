@@ -6,10 +6,10 @@ import { Wallet } from './entities/wallet.entity';
 import { PaymobWebhookController } from './paymob.controller';
 import { PaymobService } from './paymob.service';
 import { WalletTransactionController } from './wallet-transaction.controller';
-import { WalletTransactionService } from './wallet-transaction.service';
+import { WalletTransactionService } from './services/wallet-transaction.service';
 import { WalletController } from './wallets.controller';
 import { WalletsListener } from './wallets.listener';
-import { WalletsService } from './wallets.service';
+import { WalletsService } from './services/wallets.service';
 import { UsersModule } from '../users/users.module';
 
 @Module({

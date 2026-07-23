@@ -13,6 +13,7 @@ import { PaymentMethod } from '../../../common/interfaces/transactions/payment-m
 import { ReservationStatus } from '../interfaces/reservation-status.interface';
 import { ReservationExtra } from './reservation-extra.entity';
 import { ReservationTransaction } from 'src/modules/reservation-transactions/entities/reservation-transaction.entity';
+import { ReservationPaymentStatus } from '../interfaces/reservation-payment-status.interface';
 
 @Entity('reservations')
 export class Reservation {
@@ -47,14 +48,59 @@ export class Reservation {
     return this.slots?.length ?? 0;
   }
 
-  @Column({ type: 'decimal' })
+  @Column({ type: 'decimal', precision: 10, scale: 2 })
   playTotalAmount: number;
 
-  @Column({ type: 'decimal' })
+  @Column({ type: 'decimal', precision: 10, scale: 2 })
   extrasTotalAmount: number;
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   totalAmount: number;
+
+  @Column({ type: 'decimal', precision: 5, scale: 4 })
+  playDepositRate: number;
+
+  @Column({ type: 'decimal', precision: 5, scale: 4 })
+  extrasDepositRate: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  playDepositAmount: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  extrasDepositAmount: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  depositTotalAmount: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  paidAmount: number;
+
+  @Expose()
+  get remainingAmount(): number {
+    const remainingAmountInCents = Math.max(
+      Math.round(Number(this.totalAmount) * 100) -
+        Math.round(Number(this.paidAmount) * 100),
+      0,
+    );
+
+    return remainingAmountInCents / 100;
+  }
+
+  @Expose()
+  get paymentStatus(): ReservationPaymentStatus {
+    const paidAmountInCents = Math.round(Number(this.paidAmount) * 100);
+    const totalAmountInCents = Math.round(Number(this.totalAmount) * 100);
+
+    if (paidAmountInCents <= 0) {
+      return ReservationPaymentStatus.UNPAID;
+    }
+
+    if (paidAmountInCents >= totalAmountInCents) {
+      return ReservationPaymentStatus.PAID;
+    }
+
+    return ReservationPaymentStatus.PARTIALLY_PAID;
+  }
 
   @OneToMany(() => CourtSlot, (slot) => slot.reservation, {
     onDelete: 'CASCADE',
@@ -81,6 +127,10 @@ export class Reservation {
   @Expose()
   get allExtras(): ReservationExtra[] {
     // Flattens the extras arrays from all transactions into one unified array
-    return this.transactions?.flatMap((tx) => tx.extras ?? []) ?? [];
+    return (
+      this.transactions?.flatMap((tx) =>
+        (tx.extras ?? []).filter((e) => e.cancelledAt === null),
+      ) ?? []
+    );
   }
 }

@@ -1,4 +1,5 @@
 import { Expose, Type } from 'class-transformer';
+import { ReservationExtraDto } from 'src/modules/reservations/dto/reservation-extra.dto';
 import { ReservationSummaryDto } from 'src/modules/reservations/dto/reservation-summary.dto';
 
 export class ReservationTransactionResponseDto {
@@ -10,6 +11,10 @@ export class ReservationTransactionResponseDto {
   reservation: ReservationSummaryDto;
 
   @Expose()
+  @Type(() => ReservationExtraDto)
+  extras?: ReservationExtraDto[];
+
+  @Expose()
   amount: number;
 
   @Expose()
@@ -19,7 +24,7 @@ export class ReservationTransactionResponseDto {
   method: string;
 
   @Expose()
-  status: string;
+  stage: string;
 
   @Expose()
   note?: string;
