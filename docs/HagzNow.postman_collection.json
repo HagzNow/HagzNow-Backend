@@ -1,0 +1,1973 @@
+{
+  "info": {
+    "_postman_id": "c629fc39-c546-4f4a-a41a-fec2dc775495",
+    "name": "HagzNow Backend - Complete API",
+    "description": "# HagzNow Backend API\n\nImport this Postman Collection v2.1 file into **Postman** or **Apidog**.\n\n## Quick start\n1. Set `baseUrl` if the API is not running at `http://localhost:3000`.\n2. Edit the account variables, then run **Auth > Login as User**, **Login as Owner**, or **Login as Admin**. Each login stores its role token and also makes it the active `jwt`.\n3. Requests use the appropriate role token automatically. IDs returned by common create/read requests are stored as collection variables.\n4. The collection sends `X-Language` and a new `X-Correlation-ID` automatically.\n\n## Authentication\nProtected requests use `Authorization: Bearer <token>`. Registration and login return the token inside `data.token` because successful API responses use the standard envelope shown below. Owner registration creates a pending owner; complete owner verification and have an admin accept the request before using owner-only endpoints.\n\n## Response envelope\nJSON successes are expected as `{ \"isSuccess\": true, \"message\": \"Success\", \"data\": ..., \"error\": null }`. Errors are expected as `{ \"isSuccess\": false, \"message\": \"...\", \"data\": null, \"error\": { \"code\": \"...\", \"details\": ... } }`.\n\n## Recommended workflow\nCreate a category, upload arena media, create an arena with courts/extras, approve the arena, discover slots, create a reservation, add an on-field transaction, then settle or cancel that pending transaction.\n\n## Important source behavior\n- `GET /arenas/detailed` currently accepts `categoryId` in a GET request body. Body pruning is disabled for that request, but some proxies may still discard GET bodies.\n- `PATCH /arenas/:id/:status` requires the status path value and currently also reads `{ \"status\": ... }` from the body.\n- `PATCH /reservations/:id` and `DELETE /reservations/:id` are currently service stubs and have no role decorator.\n- `DELETE /arenas/:id` currently has no role decorator.\n- The Paymob webhook is provider-facing; use an authentic provider payload and HMAC for meaningful testing.\n\nGenerated from the application controllers and DTOs on 2026-07-25.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.request.headers.upsert({ key: 'X-Language', value: pm.collectionVariables.get('language') || 'en' });",
+          "pm.request.headers.upsert({ key: 'X-Correlation-ID', value: pm.variables.replaceIn('{{$guid}}') });"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const contentType = pm.response.headers.get('Content-Type') || '';",
+          "const isSwaggerDocument = pm.request.url.getPath().endsWith('/swagger/json');",
+          "if (contentType.includes('application/json') && !isSwaggerDocument) {",
+          "  pm.test('Uses the standard API envelope', function () {",
+          "    const body = pm.response.json();",
+          "    pm.expect(body).to.be.an('object');",
+          "    pm.expect(body).to.have.property('isSuccess');",
+          "    pm.expect(body).to.have.property('message');",
+          "    pm.expect(body).to.have.property('data');",
+          "    pm.expect(body).to.have.property('error');",
+          "  });",
+          "}"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Getting Started",
+      "description": "Public application, health, and generated Swagger endpoints.",
+      "item": [
+        {
+          "name": "Application Root",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "url": "{{baseUrl}}/",
+            "description": "Public root endpoint."
+          }
+        },
+        {
+          "name": "Health Check",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "url": "{{baseUrl}}/health",
+            "description": "Public application health endpoint."
+          }
+        },
+        {
+          "name": "Swagger JSON",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "url": "{{baseUrl}}/swagger/json",
+            "description": "Generated OpenAPI document. Swagger UI is available at `/api`."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "description": "Registration, login, and password management. Login scripts save JWTs automatically.",
+      "item": [
+        {
+          "name": "Login as User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const token = (body.data || body).token;",
+                  "if (token) { pm.collectionVariables.set('userJwt', token); pm.collectionVariables.set('jwt', token); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{userEmail}}\",\"password\":\"{{userPassword}}\"}"
+            },
+            "url": "{{baseUrl}}/auth/login",
+            "description": "Logs in a user and stores `userJwt` plus the active `jwt`."
+          }
+        },
+        {
+          "name": "Login as Owner",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const token = (body.data || body).token;",
+                  "if (token) { pm.collectionVariables.set('ownerJwt', token); pm.collectionVariables.set('jwt', token); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{ownerEmail}}\",\"password\":\"{{ownerPassword}}\"}"
+            },
+            "url": "{{baseUrl}}/auth/login",
+            "description": "Logs in an owner and stores `ownerJwt` plus the active `jwt`."
+          }
+        },
+        {
+          "name": "Login as Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const token = (body.data || body).token;",
+                  "if (token) { pm.collectionVariables.set('adminJwt', token); pm.collectionVariables.set('jwt', token); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{adminEmail}}\",\"password\":\"{{adminPassword}}\"}"
+            },
+            "url": "{{baseUrl}}/auth/login",
+            "description": "Logs in an admin and stores `adminJwt` plus the active `jwt`."
+          }
+        },
+        {
+          "name": "Register User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const token = (body.data || body).token;",
+                  "if (token) { pm.collectionVariables.set('userJwt', token); pm.collectionVariables.set('jwt', token); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"fName\":\"API\",\"lName\":\"User\",\"email\":\"{{userEmail}}\",\"phone\":\"{{phone}}\",\"password\":\"{{userPassword}}\",\"role\":\"user\"}"
+            },
+            "url": "{{baseUrl}}/auth/register",
+            "description": "Registers a regular user. Password must be 8-20 characters with uppercase, lowercase, and a digit."
+          }
+        },
+        {
+          "name": "Register Owner",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const token = (body.data || body).token;",
+                  "if (token) { pm.collectionVariables.set('ownerJwt', token); pm.collectionVariables.set('jwt', token); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"fName\":\"API\",\"lName\":\"Owner\",\"email\":\"{{ownerEmail}}\",\"phone\":\"{{phone}}\",\"password\":\"{{ownerPassword}}\",\"role\":\"owner\"}"
+            },
+            "url": "{{baseUrl}}/auth/register",
+            "description": "Registers a pending owner. Submit verification images and wait for admin acceptance."
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"oldPassword\":\"{{userPassword}}\",\"newPassword\":\"Password2\"}"
+            },
+            "url": "{{baseUrl}}/auth/change-password",
+            "description": "Authenticated account changes its password. Set `jwt` to the intended account token."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "description": "Authenticated profile operations and admin owner-approval workflow.",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/users/profile",
+            "description": "Returns the profile belonging to the active `jwt`."
+          }
+        },
+        {
+          "name": "Update My Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"fName\":\"Updated\",\"lName\":\"Name\",\"avatar\":\"{{uploadPath}}\",\"payoutMethod\":\"wallet\"}"
+            },
+            "url": "{{baseUrl}}/users/profile",
+            "description": "Updates optional profile fields. `payoutMethod` is `wallet` or `instapay`."
+          }
+        },
+        {
+          "name": "Update My Phone",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"newPhone\":\"{{phone}}\"}"
+            },
+            "url": "{{baseUrl}}/users/profile/phone",
+            "description": "Updates the authenticated user's Egyptian phone number."
+          }
+        },
+        {
+          "name": "Update My Email",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"newEmail\":\"updated@example.com\"}"
+            },
+            "url": "{{baseUrl}}/users/profile/email",
+            "description": "Updates the authenticated user's email."
+          }
+        },
+        {
+          "name": "Submit Owner Verification",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ownerJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nationalIdFront\":\"users/national-id-front.webp\",\"nationalIdBack\":\"users/national-id-back.webp\",\"selfieWithId\":\"users/selfie-with-id.webp\"}"
+            },
+            "url": "{{baseUrl}}/users/profile/verification",
+            "description": "Owner submits uploaded verification image paths."
+          }
+        },
+        {
+          "name": "Update Language",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"newLanguage\":\"en\"}"
+            },
+            "url": "{{baseUrl}}/users/profile/language",
+            "description": "Sets the authenticated user's language to `ar` or `en`."
+          }
+        },
+        {
+          "name": "List Owner Requests",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": "{{baseUrl}}/users/owner-requests?page=1&limit=10",
+            "description": "Admin lists pending owner requests."
+          }
+        },
+        {
+          "name": "Accept Owner Request",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "url": "{{baseUrl}}/users/owner-requests/{{ownerId}}/accept",
+            "description": "Admin accepts an owner request."
+          }
+        },
+        {
+          "name": "Reject Owner Request",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"reason\":\"Verification documents are incomplete\"}"
+            },
+            "url": "{{baseUrl}}/users/owner-requests/{{ownerId}}/reject",
+            "description": "Admin rejects an owner request with an optional reason."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin Users",
+      "description": "Admin-only user management.",
+      "item": [
+        {
+          "name": "Create User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json().data;",
+                  "if (data && data.id) pm.collectionVariables.set('userId', data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"fName\":\"Created\",\"lName\":\"By Admin\",\"email\":\"admin-created@example.com\",\"phone\":\"{{phone}}\",\"password\":\"Password1\"}"
+            },
+            "url": "{{baseUrl}}/admin/users",
+            "description": "Creates an active regular user."
+          }
+        },
+        {
+          "name": "List Users",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": "{{baseUrl}}/admin/users?page=1&limit=10&status=active&role=user",
+            "description": "Lists users with optional `status` and `role` filters."
+          }
+        },
+        {
+          "name": "User Statistics",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": "{{baseUrl}}/admin/users/stats",
+            "description": "Returns user statistics."
+          }
+        },
+        {
+          "name": "Get User",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": "{{baseUrl}}/admin/users/{{userId}}",
+            "description": "Gets one user by UUID."
+          }
+        },
+        {
+          "name": "Update User Status",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":\"active\"}"
+            },
+            "url": "{{baseUrl}}/admin/users/{{userId}}/status",
+            "description": "Updates a user's account status."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Categories",
+      "description": "Public category reads and admin category writes.",
+      "item": [
+        {
+          "name": "Create Category",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json().data;",
+                  "if (data && data.id) pm.collectionVariables.set('categoryId', data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Football\"}"
+            },
+            "url": "{{baseUrl}}/categories",
+            "description": "Admin creates a category and captures `categoryId`."
+          }
+        },
+        {
+          "name": "List Categories",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "url": "{{baseUrl}}/categories",
+            "description": "Public category list."
+          }
+        },
+        {
+          "name": "Get Category",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "url": "{{baseUrl}}/categories/{{categoryId}}",
+            "description": "Public category details."
+          }
+        },
+        {
+          "name": "Update Category",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Updated Football\"}"
+            },
+            "url": "{{baseUrl}}/categories/{{categoryId}}",
+            "description": "Admin updates a category."
+          }
+        },
+        {
+          "name": "Delete Category",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "url": "{{baseUrl}}/categories/{{categoryId}}",
+            "description": "Admin deletes a category."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Arenas",
+      "description": "Arena discovery, owner management, admin approval, and extras.",
+      "item": [
+        {
+          "name": "Create Arena",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json().data;",
+                  "if (data && data.id) pm.collectionVariables.set('arenaId', data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ownerJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"HagzNow Arena\",\"thumbnail\":\"arenas/thumbnail.webp\",\"openingHour\":9,\"closingHour\":23,\"pricePerHour\":200,\"depositPercent\":50,\"description\":\"Example arena\",\"policy\":\"No smoking\",\"categoryId\":\"{{categoryId}}\",\"location\":{\"lat\":30.0444,\"lng\":31.2357,\"governorate\":\"Cairo\",\"city\":\"Nasr City\"},\"images\":[{\"path\":\"arenas/image-1.webp\"}],\"extras\":[{\"name\":\"Ball\",\"price\":25}],\"courts\":[{\"name\":\"Court 1\"}]}"
+            },
+            "url": "{{baseUrl}}/arenas",
+            "description": "Owner creates an arena. `depositPercent` is 20-100; hours are 0-23. Captures `arenaId`."
+          }
+        },
+        {
+          "name": "Get Detailed Arenas by Category",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"categoryId\":\"{{categoryId}}\"}"
+            },
+            "url": "{{baseUrl}}/arenas/detailed",
+            "description": "Public detailed arena query. The current controller reads `categoryId` from a GET body."
+          },
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "name": "List Arena Governorates",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "url": "{{baseUrl}}/arenas/governorate",
+            "description": "Public list of arena governorates."
+          }
+        },
+        {
+          "name": "Search Arenas",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "url": "{{baseUrl}}/arenas?page=1&limit=10&name=&categoryId={{categoryId}}&governorate=Cairo&orderBy=createdAt&direction=DESC",
+            "description": "Public paginated arena search. Remove optional empty filters when not needed."
+          }
+        },
+        {
+          "name": "List Arena Requests",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": "{{baseUrl}}/arenas/requests?page=1&limit=10",
+            "description": "Admin lists arena approval requests."
+          }
+        },
+        {
+          "name": "List My Arenas",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ownerJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": "{{baseUrl}}/arenas/owner?page=1&limit=10",
+            "description": "Owner lists owned arenas."
+          }
+        },
+        {
+          "name": "List My Arena Names",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ownerJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": "{{baseUrl}}/arenas/owner/names",
+            "description": "Owner gets lightweight arena names."
+          }
+        },
+        {
+          "name": "Get Arena",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "url": "{{baseUrl}}/arenas/{{arenaId}}",
+            "description": "Public arena details."
+          }
+        },
+        {
+          "name": "Update Arena",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ownerJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Updated Arena\",\"pricePerHour\":250,\"description\":\"Updated description\"}"
+            },
+            "url": "{{baseUrl}}/arenas/{{arenaId}}",
+            "description": "Owner updates an owned arena. All fields are optional."
+          }
+        },
+        {
+          "name": "Update Arena Status",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":\"{{arenaStatus}}\"}"
+            },
+            "url": "{{baseUrl}}/arenas/{{arenaId}}/{{arenaStatus}}",
+            "description": "Admin updates arena status (`active`, `pending`, or `disabled`). The current route includes status in both path and body."
+          }
+        },
+        {
+          "name": "Delete Arena",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/arenas/{{arenaId}}",
+            "description": "Deletes an arena. The current controller has no explicit role decorator; use the active `jwt`."
+          }
+        },
+        {
+          "name": "List Arena Extras",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json().data;",
+                  "const first = Array.isArray(data) ? data[0] : data && Array.isArray(data.data) ? data.data[0] : null;",
+                  "if (first && first.id) pm.collectionVariables.set('arenaExtraId', first.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "url": "{{baseUrl}}/arenas-extras?arenaId={{arenaId}}",
+            "description": "Lists stored extras for an arena and captures the first `arenaExtraId`."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Courts and Slots",
+      "description": "Owner court management and public slot availability.",
+      "item": [
+        {
+          "name": "Create Court",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json().data;",
+                  "if (data && data.id) pm.collectionVariables.set('courtId', data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ownerJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Court 2\"}"
+            },
+            "url": "{{baseUrl}}/courts/arena/{{arenaId}}",
+            "description": "Owner creates a court and captures `courtId`."
+          }
+        },
+        {
+          "name": "List Arena Courts",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "url": "{{baseUrl}}/courts/arena/{{arenaId}}?status={{courtStatus}}",
+            "description": "Lists courts for an arena, optionally filtered by `active`, `pending`, or `disabled`."
+          }
+        },
+        {
+          "name": "Get Court",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "url": "{{baseUrl}}/courts/{{courtId}}",
+            "description": "Gets court details."
+          }
+        },
+        {
+          "name": "Update Court",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ownerJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Updated Court\",\"status\":\"active\"}"
+            },
+            "url": "{{baseUrl}}/courts/{{courtId}}",
+            "description": "Owner updates a court."
+          }
+        },
+        {
+          "name": "Delete Court",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ownerJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "url": "{{baseUrl}}/courts/{{courtId}}",
+            "description": "Owner deletes a court."
+          }
+        },
+        {
+          "name": "Get Available Slots",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "url": "{{baseUrl}}/arenas/{{arenaId}}/slots/available?date={{reservationDate}}",
+            "description": "Gets available court slots for an arena and date (`YYYY-MM-DD`)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customers",
+      "description": "Owner customer lookup used by manual reservations.",
+      "item": [
+        {
+          "name": "Find Customer by Phone",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json().data;",
+                  "if (data && data.id) pm.collectionVariables.set('customerId', data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ownerJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": "{{baseUrl}}/customers/{{customerPhone}}",
+            "description": "Owner finds a customer by phone and captures `customerId`."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reservations",
+      "description": "Online/manual booking, owner/admin searches, customer history, and enriched details with transaction history.",
+      "item": [
+        {
+          "name": "Create Online Reservation",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json().data;",
+                  "if (data && data.id) pm.collectionVariables.set('reservationId', data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{reservationDate}}\",\"slots\":[{\"courtId\":\"{{courtId}}\",\"slots\":[18,19]}],\"extras\":[{\"extraId\":\"{{arenaExtraId}}\",\"quantity\":1}]}"
+            },
+            "url": "{{baseUrl}}/reservations",
+            "description": "User creates an online reservation. Wallet funds cover the immutable booking deposit; captures `reservationId`."
+          }
+        },
+        {
+          "name": "Create Manual Reservation for Existing Customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json().data;",
+                  "if (data && data.id) pm.collectionVariables.set('reservationId', data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ownerJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{reservationDate}}\",\"slots\":[{\"courtId\":\"{{courtId}}\",\"slots\":[18,19]}],\"extras\":[{\"extraId\":\"{{arenaExtraId}}\",\"quantity\":1}],\"customerId\":\"{{customerId}}\",\"paidAmount\":100}"
+            },
+            "url": "{{baseUrl}}/reservations/owner/manual",
+            "description": "Owner creates a manual reservation for an existing customer. `paidAmount` is positive and cannot exceed the full reservation total."
+          }
+        },
+        {
+          "name": "Create Manual Reservation for Walk-in",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json().data;",
+                  "if (data && data.id) pm.collectionVariables.set('reservationId', data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ownerJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{reservationDate}}\",\"slots\":[{\"courtId\":\"{{courtId}}\",\"slots\":[18,19]}],\"customerDto\":{\"fName\":\"Walk-in\",\"lName\":\"Customer\",\"phone\":\"{{customerPhone}}\"},\"paidAmount\":100}"
+            },
+            "url": "{{baseUrl}}/reservations/owner/manual",
+            "description": "Owner creates a manual reservation and customer profile for a walk-in. Use either `customerId` or `customerDto`."
+          }
+        },
+        {
+          "name": "Cancel My Reservation",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "url": "{{baseUrl}}/reservations/cancel/{{reservationId}}",
+            "description": "Customer cancels an owned reservation. Online wallet refund and payment transaction cancellation are coordinated by the facade."
+          }
+        },
+        {
+          "name": "Create Pending On-field Charge",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json().data;",
+                  "if (data && data.id) pm.collectionVariables.set('reservationTransactionId', data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ownerJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"amount\":75,\"stage\":\"pending\",\"note\":\"Collect on field\"}"
+            },
+            "url": "{{baseUrl}}/reservations/{{reservationId}}/transactions",
+            "description": "Owner adds an uncollected manual charge. It increases the bill but not `paidAmount`; captures `reservationTransactionId`."
+          }
+        },
+        {
+          "name": "Create Instant On-field Extras Charge",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json().data;",
+                  "if (data && data.id) pm.collectionVariables.set('reservationTransactionId', data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ownerJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"extras\":[{\"extraId\":\"{{arenaExtraId}}\",\"quantity\":2}],\"stage\":\"instant\",\"note\":\"Paid at venue\"}"
+            },
+            "url": "{{baseUrl}}/reservations/{{reservationId}}/transactions",
+            "description": "Owner adds extras using stored prices and records immediate collection. `amount` is required only when extras are absent."
+          }
+        },
+        {
+          "name": "List Past Reservations",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": "{{baseUrl}}/reservations/past?page=1&limit=10&arenaName=&arenaCategoryId={{categoryId}}&status={{reservationStatus}}",
+            "description": "User lists past reservations. Remove unused optional filters."
+          }
+        },
+        {
+          "name": "List Upcoming Reservations",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": "{{baseUrl}}/reservations/upcoming?page=1&limit=10&arenaName=&arenaCategoryId={{categoryId}}&status={{reservationStatus}}",
+            "description": "User lists upcoming reservations. Remove unused optional filters."
+          }
+        },
+        {
+          "name": "Search Reservations",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ownerJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": "{{baseUrl}}/reservations?arenaId={{arenaId}}&startDate={{startDate}}&endDate={{endDate}}&page=1&limit=10&status={{reservationStatus}}",
+            "description": "Owner/admin searches reservations. `arenaId`, `startDate`, and `endDate` are required."
+          }
+        },
+        {
+          "name": "List Arena Reservations",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ownerJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": "{{baseUrl}}/reservations/arena/{{arenaId}}",
+            "description": "Owner/admin lists reservations for an arena."
+          }
+        },
+        {
+          "name": "Get Reservation Details",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/reservations/{{reservationId}}",
+            "description": "Authorized customer, owning arena owner, or admin gets full reservation details. Includes all transactions newest-first, safe creator fields, extras/subtotals, full/deposit totals, `paidAmount`, `remainingAmount`, and `paymentStatus`. Set active `jwt` to the viewer."
+          }
+        },
+        {
+          "name": "Update Reservation (Stub)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": "{{baseUrl}}/reservations/{{reservationId}}",
+            "description": "Present in the controller but currently backed by a stub service method and no role decorator."
+          }
+        },
+        {
+          "name": "Delete Reservation (Stub)",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/reservations/{{reservationId}}",
+            "description": "Present in the controller but currently backed by a stub service method and no role decorator."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reservation Transactions",
+      "description": "Owner-only edits, cancellation, and settlement for on-field manual transactions. Only `instant` and `settled` count toward paid amount.",
+      "item": [
+        {
+          "name": "Update Pending Transaction",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ownerJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"amount\":80,\"note\":\"Corrected pending amount\"}"
+            },
+            "url": "{{baseUrl}}/reservation-transactions/{{reservationTransactionId}}",
+            "description": "Updates amount/note only for a pending on-field transaction without attached extras. Stage cannot be changed here."
+          }
+        },
+        {
+          "name": "Cancel Pending Transaction",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ownerJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "url": "{{baseUrl}}/reservation-transactions/{{reservationTransactionId}}/cancel",
+            "description": "Cancels only a pending on-field transaction, reverses its bill amount, and cancels attached extras."
+          }
+        },
+        {
+          "name": "Settle Pending Transaction",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ownerJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "url": "{{baseUrl}}/reservation-transactions/{{reservationTransactionId}}/settle",
+            "description": "Collects a full pending on-field manual transaction (`pending` to `settled`). It does not alter reservation totals."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reviews",
+      "description": "Authenticated review creation and public arena reviews.",
+      "item": [
+        {
+          "name": "Create Review",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"arenaId\":\"{{arenaId}}\",\"rating\":5,\"content\":\"Great experience\"}"
+            },
+            "url": "{{baseUrl}}/reviews",
+            "description": "User creates a review. Rating is 1-5."
+          }
+        },
+        {
+          "name": "List Arena Reviews",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "url": "{{baseUrl}}/reviews/arena/{{arenaId}}?page=1&limit=10",
+            "description": "Public paginated arena reviews."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Owner",
+      "description": "Owner dashboard.",
+      "item": [
+        {
+          "name": "Get Owner Dashboard",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ownerJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": "{{baseUrl}}/owner/dashboard",
+            "description": "Returns dashboard metrics for the authenticated owner."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Wallet",
+      "description": "Wallet balance, funding, owner withdrawals, admin approval, and ledger history.",
+      "item": [
+        {
+          "name": "Get Wallet Balance",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/wallet/balance",
+            "description": "Returns the wallet balance for the active authenticated `jwt`."
+          }
+        },
+        {
+          "name": "Add Funds",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json().data;",
+                  "if (data && data.paymentUrl) pm.collectionVariables.set('paymentUrl', data.paymentUrl);",
+                  "if (data && data.transactionId) pm.collectionVariables.set('walletTransactionId', data.transactionId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"amount\":100.00}"
+            },
+            "url": "{{baseUrl}}/wallet/add-funds",
+            "description": "User starts a positive wallet top-up and captures provider URL/transaction ID when returned."
+          }
+        },
+        {
+          "name": "Request Withdrawal",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json().data;",
+                  "if (data && data.id) pm.collectionVariables.set('walletTransactionId', data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ownerJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"amount\":100.00}"
+            },
+            "url": "{{baseUrl}}/wallet/request-withdraw",
+            "description": "Owner creates a positive withdrawal request and captures `walletTransactionId`."
+          }
+        },
+        {
+          "name": "List Withdrawal Requests",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": "{{baseUrl}}/wallet/withdrawal-requests?page=1&limit=10",
+            "description": "Admin lists pending withdrawal requests."
+          }
+        },
+        {
+          "name": "Accept Withdrawal Request",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "url": "{{baseUrl}}/wallet/accept-withdrawal-requests/{{walletTransactionId}}",
+            "description": "Admin accepts a wallet withdrawal transaction."
+          }
+        },
+        {
+          "name": "Reject Withdrawal Request",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminJwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "url": "{{baseUrl}}/wallet/reject-withdrawal-requests/{{walletTransactionId}}",
+            "description": "Admin rejects a wallet withdrawal transaction."
+          }
+        },
+        {
+          "name": "List Wallet Transactions",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/transactions?page=1&limit=10",
+            "description": "Returns paginated wallet ledger transactions for the active authenticated `jwt`."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Uploads",
+      "description": "Authenticated image upload. Maximum 5 MB; JPEG, PNG, JPG, GIF, and WEBP are accepted.",
+      "item": [
+        {
+          "name": "Upload Image",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json().data;",
+                  "const path = data && (data.path || data.url);",
+                  "if (path) pm.collectionVariables.set('uploadPath', path);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/upload/{{uploadEntity}}",
+            "description": "Uploads form-data field `image`. Supported entities: `users`, `bookings`, `ads`, `arenas`, `auth`, `reviews`, and `categories`. The `auth` entity is owner-only. Captures `uploadPath`."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Webhooks",
+      "description": "Provider-facing callbacks. Do not use fabricated payloads to validate production payment behavior.",
+      "item": [
+        {
+          "name": "Paymob Webhook",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"obj\":{}}"
+            },
+            "url": "{{baseUrl}}/paymob/webhook?hmac={{paymobHmac}}",
+            "description": "Public Paymob callback. Replace the body and `paymobHmac` with the authentic provider callback values."
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "language",
+      "value": "en",
+      "type": "string"
+    },
+    {
+      "key": "jwt",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userJwt",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "ownerJwt",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminJwt",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userEmail",
+      "value": "user@example.com",
+      "type": "string"
+    },
+    {
+      "key": "userPassword",
+      "value": "Password1",
+      "type": "string"
+    },
+    {
+      "key": "ownerEmail",
+      "value": "owner@example.com",
+      "type": "string"
+    },
+    {
+      "key": "ownerPassword",
+      "value": "Password1",
+      "type": "string"
+    },
+    {
+      "key": "adminEmail",
+      "value": "admin@example.com",
+      "type": "string"
+    },
+    {
+      "key": "adminPassword",
+      "value": "Password1",
+      "type": "string"
+    },
+    {
+      "key": "phone",
+      "value": "01000000000",
+      "type": "string"
+    },
+    {
+      "key": "customerPhone",
+      "value": "01000000001",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "00000000-0000-4000-8000-000000000001",
+      "type": "string"
+    },
+    {
+      "key": "ownerId",
+      "value": "00000000-0000-4000-8000-000000000002",
+      "type": "string"
+    },
+    {
+      "key": "categoryId",
+      "value": "00000000-0000-4000-8000-000000000003",
+      "type": "string"
+    },
+    {
+      "key": "arenaId",
+      "value": "00000000-0000-4000-8000-000000000004",
+      "type": "string"
+    },
+    {
+      "key": "courtId",
+      "value": "00000000-0000-4000-8000-000000000005",
+      "type": "string"
+    },
+    {
+      "key": "arenaExtraId",
+      "value": "00000000-0000-4000-8000-000000000006",
+      "type": "string"
+    },
+    {
+      "key": "customerId",
+      "value": "00000000-0000-4000-8000-000000000007",
+      "type": "string"
+    },
+    {
+      "key": "reservationId",
+      "value": "00000000-0000-4000-8000-000000000008",
+      "type": "string"
+    },
+    {
+      "key": "reservationTransactionId",
+      "value": "00000000-0000-4000-8000-000000000009",
+      "type": "string"
+    },
+    {
+      "key": "walletTransactionId",
+      "value": "00000000-0000-4000-8000-000000000010",
+      "type": "string"
+    },
+    {
+      "key": "reservationDate",
+      "value": "2030-01-01",
+      "type": "string"
+    },
+    {
+      "key": "startDate",
+      "value": "2030-01-01",
+      "type": "string"
+    },
+    {
+      "key": "endDate",
+      "value": "2030-01-31",
+      "type": "string"
+    },
+    {
+      "key": "uploadEntity",
+      "value": "arenas",
+      "type": "string"
+    },
+    {
+      "key": "uploadPath",
+      "value": "arenas/example.webp",
+      "type": "string"
+    },
+    {
+      "key": "arenaStatus",
+      "value": "active",
+      "type": "string"
+    },
+    {
+      "key": "courtStatus",
+      "value": "active",
+      "type": "string"
+    },
+    {
+      "key": "reservationStatus",
+      "value": "confirmed",
+      "type": "string"
+    },
+    {
+      "key": "paymobHmac",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "paymentUrl",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
